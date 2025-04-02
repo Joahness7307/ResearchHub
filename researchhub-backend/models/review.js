@@ -1,16 +1,16 @@
 module.exports = (sequelize, DataTypes) => {
   const Review = sequelize.define("Review", {
     id: {
-      type: DataTypes.UUID, // Use UUID
-      defaultValue: DataTypes.UUIDV4, // Auto-generate UUID
+      type: DataTypes.UUID,
+      defaultValue: DataTypes.UUIDV4,
       allowNull: false,
       primaryKey: true,
     },
     paperId: {
-      type: DataTypes.UUID, // Use UUID
+      type: DataTypes.UUID,
       allowNull: false,
       references: {
-        model: "ResearchPapers", // Ensure it matches table name
+        model: "ResearchPapers",
         key: "id",
       },
       onUpdate: "CASCADE",
