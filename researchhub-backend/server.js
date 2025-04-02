@@ -4,7 +4,7 @@ const cors = require("cors");
 const bodyParser = require("body-parser");
 const { sequelize } = require("./models");
 const userRoutes = require("./routes/userRoutes");
-// const researchRoutes = require("./routes/researchRoutes");
+const researchRoutes = require("./routes/researchRoutes");
 
 const app = express();
 
@@ -14,7 +14,7 @@ app.use(bodyParser.json());
 
 // Routes
 app.use("/api/users", userRoutes);
-// app.use("/api/research", researchRoutes);
+app.use("/api/research", researchRoutes);
 
 // Global error handling middleware
 app.use((err, req, res, next) => {
