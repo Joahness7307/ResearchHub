@@ -10,7 +10,7 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.UUID, // Use UUID
       allowNull: false,
       references: {
-        model: "research_papers", // Ensure it matches table name
+        model: "ResearchPapers", // Ensure it matches table name
         key: "id",
       },
       onUpdate: "CASCADE",
