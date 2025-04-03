@@ -2,7 +2,6 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { User } = require("../models");
 require("dotenv").config();
-const SECRET_KEY = process.env.JWT_SECRET;
 
 // Register User
 exports.register = async (req, res) => {
@@ -27,12 +26,13 @@ exports.login = async (req, res) => {
     if (!isMatch) return res.status(400).json({ message: "Invalid credentials" });
 
     // Generate JWT Token
-    const token = jwt.sign({ id: user.id, email: user.email, role: user.role }, SECRET_KEY, {
-      expiresIn: "1h", // Token expires in 1 hour
-    });
+    const token = jwt.sign({ id: user.id, email: user.email, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: "1h" } // Token expires in 1 hour
+    );
 
-    // Ensure SECRET_KEY is defined
-    if (!SECRET_KEY) {
+    // Ensure JWT_SECRET is defined inside .env file
+    if (!process.env.JWT_SECRET) {
       throw new Error("JWT_SECRET is not defined in the .env file");
     }
 
