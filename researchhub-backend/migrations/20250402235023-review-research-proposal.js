@@ -14,7 +14,7 @@ module.exports = {
         type: Sequelize.UUID,
         allowNull: false,
         references: {
-          model: "ResearchPapers", // Table name in DB
+          model: "ResearchPapers",
           key: "id",
         },
         onUpdate: "CASCADE",
@@ -24,7 +24,7 @@ module.exports = {
         type: Sequelize.INTEGER,
         allowNull: false,
         references: {
-          model: "Users", // Table name in DB
+          model: "Users",
           key: "id",
         },
         onUpdate: "CASCADE",
@@ -48,6 +48,12 @@ module.exports = {
         type: Sequelize.DATE,
         defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
       },
+    });
+
+    // Add the unique index on paperId and reviewerId
+    await queryInterface.addIndex('Reviews', ['paperId', 'reviewerId'], {
+      unique: true,
+      name: 'unique_paper_reviewer',  // Optional: naming the index
     });
   },
 
