@@ -7,6 +7,11 @@ require("dotenv").config();
 exports.register = async (req, res) => {
   try {
     const { name, email, password, role } = req.body;
+    const allowedRoles = ["student"];
+    if (!allowedRoles.includes(role)) {
+      return res.status(400).json({ message: "Invalid role" });
+    }
+
     const hashedPassword = await bcrypt.hash(password, 10);
     const user = await User.create({ name, email, password: hashedPassword, role });
     res.status(201).json({ message: "User registered successfully", user });
@@ -45,7 +50,18 @@ exports.login = async (req, res) => {
 // Add User
 exports.addUser = async (req, res) => {
   try {
+    // Only admin can add users
+    if (!req.user || req.user.role !== "admin") {
+      return res.status(403).json({ message: "Access denied: Only admin can add users." });
+    }
     const { name, email, password, role } = req.body;
+    const allowedRoles = ["teacher", "admin"];
+    if (!allowedRoles.includes(role)) {
+      return res.status(400).json({ message: "Invalid. Only 'teacher' or 'admin' can be added by admin." });
+    }
+    if (!password) {
+      return res.status(400).json({ message: "Password is required" });
+    }
     const hashedPassword = await bcrypt.hash(password, 10);
     const user = await User.create({ name, email, password: hashedPassword, role });
     res.status(201).json({ message: "User added successfully", user });
