@@ -1,0 +1,30 @@
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #3766E6;
+  padding: 1.5rem 2rem;
+  color: #fff;
+}
+
+.navbar-logo a {
+  color: #fff;
+  font-weight: bold;
+  font-size: 1.3rem;
+  text-decoration: none;
+}
+
+.navbar-links a, .navbar-links button {
+  color: #fff;
+  margin-left: 1.5rem;
+  text-decoration: none;
+  background: none;
+  border: none;
+  font: inherit;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.navbar-links a:hover, .navbar-links button:hover {
+  color: #63b3ed;
+}
