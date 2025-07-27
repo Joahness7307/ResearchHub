@@ -1,0 +1,84 @@
+.navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 1000;
+
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #4e70e2;
+  padding: 1.5rem 2rem;
+  color: #fff;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
+.navbar-left,
+.navbar-center,
+.navbar-right {
+  display: flex;
+  align-items: center;
+}
+
+.navbar-center {
+  flex: 1;
+  justify-content: center;
+  gap: 2rem;
+}
+
+.navbar-right a,
+.navbar-center a,
+.navbar-right button {
+  color: #fff;
+  margin-left: 2.5rem;
+  text-decoration: none;
+  background: none;
+  border: none;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.navbar-center a:hover,
+.navbar-right a:hover,
+.navbar-right button:hover {
+  color: rgba(211, 211, 211, 0.699) ;
+}
+
+.app-logo {
+  width: 200px;
+}
+
+/* Projects Dropdown Styles */
+.projects-dropdown {
+  position: absolute;
+  top: 36px;
+  left: 0;
+  background: #fff;
+  color: #222;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.13);
+  border-radius: 8px;
+  min-width: 220px;
+  z-index: 2000;
+  padding: 0.5rem 0;
+}
+
+.projects-dropdown-item {
+  padding: 0.7rem 1.2rem;
+  cursor: pointer;
+  color: #2563eb;
+  font-weight: 500;
+  border: none;
+  background: none;
+  width: 100%;
+  text-align: left;
+  transition: background 0.18s, color 0.18s;
+}
+
+.projects-dropdown-item:hover,
+.projects-dropdown-item.active {
+  background: #26928d;
+  color: #fff;
+}
+
