@@ -3,13 +3,11 @@ const { Model } = require('sequelize');
 module.exports = (sequelize, DataTypes) => {
   class Review extends Model {
     static associate(models) {
-      // Associate with ResearchPaper
       Review.belongsTo(models.ResearchPaper, {
         foreignKey: "paperId",
         as: 'researchPaper'
       });
-      // Associate with User (reviewer)
-      Review.belongsTo(models.User, {
+      Review.belongsTo(models.UserProfile, {
         foreignKey: "reviewerId",
         as: 'reviewer'
       });
@@ -33,10 +31,10 @@ module.exports = (sequelize, DataTypes) => {
       onDelete: "CASCADE",
     },
     reviewerId: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.UUID,
       allowNull: false,
       references: {
-        model: "Users",
+        model: "users_profiles",
         key: "id",
       },
       onUpdate: "CASCADE",
