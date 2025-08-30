@@ -3,9 +3,9 @@ const { Model } = require('sequelize');
 module.exports = (sequelize, DataTypes) => {
   class ResearchPaper extends Model {
     static associate(models) {
-      ResearchPaper.belongsTo(models.User, { foreignKey: 'submittedBy', as: 'student' });
-      ResearchPaper.hasMany(models.Review, { foreignKey: 'paperId', as: 'reviews' });
-    }
+    ResearchPaper.belongsTo(models.UserProfile, { foreignKey: 'submittedBy', as: 'student' });
+    ResearchPaper.hasMany(models.Review, { foreignKey: 'paperId', as: 'reviews' });
+  }
   }
   ResearchPaper.init({
     id: {
@@ -20,8 +20,8 @@ module.exports = (sequelize, DataTypes) => {
     category: { type: DataTypes.STRING, allowNull: false },
     documentPath: { type: DataTypes.STRING, allowNull: false },
     submittedBy: {
-      type: DataTypes.INTEGER,
-      references: { model: 'Users', key: 'id' },
+      type: DataTypes.UUID, // Supabase uses UUIDs for IDs
+      references: { model: 'users_profiles', key: 'id' },
       allowNull: false,
     },
     status: {

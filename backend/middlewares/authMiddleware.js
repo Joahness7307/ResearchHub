@@ -1,5 +1,5 @@
 const jwt = require("jsonwebtoken");
-const { User } = require("../models");
+const { UserProfile } = require("../models");
 
 const authMiddleware = (roles = []) => {
   return async (req, res, next) => {
@@ -11,7 +11,7 @@ const authMiddleware = (roles = []) => {
 
       // Verify token
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      const user = await User.findByPk(decoded.id);
+      const user = await UserProfile.findByPk(decoded.id);
 
       if (!user) {
         return res.status(401).json({ message: "User not found" });

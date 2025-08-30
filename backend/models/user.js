@@ -1,65 +1,37 @@
 'use strict';
-const {
-  Model
-} = require('sequelize');
+const { Model } = require('sequelize');
+
 module.exports = (sequelize, DataTypes) => {
-  class User extends Model {
-    /**
-     * Helper method for defining associations.
-     * This method is not a part of Sequelize lifecycle.
-     * The `models/index` file will call this method automatically.
-     */
+  class UserProfile extends Model {
     static associate(models) {
-      // define association here
-      // A User can submit multiple ResearchProposals
-      User.hasMany(models.ResearchPaper, {
-        foreignKey: 'submittedBy',
-        as: 'submittedPaper'
-      });
-      // A User can be a reviewer for multiple Reviews
-      User.hasMany(models.Review, {
-        foreignKey: 'reviewerId',
-        as: 'reviewsGiven'
-      });
+      // Associations here later if needed
     }
   }
-  User.init({
-    // ADD THIS ID FIELD
+
+  UserProfile.init({
     id: {
-      type: DataTypes.INTEGER,
-      autoIncrement: true,
-      allowNull: false,
+      type: DataTypes.UUID,
       primaryKey: true,
+      defaultValue: DataTypes.UUIDV4
     },
-    name: {
-      type: DataTypes.STRING,
-      allowNull: false, // Assuming name is required
-    },
-    email: {
-      type: DataTypes.STRING,
-      allowNull: false,
-      unique: true, // Email should be unique
-      validate: {
-        isEmail: true, // Basic email format validation
-      },
-    },
-    password: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
-    role: {
-      type: DataTypes.ENUM("student", "admin"),
-      allowNull: false,
-      defaultValue: "student",
-      validate: {
-        isIn: [["student", "admin"]], // Validation for enum consistency
-      },
-    }
+    user_id: DataTypes.UUID,
+    full_name: DataTypes.STRING,
+    email: DataTypes.STRING,
+    department: DataTypes.STRING,
+    year_level: DataTypes.STRING,
+    block: DataTypes.STRING,
+    gender: DataTypes.STRING,
+    created_at: DataTypes.DATE,
+    updated_at: DataTypes.DATE,
+    bio: DataTypes.TEXT,
+    profile_picture_url: DataTypes.STRING,
+    role: DataTypes.STRING
   }, {
     sequelize,
-    modelName: 'User',
-    tableName: 'Users', // Explicitly set table name to match migration
-    timestamps: true, // Assuming you want createdAt and updatedAt columns
+    modelName: 'UserProfile',
+    tableName: 'user_profiles', // MUST match Supabase table
+    timestamps: false // They already have created_at, updated_at
   });
-  return User;
+
+  return UserProfile;
 };
