@@ -1,22 +1,133 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { User } = require("../models");
-const { ResearchPaper } = require("../models");
+const { Project } = require("../models");
+const { Invitation } = require("../models");
+const crypto = require("crypto");
+const nodemailer = require("nodemailer");
+const { Op } = require("sequelize");
 require("dotenv").config();
 
 // Register User
 exports.register = async (req, res) => {
   try {
-    const { name, email, password, role } = req.body;
-    const allowedRoles = ["student"];
-    if (!allowedRoles.includes(role)) {
-      return res.status(400).json({ message: "Invalid role" });
+    const {
+      full_name, username, email, department, year_level, block,
+      password, confirm_password, role, strand, grade_level, major
+    } = req.body;
+
+    // Only allow student and guest role for public registration
+    const allowedRoles = ["student", "guest"];
+    const userRole = allowedRoles.includes(role) ? role : "student";
+
+    // Senior High registration
+    if (strand && grade_level) {
+      if (!full_name || !username || !email || !strand || !grade_level || !password || !confirm_password) {
+        console.error("Register validation error: Missing required fields for Senior High.");
+        return res.status(400).json({ message: "All fields are required for senior high students." });
+      }
+      if (password !== confirm_password) {
+        console.error("Register validation error: Passwords do not match.");
+        return res.status(400).json({ message: "Passwords do not match." });
+      }
+      const validStrands = ["ABM", "STEM", "TVL", "HUMSS"];
+      const validGradeLevels = ["11", "12"];
+      if (!validStrands.includes(strand) || !validGradeLevels.includes(grade_level)) {
+        return res.status(400).json({ message: "Invalid strand or grade level." });
+      }
+      const hashedPassword = await bcrypt.hash(password, 10);
+      const newUser = await User.create({
+        full_name,
+        username,
+        email,
+        strand,
+        grade_level,
+        password: hashedPassword,
+        role: "student",
+        type: "senior_high"
+      });
+      return res.status(201).json({ message: "Senior high student registered successfully", newUser });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const user = await User.create({ name, email, password: hashedPassword, role });
-    res.status(201).json({ message: "User registered successfully", user });
+    // College students registration
+    if (userRole === "student") {
+      // 🔑 CRITICAL FIX: Only check for universally required fields first
+      if (!full_name || !username || !email || !department || !year_level || !password || !confirm_password) {
+        console.error("Register validation error: Missing required fields for College (basic).");
+        return res.status(400).json({ message: "All required fields (name, username, email, department, year level, password) are required." });
+      }
+
+      if (password !== confirm_password) {
+        console.error("Register validation error: Passwords do not match.");
+        return res.status(400).json({ message: "Passwords do not match." });
+      }
+
+      // Perform conditional checks after the basic fields are validated
+
+      // If department is BEED or BSED, major is required
+      if ((department === "BEED" || department === "BSED") && !major) {
+        console.error("Register validation error: Major is required for BEED/BSED department.");
+        return res.status(400).json({ message: "Major is required for BEED/BSED department." });
+      }
+      
+      // If department is BSIT or BSHM, block is required
+      if ((department === "BSIT" || department === "BSHM") && !block) {
+        console.error("Register validation error: Block is required for BSIT/BSHM department.");
+        return res.status(400).json({ message: "Block is required for BSIT/BSHM department." });
+      }
+      
+      // You might also want to prevent non-BSIT/BSHM students from sending a block, 
+      // and non-BEED/BSED students from sending a major, 
+      // but the next block handles setting them to null.
+      
+      // Continue with registration...
+      const hashedPassword = await bcrypt.hash(password, 10);
+      const newUser = await User.create({
+        full_name,
+        username,
+        email,
+        department,
+        year_level,
+        // Note: The logic below ensures only the relevant field is saved
+        block: (department === "BSIT" || department === "BSHM") ? block : null,
+        major: (department === "BEED" || department === "BSED") ? major : null,
+        password: hashedPassword,
+        role: "student",
+        type: "college"
+      });
+      return res.status(201).json({ message: "User registered successfully", newUser });
+    }
+
+    // Guest registration
+    if (userRole === "guest") {
+      if (!full_name || !username || !email || !password || !confirm_password) {
+        console.error("Register validation error: Missing required fields for Guest.");
+        return res.status(400).json({ message: "All fields are required." });
+      }
+      if (password !== confirm_password) {
+        console.error("Register validation error: Passwords do not match.");
+        return res.status(400).json({ message: "Passwords do not match." });
+      }
+      const existing = await User.findOne({ where: { email } });
+      if (existing) {
+        return res.status(400).json({ message: "Email already registered." });
+      }
+      const hashedPassword = await bcrypt.hash(password, 10);
+      const newUser = await User.create({
+        full_name,
+        username,
+        email,
+        password: hashedPassword,
+        role: "guest"
+      });
+      return res.status(201).json({ message: "Registration successful", newUser });
+    }
+
+    // If none matched
+    console.error("Register validation error: Invalid registration data.");
+    return res.status(400).json({ message: "Invalid registration data." });
   } catch (error) {
+    console.error("Register error:", error);
     res.status(500).json({ error: error.message });
   }
 };
@@ -24,8 +135,16 @@ exports.register = async (req, res) => {
 // Login User
 exports.login = async (req, res) => {
   try {
-    const { email, password } = req.body;
-    const user = await User.findOne({ where: { email } });
+    const { identifier, password } = req.body;
+    const { Op } = require("sequelize");
+    const user = await User.findOne({
+      where: {
+        [Op.or]: [
+          { email: identifier },
+          { username: identifier }
+        ]
+      }
+    });
     if (!user) return res.status(404).json({ message: "User not found" });
 
     const isMatch = await bcrypt.compare(password, user.password);
@@ -34,7 +153,7 @@ exports.login = async (req, res) => {
     // Generate JWT Token
     const token = jwt.sign({ id: user.id, email: user.email, role: user.role },
       process.env.JWT_SECRET,
-      { expiresIn: "1h" } // Token expires in 1 hour
+      { expiresIn: "7d" } // Token expires in 7 days
     );
 
     // Ensure JWT_SECRET is defined inside .env file
@@ -42,9 +161,87 @@ exports.login = async (req, res) => {
       throw new Error("JWT_SECRET is not defined in the .env file");
     }
 
-    res.status(200).json({ message: "Login successful", token, user: { id: user.id, name: user.name, email: user.email, role: user.role } });
+    res.status(200).json({
+      message: "Login successful",
+      token,
+      user: {
+        id: user.id,
+        full_name: user.full_name,
+        username: user.username,
+        email: user.email,
+        role: user.role,
+        department: user.department,
+        year_level: user.year_level,
+        block: user.block,
+        major: user.major,
+        strand: user.strand,
+        grade_level: user.grade_level,
+        type: user.type,
+        created_at: user.created_at,
+        updated_at: user.updated_at
+      }
+    });
   } catch (error) {
+    console.error("Login error:", error);
     res.status(500).json({ error: error.message });
+  }
+};
+
+// Forgot Password
+exports.forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+    const user = await User.findOne({ where: { email } });
+    // if (!user) return res.status(200).json({ message: "If your email exists, a reset link has been sent." });
+
+    // Generate token
+    const token = crypto.randomBytes(32).toString("hex");
+    user.resetToken = token;
+    user.resetTokenExpiry = Date.now() + 1000 * 60 * 60; // 1 hour
+    await user.save();
+
+    // Send email
+    const transporter = nodemailer.createTransport({
+      host: "smtp.gmail.com",
+      port: 587,
+      secure: false,
+      auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS }
+    });
+    const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${token}`;
+    await transporter.sendMail({
+      from: process.env.SMTP_USER,
+      to: email,
+      subject: "ResearchHub Password Reset",
+      html: `<p>Click <a href="${resetUrl}">here</a> to reset your password. This link expires in 1 hour.</p>`
+    });
+
+    res.json({ message: "Please check your email, a reset link has been sent." });
+  } catch (error) {
+    res.status(500).json({ message: "Failed to send reset email.", error: error.message });
+  }
+};
+
+// Reset Password
+exports.resetPassword = async (req, res) => {
+  try {
+    const { token } = req.params;
+    const { password } = req.body;
+    const user = await User.findOne({
+      where: {
+        resetToken: token,
+        resetTokenExpiry: { [Op.gt]: Date.now() }
+      }
+    });
+    if (!user) return res.status(400).json({ message: "Invalid or expired token." });
+
+    user.password = await bcrypt.hash(password, 10);
+    user.resetToken = null;
+    user.resetTokenExpiry = null;
+    await user.save();
+
+    res.json({ message: "Password reset successful. You can now login." });
+  } catch (error) {
+    res.status(500).json({ message: "Failed to reset password.", error: error.message });
   }
 };
 
@@ -52,9 +249,105 @@ exports.login = async (req, res) => {
 exports.getAllUsers = async (req, res) => {
   try {
     const users = await User.findAll({
-      attributes: ['id', 'name', 'email', 'role', 'createdAt']
+      attributes: ['id', 'full_name', 'email', 'role', 'created_at']
     });
     res.status(200).json({ users });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+// Invite user
+exports.inviteUser = async (req, res) => {
+  try {
+    const { email, role, type, department, strand, username } = req.body;
+    if (!["admin", "head_admin", "research_adviser"].includes(role)) {
+      return res.status(400).json({ message: "Invalid role." });
+    }
+    if (role === "research_adviser" && !type) {
+      return res.status(400).json({ message: "Type is required for research adviser." });
+    }
+    if (role === "research_adviser" && type === "college" && !department) {
+      return res.status(400).json({ message: "Department is required for college adviser." });
+    }
+    if (role === "research_adviser" && type === "senior_high" && !strand) {
+      return res.status(400).json({ message: "Strand is required for senior high adviser." });
+    }
+    const existingUser = await User.findOne({ where: { email } });
+    if (existingUser) return res.status(400).json({ message: "User already exists." });
+
+    const token = crypto.randomBytes(32).toString("hex");
+    await Invitation.create({
+      email,
+      username: username || null,
+      token,
+      role,
+      type: type || null,
+      department: department || null,
+      strand: strand || null,
+    });
+
+    // Send email
+    const transporter = nodemailer.createTransport({
+      host: "smtp.gmail.com",
+      port: 587,
+      secure: false,
+      auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS }
+    });
+    const inviteUrl = `${process.env.FRONTEND_URL}/setup-account?token=${token}`;
+    await transporter.sendMail({
+      from: process.env.SMTP_USER,
+      to: email,
+      subject: `ResearchHub Invitation (${role})`,
+      html: `<p>You have been invited as <b>${role.replace("_", " ")}</b>.<br><a href="${inviteUrl}">Click here to setup your account</a></p>`
+    });
+
+    res.json({ message: "Invitation sent!" });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+exports.getInvitationInfo = async (req, res) => {
+  try {
+    const { token } = req.query;
+    const invitation = await Invitation.findOne({ where: { token, used: false } });
+    if (!invitation) return res.status(404).json({ message: "Invalid or expired invitation." });
+    res.json({ invitation });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+// Setup Account
+exports.setupAccount = async (req, res) => {
+  try {
+    const { token, full_name, username, password, confirm_password } = req.body;
+    if (!token || !full_name || !username || !password || !confirm_password) {
+      return res.status(400).json({ message: "Missing required fields." });
+    }
+    if (password !== confirm_password) {
+      return res.status(400).json({ message: "Passwords do not match." });
+    }
+    const invitation = await Invitation.findOne({ where: { token, used: false } });
+    if (!invitation) return res.status(400).json({ message: "Invalid or expired invitation." });
+
+    const userObj = {
+      full_name,
+      username,
+      email: invitation.email,
+      password: await bcrypt.hash(password, 10),
+      role: invitation.role
+    };
+    if (invitation.role === "research_adviser") {
+      if (invitation.type === "college") userObj.department = invitation.department;
+      if (invitation.type === "senior_high") userObj.strand = invitation.strand;
+    }
+    await User.create(userObj);
+    invitation.used = true;
+    await invitation.save();
+
+    res.json({ message: "Account setup successful. You can now login." });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -64,19 +357,19 @@ exports.getAllUsers = async (req, res) => {
 exports.addUser = async (req, res) => {
   try {
     // Only admin can add users
-    if (!req.user || req.user.role !== "admin") {
+    if (!req.user || !["admin", "head_admin", "research_adviser", "admin"].includes(req.user.role)) {
       return res.status(403).json({ message: "Access denied: Only admin can add users." });
     }
-    const { name, email, password, role } = req.body;
-    const allowedRoles = ["student", "admin"];
+    const { name, email, department, yearLevel, block, password, role } = req.body;
+    const allowedRoles = ["admin", "research_adviser", "teacher", "student"];
     if (!allowedRoles.includes(role)) {
-      return res.status(400).json({ message: "Invalid. Only 'student' or 'admin' can be added by admin." });
+      return res.status(400).json({ message: "Invalid role." });
     }
     if (!password) {
       return res.status(400).json({ message: "Password is required" });
     }
     const hashedPassword = await bcrypt.hash(password, 10);
-    const user = await User.create({ name, email, password: hashedPassword, role });
+    const user = await User.create({ name, email, department, yearLevel, block, password: hashedPassword, role });
     res.status(201).json({ message: "User added successfully", user });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -120,38 +413,32 @@ exports.deleteUser = async (req, res) => {
 
 // Get User Profile from Token (for persistent login)
 exports.getUserProfile = async (req, res) => {
-  // req.user is populated by authMiddleware if the token is valid
   if (!req.user || !req.user.id) {
-    // This case should ideally not be reached if authMiddleware is working
-    // but good for robustness
-    return res.status(401).json({ message: "Unauthorized: User information not found in token." });
+    return res.status(401).json({ message: "Unauthorized" });
   }
-
   try {
     const user = await User.findByPk(req.user.id, {
-      attributes: ['id', 'email', 'role', 'name'] // Only fetch necessary user attributes
+      attributes: [
+        "id", "full_name", "username", "email", "role", "department", "year_level",
+        "block", "major", "strand", "grade_level", "created_at", "updated_at"
+      ]
     });
-
-    if (!user) {
-      return res.status(404).json({ message: "User not found in database." });
-    }
-
-    res.status(200).json({ user }); // Send back the user object
+    if (!user) return res.status(404).json({ message: "User not found" });
+    res.json({ user }); // <-- Must be { user: ... }
   } catch (error) {
-    console.error("Error fetching user profile:", error);
-    res.status(500).json({ error: "Internal Server Error" });
+    res.status(500).json({ error: error.message });
   }
 };
 
-exports.getUserResearchPapers = async (req, res) => {
+exports.getUserProjects = async (req, res) => {
   try {
-    console.log("Fetching papers for user:", req.user.id); // Add this line
-    const papers = await ResearchPaper.findAll({
-      where: { submittedBy: req.user.id },
-      order: [["createdAt", "DESC"]],
+    console.log("Fetching projects for user:", req.user.id); // Add this line
+    const projects = await Project.findAll({
+      where: { submitted_by: req.user.id },
+      order: [["created_at", "DESC"]],
     });
-    console.log("Found papers:", papers); // Add this line
-    res.status(200).json({ papers });
+    console.log("Found projects:", projects); // Add this line
+    res.status(200).json({ projects });
   } catch (error) {
     res.status(500).json({ error: "Internal Server Error" });
   }

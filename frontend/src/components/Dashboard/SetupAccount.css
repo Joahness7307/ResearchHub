@@ -1,0 +1,98 @@
+.setup-account-container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f9f9ff;
+}
+
+.setup-account-form {
+  background: #fff;
+  padding: 2.5rem 2rem 2rem 2rem;
+  border-radius: 14px;
+  box-shadow: 0 2px 16px rgba(37,99,235,0.08);
+  max-width: 400px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+}
+
+.setup-account-form h2 {
+  margin-bottom: 0.5rem;
+  color: #2d3748;
+  font-size: 1.5rem;
+  text-align: center;
+}
+
+.setup-account-desc {
+  color: #555;
+  font-size: 1rem;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+.setup-input {
+  padding: 0.8rem 1rem;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+  font-size: 1rem;
+  background: #f5f6fa;
+  transition: border 0.2s;
+}
+
+.setup-input:focus {
+  border: 1.5px solid #2563eb;
+  outline: none;
+  background: #fff;
+}
+
+.setup-btn {
+  background: #3a3e92;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 0.9rem 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 0.5rem;
+  transition: background 0.2s;
+}
+
+.setup-btn:hover {
+  background: #646cff;
+}
+
+.setup-success {
+  color: #22c55e;
+  background: #e7fbe9;
+  border-radius: 6px;
+  padding: 0.7rem 1rem;
+  margin-top: 0.5rem;
+  text-align: center;
+  font-weight: 500;
+}
+
+.setup-error {
+  color: #b33834;
+  background: #ffe4e6;
+  border-radius: 6px;
+  padding: 0.7rem 1rem;
+  margin-top: 0.5rem;
+  text-align: center;
+  font-weight: 500;
+}
+
+@media (max-width: 900px) {
+  .setup-account-form, .submit-research-container {
+    padding: 1.2rem;
+    max-width: 98vw;
+  }
+}
+@media (max-width: 600px) {
+  .setup-account-form, .submit-research-container {
+    padding: 0.7rem;
+    max-width: 100vw;
+  }
+}

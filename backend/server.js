@@ -5,7 +5,7 @@ const cors = require("cors");
 const bodyParser = require("body-parser"); // Keep for JSON requests
 const { sequelize } = require("./models");
 const userRoutes = require("./routes/userRoutes");
-const researchRoutes = require("./routes/researchRoutes");
+const projectRoutes = require("./routes/projectRoutes");
 const reviewRoutes = require("./routes/reviewRoutes"); // Assuming you have this route
 const commentRoutes = require("./routes/commentRoutes");
 const notificationRoutes = require("./routes/notificationRoutes");
@@ -23,18 +23,13 @@ app.set("io", io);
 
 // Middleware
 app.use(cors());
-// IMPORTANT: bodyParser.json() handles JSON payloads, but NOT multipart/form-data for file uploads.
-// Multer handles the multipart/form-data parsing.
 app.use(bodyParser.json());
 
-// Serve static uploaded files (e.g., research documents)
-// When a document is uploaded, its path might be something like 'src\uploads\research_documents\document-167888888.pdf'
-// You want to make these accessible via a URL like http://localhost:5000/uploads/research_documents/document-167888888.pdf
 app.use('/uploads', express.static('uploads'));
 
 // Routes
 app.use("/api/users", userRoutes);
-app.use("/api/research", researchRoutes);
+app.use("/api/projects", projectRoutes);
 app.use("/api/reviews", reviewRoutes);
 app.use("/api/comments", commentRoutes);
 app.use("/api/notifications", notificationRoutes);

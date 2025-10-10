@@ -1,205 +1,201 @@
-import React, { useEffect, useState } from "react";
-import { useLocation, useNavigate, Link } from "react-router-dom";
+import React, { useEffect, useState, useContext } from "react";
 import axios from "../../api/axios";
 import { AuthContext } from "../../context/AuthContext";
+import { useNavigate } from "react-router-dom";
 import "./StudentDashboard.css";
-
-const generateColor = (str) => {
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    hash = str.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  const hue = hash % 360;
-  return `hsl(${hue}, 70%, 80%)`;
-};
+import categoryColors from "../../constants/categoryColors";
 
 const StudentDashboard = () => {
-  const { user } = React.useContext(AuthContext);
-  const [papers, setPapers] = useState([]);
+  const { user } = useContext(AuthContext);
+  const [projects, setProjects] = useState([]);
+  const [selectedCard, setSelectedCard] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
-  const [expandedAbstractId, setExpandedAbstractId] = useState(null);
-  const [categoryColors, setCategoryColors] = useState({});
-  const [selectedCategory, setSelectedCategory] = useState("All");
-  const [categories, setCategories] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const [showProjectsDropdown, setShowProjectsDropdown] = useState(false);
-  const PAGE_SIZE = 10;
-  const location = useLocation();
-
-useEffect(() => {
-  const params = new URLSearchParams(location.search);
-  const cat = params.get("category");
-  if (cat && categories.includes(cat)) {
-    setSelectedCategory(cat);
-  } else {
-    setSelectedCategory("All");
-  }
-  // eslint-disable-next-line
-}, [location.search, categories]);
+  const projectsPerPage = 10;
+  const navigate = useNavigate();
 
   useEffect(() => {
-  if (user && user.role === "student") {
-    axios.get("/research/categories")
-      .then(res => setCategories(res.data.categories))
-      .catch(() => setCategories([]));
-  }
-}, [user]);
-
-  useEffect(() => {
-    axios.get("/research")
-      .then(res => setPapers(res.data))
-      .catch(() => setPapers([]));
+    // Only fetch approved projects for the repository
+    axios.get("/projects")
+      .then(res => setProjects(res.data))
+      .catch(() => setProjects([]));
   }, []);
 
-  useEffect(() => {
-    axios.get("/research/categories")
-      .then(res => {
-        const colors = {};
-        res.data.categories.forEach(cat => {
-          colors[cat] = generateColor(cat);
-        });
-        setCategoryColors(colors);
-        setCategories(res.data.categories);
-      });
-  }, []);
+  // Only approved projects
+  const approvedProjects = projects.filter(project => project.status === "approved");
 
-  // Filter papers by search and category
-  const filteredPapers = papers.filter(paper =>
-    paper.title.toLowerCase().includes(searchTerm.toLowerCase()) &&
-    (selectedCategory === "All" || paper.category === selectedCategory)
+  // College projects: must have department and year_level, and NOT have strand/grade_level
+  const collegeProjects = approvedProjects.filter(
+    project =>
+      project.submitter &&
+      project.submitter.department && // Check if department has a value (non-null/non-empty string)
+      project.submitter.year_level && // Check if year_level has a value
+      !project.submitter.strand && // Ensure SHS fields are not present
+      !project.submitter.grade_level
   );
 
-  // Pagination logic
-  const totalPages = Math.ceil(filteredPapers.length / PAGE_SIZE);
-  const paginatedPapers = filteredPapers.slice(
-    (currentPage - 1) * PAGE_SIZE,
-    currentPage * PAGE_SIZE
+  // Senior high projects: must have strand and grade_level, and NOT have department/year_level
+  const shsProjects = approvedProjects.filter(
+    project =>
+      project.submitter &&
+      project.submitter.strand && // Check if strand has a value
+      project.submitter.grade_level && // Check if grade_level has a value
+      !project.submitter.department && // Ensure College fields are not present
+      !project.submitter.year_level
   );
 
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchTerm, selectedCategory]);
+  // Card filters
+  const allProjects = approvedProjects;
+
+  let displayedProjects = [];
+  if (selectedCard === "all") displayedProjects = allProjects;
+  else if (selectedCard === "college") displayedProjects = collegeProjects;
+  else if (selectedCard === "shs") displayedProjects = shsProjects;
+
+  // Search filter
+  const filteredProjects = displayedProjects.filter(project => {
+    const titleMatch = project.title.toLowerCase().includes(searchTerm.toLowerCase());
+    const categoryMatch = project.category.toLowerCase().includes(searchTerm.toLowerCase());
+    const uploaderMatch =
+      (project.authors && project.authors.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (project.submitter &&
+        project.submitter.full_name &&
+        project.submitter.full_name.toLowerCase().includes(searchTerm.toLowerCase()));
+    return titleMatch || categoryMatch || uploaderMatch;
+  });
+
+  // Pagination logic (if needed) 
+  const totalProjects = filteredProjects.length;
+  const totalPages = Math.ceil(totalProjects / projectsPerPage);
+  const startIndex = (currentPage - 1) * projectsPerPage;
+  const endIndex = startIndex + projectsPerPage;
+  const paginatedProjects = filteredProjects.slice(startIndex, endIndex);
+
+    useEffect(() => {
+    console.log("Selected card:", selectedCard);
+    console.log("Displayed projects:", displayedProjects);
+  }, [selectedCard, displayedProjects]);
 
   return (
-    <div style={{ display: "flex" }}>
-      <div style={{ marginLeft: 260, width: "100%" }}>
-        <div className="student-dashboard">
-          <form className="search-form" onSubmit={e => e.preventDefault()}>
-            <input
-              type="text"
-              placeholder="Search research papers by title"
-              value={searchTerm}
-              onChange={e => setSearchTerm(e.target.value)}
-              className="search-input"
-            />
-            <button type="submit" className="search-button">Search</button>
-          </form>
-
-          <div style={{ textAlign: "left", marginBottom: "2rem" }}>
-            <label style={{ fontSize: "1.4rem", fontWeight: 600, color: "#2563eb", letterSpacing: "0.5px" }}>
-              Research Project Repository
-            </label>  
-          </div>
-
-          <div className="research-grid">
-            {paginatedPapers.length === 0 ? (
-              <div className="empty-state">
-                <h3>No research papers found</h3>
-                <p>There are no submissions yet. Be the first to upload your study!</p>
-                <Link 
-                  to="/submit-research" 
-                  style={{ 
-                    backgroundColor: "#b33834",
-                    color: "white",            
-                    padding: "10px 20px",      
-                    border: "none",         
-                    borderRadius: "5px",      
-                    cursor: "pointer",         
-                    fontSize: "16px",        
-                    textDecoration: "none",     
-                    display: "inline-block"     
-                  }}
-                >
-                  Upload
-                </Link>
-              </div>
-            ) : (
-              paginatedPapers.map(paper => (
-                <div
-                  className="research-card clickable-card"
-                  key={paper.id}
-                  tabIndex={0}
-                  role="button"
-                  onClick={() => window.location.href = `/projects/${paper.id}`}
-                >
-                  <h3 className="research-title">{paper.title}</h3>
-                  <span
-                    className="category-badge"
-                    style={{
-                      background: categoryColors[paper.category] || "#2563eb",
-                      color: "#000",
-                      padding: "0.2rem 0.5rem",
-                      borderRadius: "6px",
-                      fontSize: "1rem",
-                      marginBottom: "1rem",
-                      display: "inline-block"
-                    }}
-                  >
-                    {paper.category}
-                  </span>
-                  <p className="authors"><b>Authors:</b> {paper.authors}</p>
-                  <p className="abstract">
-                    <b>Abstract:</b>{" "}
-                    {expandedAbstractId === paper.id
-                      ? paper.abstract
-                      : paper.abstract.length > 180
-                        ? paper.abstract.slice(0, 180) + "..."
-                        : paper.abstract}
-                    {paper.abstract.length > 180 && (
-                      <span
-                        className="read-more"
-                        onClick={e => {
-                          e.stopPropagation();
-                          setExpandedAbstractId(
-                            expandedAbstractId === paper.id ? null : paper.id
-                          );
-                        }}
-                      >
-                        {expandedAbstractId === paper.id ? "Show Less" : "Read More"}
-                      </span>
-                    )}
-                  </p>
-                  <span className="submission-date">
-                    Uploaded: {new Date(paper.createdAt).toLocaleDateString()}
-                  </span>
-                </div>
-              ))
-            )}
-          </div>
-
-          {/* Pagination Controls */}
-          {totalPages > 1 && (
-            <div className="pagination-controls">
-              <button
-                className="pagination-btn"
-                disabled={currentPage === 1}
-                onClick={() => setCurrentPage(currentPage - 1)}
-              >
-                Previous
-              </button>
-              <span className="pagination-info">
-                Page {currentPage} of {totalPages}
-              </span>
-              <button
-                className="pagination-btn"
-                disabled={currentPage === totalPages}
-                onClick={() => setCurrentPage(currentPage + 1)}
-              >
-                Next
-              </button>
-            </div>
-          )}
+    <div className="student-dashboard-container">
+      <h2 style={{ marginBottom: '25px' }}>Research Project Repository</h2>
+      <div className="dashboard-cards-row">
+        <div
+          className={`dashboard-card${selectedCard === "all" ? " active" : ""}`}
+          onClick={() => setSelectedCard("all")}
+        >
+          <h3>All Projects</h3>
+          <div className="dashboard-card-count">{allProjects.length}</div>
         </div>
+        <div
+          className={`dashboard-card${selectedCard === "college" ? " active" : ""}`}
+          onClick={() => setSelectedCard("college")}
+        >
+          <h3>College Department</h3>
+          <div className="dashboard-card-count">{collegeProjects.length}</div>
+        </div>
+        <div
+          className={`dashboard-card${selectedCard === "shs" ? " active" : ""}`}
+          onClick={() => setSelectedCard("shs")}
+        >
+          <h3>Senior High Level</h3>
+          <div className="dashboard-card-count">{shsProjects.length}</div>
+        </div>
+      </div>
+
+      <div className="dashboard-search-row">
+      <div className="search-wrapper">
+        <input
+          type="text"
+          placeholder="Search by project title..."
+          value={searchTerm}
+          onChange={e => setSearchTerm(e.target.value)}
+        />
+        <button
+          type="button"
+          className="search-button"
+          onClick={() => console.log("Searching for:", searchTerm)} // Replace with actual search logic if needed
+        >
+          Search
+        </button>
+      </div>  
+    </div>
+
+      <div className="dashboard-main-content">
+        {filteredProjects.length === 0 ? (
+          <div className="no-projects">No projects found.</div>
+        ) : (
+          <ul className="repository-list">
+            {paginatedProjects.map(project => (
+              <li
+                key={project.id}
+                className="repository-item"
+                onClick={() => navigate(`/projects/${project.id}`)}
+              >
+                <div className="repository-title">{project.title}</div>
+                <div className="repository-meta">
+                  <span
+                   className="repository-category"
+                   style={{
+                    background: categoryColors[project.category] || "#586b94ff",
+                    color: "#fff"
+                   }}
+                  >
+                   {project.category}
+                 </span>
+                  <span className="repository-authors">{project.authors}</span>
+                </div>
+                <div className="repository-abstract">
+                  <b>Abstract:</b> {project.abstract.length > 120 ? project.abstract.slice(0, 120) + "..." : project.abstract}
+                </div>
+              </li>
+            ))}
+            <div className="pagination-controls" style={{ textAlign: "center", marginTop: "2rem" }}>
+            <button
+              className="pagination-btn"
+              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+              style={{
+                padding: "0.7rem 1.5rem",
+                marginRight: "1rem",
+                background: "#2563eb",
+                color: "#fff",
+                border: "none",
+                borderRadius: "8px",
+                fontWeight: 600,
+                fontSize: "1rem",
+                cursor: currentPage === 1 ? "not-allowed" : "pointer",
+                opacity: currentPage === 1 ? 0.6 : 1
+              }}
+            >
+              Previous
+            </button>
+            <span style={{ fontWeight: 600, fontSize: "1.1rem", color: "#2563eb" }}>
+              Page {currentPage} of {totalPages}
+            </span>
+            <button
+              className="pagination-btn"
+              onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+              disabled={currentPage === totalPages || totalPages === 0}
+              style={{
+                padding: "0.7rem 1.5rem",
+                marginLeft: "1rem",
+                background: "#2563eb",
+                color: "#fff",
+                border: "none",
+                borderRadius: "8px",
+                fontWeight: 600,
+                fontSize: "1rem",
+                cursor: (currentPage === totalPages || totalPages === 0) ? "not-allowed" : "pointer",
+                opacity: (currentPage === totalPages || totalPages === 0) ? 0.6 : 1
+              }}
+            >
+              Next
+            </button>
+          </div>
+          </ul>
+          
+        )}
       </div>
     </div>
   );

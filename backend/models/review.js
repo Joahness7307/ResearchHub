@@ -3,10 +3,10 @@ const { Model } = require('sequelize');
 module.exports = (sequelize, DataTypes) => {
   class Review extends Model {
     static associate(models) {
-      // Associate with ResearchPaper
-      Review.belongsTo(models.ResearchPaper, {
+      // Associate with Project
+      Review.belongsTo(models.Project, {
         foreignKey: "paperId",
-        as: 'researchPaper'
+        as: 'Project'
       });
       // Associate with User (reviewer)
       Review.belongsTo(models.User, {
@@ -26,7 +26,7 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.INTEGER,
       allowNull: false,
       references: {
-        model: "ResearchPapers", // <-- Use new table name
+        model: "Projects", // <-- Use new table name
         key: "id",
       },
       onUpdate: "CASCADE",

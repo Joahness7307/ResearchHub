@@ -4,7 +4,7 @@ const { Review, ResearchPaper } = require("../models");
 exports.submitReview = async (req, res) => {
   try {
     // Check if the user is a teacher or admin
-    if (!["teacher", "admin"].includes(req.user.role)) {
+    if (!["user", "admin"].includes(req.user.role)) {
       return res.status(403).json({ message: "Only teachers or admins can review papers" });
     }
 

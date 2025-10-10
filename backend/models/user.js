@@ -1,65 +1,25 @@
 'use strict';
-const {
-  Model
-} = require('sequelize');
 module.exports = (sequelize, DataTypes) => {
-  class User extends Model {
-    /**
-     * Helper method for defining associations.
-     * This method is not a part of Sequelize lifecycle.
-     * The `models/index` file will call this method automatically.
-     */
-    static associate(models) {
-      // define association here
-      // A User can submit multiple ResearchProposals
-      User.hasMany(models.ResearchPaper, {
-        foreignKey: 'submittedBy',
-        as: 'submittedPaper'
-      });
-      // A User can be a reviewer for multiple Reviews
-      User.hasMany(models.Review, {
-        foreignKey: 'reviewerId',
-        as: 'reviewsGiven'
-      });
-    }
-  }
-  User.init({
-    // ADD THIS ID FIELD
-    id: {
-      type: DataTypes.INTEGER,
-      autoIncrement: true,
-      allowNull: false,
-      primaryKey: true,
-    },
-    name: {
-      type: DataTypes.STRING,
-      allowNull: false, // Assuming name is required
-    },
-    email: {
-      type: DataTypes.STRING,
-      allowNull: false,
-      unique: true, // Email should be unique
-      validate: {
-        isEmail: true, // Basic email format validation
-      },
-    },
-    password: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
-    role: {
-      type: DataTypes.ENUM("student", "admin"),
-      allowNull: false,
-      defaultValue: "student",
-      validate: {
-        isIn: [["student", "admin"]], // Validation for enum consistency
-      },
-    }
+  const User = sequelize.define('User', {
+    id: { type: DataTypes.INTEGER, autoIncrement: true, allowNull: false, primaryKey: true },
+    full_name: { type: DataTypes.STRING, allowNull: false },
+    username: { type: DataTypes.STRING, allowNul: false, unique: true },
+    email: { type: DataTypes.STRING, allowNull: false, unique: true },
+    password: { type: DataTypes.STRING, allowNull: false },
+    department: { type: DataTypes.ENUM("BSIT", "BSHM", "BSENTREP", "BEED", "BSED", "BPED"), allowNull: true },
+    year_level: { type: DataTypes.ENUM("1st", "2nd", "3rd", "4th"), allowNull: true },
+    block: { type: DataTypes.ENUM("A", "B", "C", "D"), allowNull: true },
+    major: { type: DataTypes.ENUM("English", "Math", "Science"), allowNull: true },
+    strand: { type: DataTypes.ENUM("ABM", "HUMSS", "STEM", "TVL"), allowNull: true },
+    grade_level: { type: DataTypes.ENUM("11", "12"), allowNull: true },
+    role: { type: DataTypes.ENUM("admin", "head_admin", "research_adviser", "student", "guest"), allowNull: false, defaultValue: "guest" },
+    created_at: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW },
+    updated_at: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW },
+    resetToken: { type: DataTypes.STRING, allowNull: true },
+    resetTokenExpiry: { type: DataTypes.DATE, allowNull: true },
   }, {
-    sequelize,
-    modelName: 'User',
-    tableName: 'Users', // Explicitly set table name to match migration
-    timestamps: true, // Assuming you want createdAt and updatedAt columns
+    tableName: 'Users',
+    timestamps: false // If you use custom created_at/updated_at
   });
   return User;
-};
+};  

@@ -2,7 +2,7 @@
   max-width: 600px;
   margin: 120px auto 40px auto;
   padding: 2rem;
-  background-color: #fff;
+  background-color: #f8faff;
   border-radius: 12px;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
 }
@@ -26,10 +26,12 @@
 }
 
 .research-form input[type="text"],
+.research-form input[type="url"],
 .research-form textarea,
 .research-form input[type="file"] {
   padding: 0.75rem;
   border: 1px solid #d1d5db;
+  background: #f8faff;
   border-radius: 8px;
   font-size: 1rem;
   width: 100%;
@@ -46,7 +48,7 @@
   border-radius: 8px;
   font-size: 1rem;
   width: 100%;
-  background-color: #fff;
+  background-color: #f8faff;
   color: #111827;
   margin-bottom: 0.5rem;
   appearance: none;
@@ -71,7 +73,7 @@
 
 .research-form button {
   padding: 0.75rem;
-  background-color: #b33834;
+  background-color: #3a3e92;
   color: #fff;
   font-size: 1rem;
   border: none;
@@ -82,14 +84,15 @@
 }
 
 .research-form button:hover {
-  background-color: #8a1a16;
+  background-color: #4e54c8;
 }
 
 .success-message {
-  color: green;
-  background-color: #e6ffe6;
-  border: 1px solid #4CAF50;
-  padding: 10px;
+  color: white;
+  background-color: #3a3e92;
+  border: none;
+  font-size: 0.95rem;
+  padding: 14px 2.5rem;
   border-radius: 5px;
   margin-top: 15px;
   text-align: center;
@@ -103,4 +106,109 @@
   border-radius: 5px;
   margin-top: 15px;
   text-align: center;
+}
+
+/* ...existing code... */
+
+/* 🖥️ Large Screen */
+@media (min-width: 1441px) {
+  .submit-research-container {
+    max-width: 700px;
+    padding: 3rem;
+    font-size: 1.08rem;
+  }
+  .research-form label,
+  .research-form input,
+  .research-form textarea,
+  .research-form select {
+    font-size: 1.08rem;
+  }
+  .research-form button {
+    font-size: 1.08rem;
+    padding: 1rem;
+  }
+}
+
+/* 🖥️ Desktop */
+@media (max-width: 1440px) {
+  .submit-research-container {
+    max-width: 600px;
+    padding: 2rem;
+    font-size: 1rem;
+  }
+  .research-form label,
+  .research-form input,
+  .research-form textarea,
+  .research-form select {
+    font-size: 1rem;
+  }
+  .research-form button {
+    font-size: 1rem;
+    padding: 0.75rem;
+  }
+}
+
+/* 💻 Tablet Landscape / Small Laptops */
+@media (max-width: 1024px) {
+  .submit-research-container {
+    max-width: 98vw;
+    padding: 1.2rem;
+    margin-top: 130px;
+  }
+  .research-form label,
+  .research-form input,
+  .research-form textarea,
+  .research-form select {
+    font-size: 0.98rem;
+  }
+  .research-form button {
+    font-size: 0.98rem;
+    padding: 0.7rem;
+  }
+}
+
+/* 📲 Tablet Portrait */
+@media (max-width: 768px) {
+  .submit-research-container {
+    max-width: 100vw;
+    padding: 0.7rem;
+    margin-top: 140px;
+  }
+  .research-form label,
+  .research-form input,
+  .research-form textarea,
+  .research-form select {
+    font-size: 0.97rem;
+  }
+  .research-form button {
+    font-size: 0.97rem;
+    padding: 0.7rem;
+  }
+  .submit-research-container h2 {
+    font-size: 1.3rem;
+  }
+}
+
+/* 📱 Small Mobile */
+@media (max-width: 480px) {
+  .submit-research-container {
+    max-width: 100vw;
+    padding: 0.4rem;
+    margin-top: 120px;
+    border-radius: 0;
+    box-shadow: none;
+  }
+  .research-form label,
+  .research-form input,
+  .research-form textarea,
+  .research-form select {
+    font-size: 0.95rem;
+  }
+  .research-form button {
+    font-size: 0.95rem;
+    padding: 0.6rem;
+  }
+  .submit-research-container h2 {
+    font-size: 1.1rem;
+  }
 }

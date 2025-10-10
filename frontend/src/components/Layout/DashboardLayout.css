@@ -1,0 +1,227 @@
+/* DashboardLayout.css */
+
+/* General Layout Container */
+
+.dashboard-layout {
+
+  display: flex;
+
+}
+
+/* Desktop Sidebar (Visible by default) */
+
+.desktop-sidebar {
+
+  display: block; /* Show on screens wider than 1024px */
+
+}
+
+/* Main Content Area */
+
+.dashboard-content {
+
+  margin-left: 260px; /* Space for the desktop sidebar */
+
+  width: calc(100% - 260px);
+
+  min-height: 100vh;
+
+  background: #f9f9ff;
+
+
+}
+
+/* Mobile Sidebar (Hidden by default) */
+
+.mobile-sidebar {
+
+  display: flex;
+
+  flex-direction: column;
+
+  position: fixed;
+
+  top: 0;
+
+  right: -100%; /* Start off-screen */
+
+  width: 300px;
+
+  height: 100vh;
+
+  background: #3a3e92;
+
+  box-shadow: -3px 0 15px rgba(0, 0, 0, 0.15);
+
+  z-index: 1200;
+
+  padding: 6rem 1.5rem;
+
+  transition: right 0.35s ease-in-out;
+
+}
+
+
+
+.mobile-sidebar.open {
+
+  right: 0; /* Slide in */
+
+}
+
+
+
+.mobile-sidebar-link {
+
+  color: #fff;
+
+  background: none;
+
+  border: none;
+
+  font-size: 1rem;
+
+  text-align: left;
+
+  padding: 0.8rem 1rem;
+
+  margin-bottom: 1rem;
+
+  cursor: pointer;
+
+  border-radius: 8px;
+
+  transition: background 0.2s;
+
+}
+
+
+
+.mobile-sidebar-link.active,
+
+.mobile-sidebar-link:hover {
+
+  background: #e0e7ff;
+
+  color: #2563eb;
+
+}
+
+
+
+/* Dark overlay for when the mobile sidebar is open */
+
+.mobile-sidebar-overlay {
+
+  position: fixed;
+
+  top: 0;
+
+  left: 0;
+
+  width: 100vw;
+
+  height: 100vh;
+
+  background: rgba(0, 0, 0, 0.4);
+
+  z-index: 1199;
+
+}
+
+
+
+
+
+/* 💻 Tablet Landscape / Small Laptops (MAX-WIDTH: 1024px) */
+
+@media (max-width: 1024px) { 
+
+  .desktop-sidebar {
+
+    display: none;
+
+  }
+
+  .dashboard-content {
+
+     margin-left: 0;
+
+     margin: auto;
+
+     width: 100%;
+
+     padding: 1rem
+
+  }
+
+  .dashboard-layout {
+
+    display: block;
+
+  }
+
+}
+
+
+
+/* --- Mobile & Tablet Portrait (MAX-WIDTH: 768px) --- */
+
+@media (max-width: 768px) {
+
+  .desktop-sidebar {
+
+    display: none;
+
+  }
+
+
+
+  .dashboard-content {
+
+    margin-left: 0;
+
+    width: 100%;
+
+  }
+
+}
+
+/* DashboardLayout.css - ADD THESE STYLES */
+
+/* The .mobile-sidebar class likely already has 'position: fixed' and 'right: 0' */
+.mobile-sidebar {
+    /* Ensure the sidebar itself is the reference for the close button */
+    position: fixed; /* (This should already be here) */
+    /* ... (other styles like width, height, background) ... */
+}
+
+.mobile-sidebar-close-btn {
+    position: absolute; /* Position relative to the .mobile-sidebar */
+    top: 10px;
+    right: 15px;
+    
+    /* Styling for the close icon */
+    background: none;
+    border: none;
+    color: #3a3e92; /* A strong color that contrasts with the sidebar background */
+    font-size: 1.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 10px;
+    line-height: 1;
+    z-index: 10; /* Ensure it's above content inside the sidebar */
+}
+
+/* Optional: Basic style to hide the 'My Account' link on mobile, 
+   since the links are duplicated in the sidebar */
+@media (max-width: 768px) {
+    .desktop-sidebar {
+        display: none;
+    }
+    
+    .navbar-right .desktop-nav {
+        /* This hides the desktop 'My Account' link in the Navbar */
+        display: none;
+    }
+}

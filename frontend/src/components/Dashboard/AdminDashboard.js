@@ -1,21 +1,55 @@
 import React, { useEffect, useState } from "react";
 import axios from "../../api/axios";
-import "./AdminDashboard.css";
+import "./AdminDashboard.css"
 
-const AdminDashboard = () => {
-  const [activeTab, setActiveTab] = useState("users");
+const AdminDashboard = ({ activeSection }) => {
+  const [projects, setProjects] = useState([]);
   const [users, setUsers] = useState([]);
-  const [papers, setPapers] = useState([]);
   const [userSearch, setUserSearch] = useState("");
-  const [paperSearch, setPaperSearch] = useState("");
   const [form, setForm] = useState({ name: "", email: "", password: "", role: "student" });
   const [editUserId, setEditUserId] = useState(null);
   const [message, setMessage] = useState("");
+  const [email, setEmail] = useState("");
+  const [msg, setMsg] = useState("");
+  const [error, setError] = useState("");
 
+  const [inviteForm, setInviteForm] = useState({
+  email: "",
+  role: "admin",
+  type: "",
+  department: "",
+  strand: "",
+});
+
+const handleInviteChange = e => setInviteForm({ ...inviteForm, [e.target.name]: e.target.value });
+
+const handleInviteSubmit = async e => {
+  e.preventDefault();
+  setMsg(""); setError("");
+  try {
+    await axios.post("/users/invite-user", inviteForm);
+    setMsg("Invitation sent!");
+    setInviteForm({ email: "", role: "admin", type: "", department: "", strand: "" });
+  } catch (err) {
+    setError(err.response?.data?.message || "Failed to send invitation.");
+  }
+};
+
+  // Fetch projects for dashboard
   useEffect(() => {
-    axios.get("/users/all").then(res => setUsers(res.data.users || []));
-    axios.get("/research/admin/all").then(res => setPapers(res.data.papers || []));
-  }, [message]);
+    axios.get("/projects/admin/all")
+      .then(res => setProjects(res.data.projects || []))
+      .catch(() => setProjects([]));
+  }, []);
+
+  // Fetch users for user management
+  useEffect(() => {
+    if (activeSection === "users") {
+      axios.get("/users/all")
+        .then(res => setUsers(res.data.users || []))
+        .catch(() => setUsers([]));
+    }
+  }, [activeSection]);
 
   // User management handlers
   const handleUserSubmit = async (e) => {
@@ -32,127 +66,149 @@ const AdminDashboard = () => {
       setForm({ name: "", email: "", password: "", role: "student" });
       setEditUserId(null);
     } catch (err) {
-      setMessage(err.response?.data?.message || "Error");
+      setMessage("Error updating/adding user.");
     }
   };
 
   const handleDeleteUser = async (id) => {
-    if (!window.confirm("Delete this user?")) return;
-    await axios.delete(`/users/delete/${id}`);
-    setMessage("User deleted!");
+    try {
+      await axios.delete(`/users/delete/${id}`);
+      setMessage("User deleted!");
+      setUsers(users.filter(u => u.id !== id));
+    } catch {
+      setMessage("Error deleting user.");
+    }
   };
 
   const handleEditUser = (user) => {
-    setForm({ name: user.name, email: user.email, password: "", role: user.role });
     setEditUserId(user.id);
+    setForm({ name: user.name, email: user.email, password: "", role: user.role });
   };
 
-  // Research management handlers
-  const handleApprovePaper = async (id) => {
-    await axios.post(`/research/admin/approve/${id}`);
-    setMessage("Research paper approved!");
-  };
-
-  const handleRejectPaper = async (id) => {
-    await axios.post(`/research/admin/reject/${id}`);
-    setMessage("Research paper rejected!");
-  };
-
-  const handleDeletePaper = async (id) => {
-    if (!window.confirm("Delete this research paper?")) return;
-    await axios.delete(`/research/admin/delete/${id}`);
-    setMessage("Research paper deleted!");
-  };
-
-  // Filtered lists
   const filteredUsers = users.filter(
     user =>
-      user.name.toLowerCase().includes(userSearch.toLowerCase()) ||
-      user.email.toLowerCase().includes(userSearch.toLowerCase())
+      (user.full_name && user.full_name.toLowerCase().includes(userSearch.toLowerCase())) ||
+      (user.email && user.email.toLowerCase().includes(userSearch.toLowerCase()))
   );
 
-  const filteredPapers = papers.filter(
-    paper =>
-      paper.title.toLowerCase().includes(paperSearch.toLowerCase()) ||
-      paper.authors.toLowerCase().includes(paperSearch.toLowerCase())
-  );
+  // Project status groups
+  const pendingProjects = projects.filter(p => p.status === "pending");
+  const approvedProjects = projects.filter(p => p.status === "approved");
+  const rejectedProjects = projects.filter(p => p.status === "rejected");
 
-  // Status counts
-  const pendingCount = papers.filter(p => p.status === "pending").length;
-  const approvedCount = papers.filter(p => p.status === "approved").length;
-  const rejectedCount = papers.filter(p => p.status === "rejected").length;
+  // Determine which section to show
+  const section = activeSection || window.location.pathname.includes("manage-users") ? "users" : "dashboard";
+
+  const handleInvite = async (e) => {
+    e.preventDefault();
+    setMsg(""); setError("");
+    try {
+      const token = localStorage.getItem("token");
+      await axios.post("/users/invite-research-adviser", { email }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setMsg("Invitation sent!");
+      setEmail("");
+    } catch (err) {
+      setError(err.response?.data?.message || "Failed to send invitation.");
+    }
+  };
 
   return (
-    <div className="admin-dashboard-outer">
-      <div className="admin-dashboard-header">
-        <h2>Admin Dashboard</h2>
-      </div>
-      <div className="admin-dashboard-tabs">
-        <div
-          className={`admin-tab-card ${activeTab === "users" ? "active" : ""}`}
-          onClick={() => setActiveTab("users")}
-        >
-          <h3>👤 Manage Users</h3>
-          <p>View, search, and manage all users.</p>
-        </div>
-        <div
-          className={`admin-tab-card ${activeTab === "research" ? "active" : ""}`}
-          onClick={() => setActiveTab("research")}
-        >
-          <h3>📄 Manage Research Uploads</h3>
-          <p>Review, approve, or reject research uploads.</p>
-        </div>
-      </div>
-
-      {/* Tab Content */}
-      {activeTab === "users" && (
-        <section className="admin-section admin-users">
-          <div className="admin-management-header">
-            <h3>User Management</h3>
-            <input
-              type="text"
-              className="admin-search-input"
-              placeholder="Search users by name or email..."
-              value={userSearch}
-              onChange={e => setUserSearch(e.target.value)}
-            />
+    <>
+      {section === "dashboard" && (
+        <>
+          <h2 style={{ marginTop: '5rem' }}>Project Management</h2>
+          <div className="dashboard-cards-row">
+            <div className="dashboard-card">
+              <h3>Pending Projects</h3>
+              {pendingProjects.length === 0 ? (
+                <div>No pending projects.</div>
+              ) : (
+                pendingProjects.map(p => (
+                  <div key={p.id} className="dashboard-card-item">
+                    <b>{p.title}</b>
+                    <div>{p.category}</div>
+                    <div>By: {p.authors}</div>
+                    <a href={`/projects/${p.id}`}>View Details</a>
+                  </div>
+                ))
+              )}
+            </div>
+            <div className="dashboard-card">
+              <h3>Approved Projects</h3>
+              {approvedProjects.length === 0 ? (
+                <div>No approved projects.</div>
+              ) : (
+                approvedProjects.map(p => (
+                  <div key={p.id} className="dashboard-card-item">
+                    <b>{p.title}</b>
+                    <div>{p.category}</div>
+                    <div>By: {p.authors}</div>
+                    <a href={`/projects/${p.id}`}>View Details</a>
+                  </div>
+                ))
+              )}
+            </div>
+            <div className="dashboard-card">
+              <h3>Rejected Projects</h3>
+              {rejectedProjects.length === 0 ? (
+                <div>No rejected projects.</div>
+              ) : (
+                rejectedProjects.map(p => (
+                  <div key={p.id} className="dashboard-card-item">
+                    <b>{p.title}</b>
+                    <div>{p.category}</div>
+                    <div>By: {p.authors}</div>
+                    <a href={`/projects/${p.id}`}>View Details</a>
+                  </div>
+                ))
+              )}
+            </div>
           </div>
-          <form className="admin-form" onSubmit={handleUserSubmit}>
-            <input
-              type="text"
-              placeholder="Name"
-              value={form.name}
-              onChange={e => setForm({ ...form, name: e.target.value })}
-              required
-            />
-            <input
-              type="email"
-              placeholder="Email"
-              value={form.email}
-              onChange={e => setForm({ ...form, email: e.target.value })}
-              required
-            />
-            <input
-              type="password"
-              placeholder={editUserId ? "New Password (optional)" : "Password"}
-              value={form.password}
-              onChange={e => setForm({ ...form, password: e.target.value })}
-              required={!editUserId}
-            />
-            <select
-              value={form.role}
-              onChange={e => setForm({ ...form, role: e.target.value })}
-            >
-              <option value="student">Student</option>
-              <option value="admin">Admin</option>
-            </select>
-            <button type="submit" className="admin-btn">{editUserId ? "Update User" : "Add User"}</button>
-            {editUserId && (
-              <button type="button" className="admin-btn cancel-btn" onClick={() => { setEditUserId(null); setForm({ name: "", email: "", password: "", role: "teacher" }); }}>
-                Cancel
-              </button>
-            )}
-          </form>
+        </>
+      )}
+
+      {section === "users" && (
+        <section className="admin-section admin-users">
+          <h3 style={{ marginTop: '5rem', marginBottom: '2rem', fontSize: '1.5rem' }}>User Management</h3>
+        <form onSubmit={handleInviteSubmit} className="admin-form">
+          <input name="email" type="email" placeholder="Invite Email" value={inviteForm.email} onChange={handleInviteChange} required />
+          <select name="role" value={inviteForm.role} onChange={handleInviteChange}>
+            <option value="admin">Admin</option>
+            <option value="head_admin">Head Admin</option>
+            <option value="research_adviser">Research Adviser</option>
+          </select>
+          {inviteForm.role === "research_adviser" && (
+            <>
+              <select name="type" value={inviteForm.type} onChange={handleInviteChange}>
+                <option value="">Select Type</option>
+                <option value="college">College</option>
+                <option value="senior_high">Senior High</option>
+              </select>
+              {inviteForm.type === "college" && (
+                <select name="department" value={inviteForm.department} onChange={handleInviteChange}>
+                  <option value="">Select Department</option>
+                  {["BSIT", "BSHM", "BEED", "BSED", "BPED", "BSENTREP"].map(dep => (
+                    <option key={dep} value={dep}>{dep}</option>
+                  ))}
+                </select>
+              )}
+              {inviteForm.type === "senior_high" && (
+                <select name="strand" value={inviteForm.strand} onChange={handleInviteChange}>
+                  <option value="">Select Strand</option>
+                  {["ABM", "STEM", "TVL", "HUMSS"].map(s => (
+                    <option key={s} value={s}>{s}</option>
+                  ))}
+                </select>
+              )}
+            </>
+          )}
+          <button type="submit" className="admin-btn">Send Invite</button>
+          {msg && <div className="admin-message">{msg}</div>}
+          {error && <div className="admin-message" style={{ color: "red" }}>{error}</div>}
+        </form>
+
           {message && <div className="admin-message">{message}</div>}
           <div className="admin-list-wrapper">
             <table className="admin-table">
@@ -168,12 +224,12 @@ const AdminDashboard = () => {
               <tbody>
                 {filteredUsers.map(user => (
                   <tr key={user.id}>
-                    <td>{user.name}</td>
+                    <td>{user.full_name}</td>
                     <td>{user.email}</td>
                     <td>
                       <span className={`role-badge role-${user.role}`}>{user.role}</span>
                     </td>
-                    <td>{new Date(user.createdAt).toLocaleDateString()}</td>
+                    <td>{new Date(user.created_at).toLocaleDateString()}</td>
                     <td>
                       <button onClick={() => handleEditUser(user)} className="admin-btn edit-btn">Edit</button>
                       <button onClick={() => handleDeleteUser(user.id)} className="admin-btn delete-btn">Delete</button>
@@ -185,73 +241,7 @@ const AdminDashboard = () => {
           </div>
         </section>
       )}
-
-      {activeTab === "research" && (
-        <section className="admin-section admin-papers">
-          <div className="admin-management-header">
-            <h3>Research Uploads Management</h3>
-            <div className="admin-status-cards">
-              <div className="status-card status-pending">
-                <b>Pending</b>
-                <div>{pendingCount}</div>
-              </div>
-              <div className="status-card status-approved">
-                <b>Approved</b>
-                <div>{approvedCount}</div>
-              </div>
-              <div className="status-card status-rejected">
-                <b>Rejected</b>
-                <div>{rejectedCount}</div>
-              </div>
-            </div>
-            <input
-              type="text"
-              className="admin-search-input"
-              placeholder="Search research by title or author..."
-              value={paperSearch}
-              onChange={e => setPaperSearch(e.target.value)}
-            />
-          </div>
-          {message && <div className="admin-message">{message}</div>}
-          <div className="admin-list-wrapper">
-            <table className="admin-table">
-              <thead>
-                <tr>
-                  <th>Title</th>
-                  <th>Category</th>
-                  <th>Authors</th>
-                  <th>Status</th>
-                  <th>Uploaded</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredPapers.map(paper => (
-                  <tr key={paper.id}>
-                    <td>{paper.title}</td>
-                    <td>{paper.category}</td>
-                    <td>{paper.authors}</td>
-                    <td>
-                      <span className={`admin-paper-status status-${paper.status}`}>{paper.status}</span>
-                    </td>
-                    <td>{new Date(paper.createdAt).toLocaleDateString()}</td>
-                    <td>
-                      {paper.status === "pending" && (
-                        <>
-                          <button onClick={() => handleApprovePaper(paper.id)} className="admin-btn approve-btn">Approve</button>
-                          <button onClick={() => handleRejectPaper(paper.id)} className="admin-btn reject-btn">Reject</button>
-                        </>
-                      )}
-                      <button onClick={() => handleDeletePaper(paper.id)} className="admin-btn delete-btn">Delete</button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </section>
-      )}
-    </div>
+    </>
   );
 };
 

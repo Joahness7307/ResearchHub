@@ -4,14 +4,13 @@
   left: 0;
   width: 100%;
   z-index: 1000;
-
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: #4e70e2;
+  background: #3a3e92;
   padding: 1.5rem 2rem;
   color: #fff;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 6px rgba(255, 255, 255, 0.1);
 }
 
 .navbar-left,
@@ -29,7 +28,18 @@
 
 .navbar-right a,
 .navbar-center a,
-.navbar-right button {
+.navbar-right {
+  color: #fff;
+  margin-left: 2.5rem;
+  text-decoration: none;
+  background: none;
+  border: none;
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.navbar-link {
   color: #fff;
   margin-left: 2.5rem;
   text-decoration: none;
@@ -38,6 +48,9 @@
   font-size: 1rem;
   cursor: pointer;
   transition: color 0.2s;
+}
+.navbar-link:hover {
+  color: rgba(211, 211, 211, 0.699);
 }
 
 .navbar-center a:hover,
@@ -50,35 +63,333 @@
   width: 200px;
 }
 
-/* Projects Dropdown Styles */
+/* Notification Dropdown */
 .projects-dropdown {
   position: absolute;
   top: 36px;
-  left: 0;
+  right: 0;
+  left: auto;
   background: #fff;
   color: #222;
   box-shadow: 0 2px 8px rgba(0,0,0,0.13);
   border-radius: 8px;
-  min-width: 220px;
+  min-width: 360px;
+  max-width: 340px;
   z-index: 2000;
   padding: 0.5rem 0;
+  display: flex;
+  flex-direction: column;
+  height: 510px;
+  max-height: 600px;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.projects-dropdown-list {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  padding: 0 18px 0 18px;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.projects-dropdown-empty {
+  padding: 1.2rem;
+  color: #888;
+  font-size: 15px;
+  text-align: center;
 }
 
 .projects-dropdown-item {
-  padding: 0.7rem 1.2rem;
-  cursor: pointer;
+  white-space: normal;
+  font-size: 15px;
+  padding: 0.8rem 1.2rem;
+  border-bottom: 1px solid #e0e0e0;
   color: #2563eb;
   font-weight: 500;
-  border: none;
+  cursor: pointer;
+  min-height: 60px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  margin-bottom: 0;
   background: none;
-  width: 100%;
-  text-align: left;
-  transition: background 0.18s, color 0.18s;
+  transition: background 0.18s;
+}
+.projects-dropdown-item.unread {
+  color: #000;
+  font-weight: 700;
+}
+.projects-dropdown-item.read {
+  color: #555;
+  font-weight: 400;
+}
+.projects-dropdown-item:hover {
+  background: #e0e7ff;
 }
 
-.projects-dropdown-item:hover,
-.projects-dropdown-item.active {
-  background: #26928d;
+.projects-dropdown-date {
+  font-size: 12px;
+  color: #888;
+  margin-top: 2px;
+}
+
+.dropdown-see-all-btn {
+  width: calc(100% - 36px);
+  margin: 0 18px;
+  padding: 0.8rem;
+  background: #2563eb;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 16px;
+  cursor: pointer;
+  letter-spacing: 0.5px;
+  margin-top: 10px;
+}
+
+/* Styles for Admin/Adviser Roles */
+.navbar-right .my-account-link {
+  color: #fff;
+  text-decoration: none;
+  font-size: 1.1rem;
+  display: block; /* Visible by default on large screens */
+}
+
+/* Hide the generic .navbar-hamburger on large screens by default */
+.navbar-hamburger {
+  display: none;
+  cursor: pointer;
+  z-index: 1300; /* Ensure it's above other elements */ 
+}
+
+/* New: Increased Z-index for Admin hamburger */
+.admin-hamburger {
+    z-index: 1301; /* Higher than the mobile sidebar (1100) and overlay (1099) */
+}
+
+/* Responsive Notification Dropdown */
+@media (max-width: 1024px) {
+  .projects-dropdown {
+    min-width: 220px;
+    max-width: 90vw;
+    right: 0;
+    left: auto;
+    top: 36px;
+    padding: 0.5rem 0;
+    font-size: 15px;
+    height: 400px;
+    max-height: 400px;
+  }
+}
+
+@media (max-width: 768px) {
+  .projects-dropdown {
+    min-width: 180px;
+    max-width: 98vw;
+    right: 0;
+    left: auto;
+    top: 36px;
+    padding: 0.3rem 0;
+    font-size: 14px;
+    height: 320px;
+    max-height: 320px;
+  }
+  .projects-dropdown-item {
+    font-size: 14px;
+    padding: 0.6rem 1rem;
+  }
+  .dropdown-see-all-btn {
+    font-size: 15px;
+    padding: 0.7rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .projects-dropdown {
+    min-width: 120px;
+    max-width: 98vw;
+    right: 0;
+    left: auto;
+    top: 36px;
+    padding: 0.2rem 0;
+    font-size: 13px;
+    height: 220px;
+    max-height: 220px;
+    border-radius: 0 0 12px 12px;
+  }
+  .projects-dropdown-item {
+    font-size: 13px;
+    padding: 0.5rem 0.7rem;
+  }
+  .dropdown-see-all-btn {
+    font-size: 14px;
+    padding: 0.6rem;
+  }
+}
+
+/* Hamburger and Sidebar Styles */
+.navbar-hamburger {
+  display: none;
+  cursor: pointer;
+  font-size: 2.2rem;
+  color: #fff;
+  margin-left: auto;
+  z-index: 1101;
+}
+.hamburger-icon, .hamburger-close {
+  font-size: 2.2rem;
   color: #fff;
 }
+.navbar-sidebar {
+  display: none;
+}
+.navbar-overlay {
+  display: none;
+}
 
+/* Ensure the adviser hamburger icon is always visible and above the sidebar */
+.adviser-navbar-hamburger {
+  display: block;
+  position: fixed;
+  top: 1.5rem;
+  right: 2rem;
+  z-index: 1301; /* Higher than sidebar (sidebar is 1200) */
+  font-size: 2.2rem;
+  color: #fff;
+  cursor: pointer;
+  background: none;
+  border: none;
+}
+
+/* Hide the icon on desktop */
+@media (min-width: 769px) {
+  .adviser-navbar-hamburger {
+    display: none !important;
+  }
+}
+
+/* 🖥️ Large Screen */
+@media (min-width: 1441px) {
+  .app-logo { width: 220px; }
+  .navbar-center a, .navbar-right a, .navbar-right button { font-size: 1.2rem; }
+}
+
+/* Desktop */
+@media (max-width: 1440px) {
+  .app-logo { width: 180px; }
+  .navbar-center a, .navbar-right a, .navbar-right button { font-size: 1.05rem; }
+}
+
+/* Tablet & Mobile Hamburger */
+@media (max-width: 1024px) {
+  .app-logo { width: 180px; }
+  .desktop-nav { display: none; }
+  .navbar-hamburger { display: block; }
+  .navbar-sidebar {
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    top: 0; right: 0;
+    width: 260px;
+    height: 100vh;
+    background: #3a3e92;
+    box-shadow: -2px 0 12px rgba(0,0,0,0.13);
+    z-index: 1100;
+    padding: 5rem 2rem 2rem 2rem;
+    gap: 2rem;
+    transition: right 0.3s;
+    font-size: 1.1rem;
+    transform: translateX(100%);
+  }
+  .navbar-sidebar.open {
+    transform: translateX(0);
+  }
+  .navbar-sidebar a {
+    color: #fff;
+    text-decoration: none;
+    font-size: 1.1rem;
+    margin-bottom: 1.2rem;
+    transition: color 0.2s;
+  }
+  .navbar-sidebar a:hover {
+    color: #b3b3ff;
+  }
+  .navbar-sidebar button {
+background-color: #333;
+outline: none;
+    border: none;
+    color: white;
+    padding: 12px;
+    font-size: 1rem;
+    border-radius: 8px
+  }
+  .navbar-overlay {
+    display: block;
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw; height: 100vh;
+    background: rgba(0,0,0,0.25);
+    z-index: 1099;
+  }
+}
+/* Style for logout button */
+.navbar-logout-btn {
+    font-size: 1.1rem;
+    margin-left: 5rem;
+    background: none;
+    color: #fff;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+}
+.navbar-logout-btn:hover {
+    color: rgba(211, 211, 211, 0.699);
+}
+
+/* Style for notification badge */
+.notification-badge {
+    position: absolute;
+    top: -7px;
+    right: -7px;
+    background: #b33834;
+    color: #fff;
+    border-radius: 50%;
+    font-size: 12px;
+    padding: 2px 7px;
+    font-weight: 700;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.13);
+}
+
+/* Tablet Portrait */
+@media (max-width: 768px) {
+  .app-logo { width: 180px; }
+  .navbar-sidebar {
+    width: 200px;
+    padding: 4rem 1rem 1rem 1rem;
+    font-size: 1rem;
+  }
+   /* Hide "My Account" on small screens */
+  .navbar-right .my-account-link {
+    display: none;
+  }
+
+  /* Show the hamburger icon on small screens */
+  .navbar-hamburger {
+    display: block;
+  }
+}
+
+/* Small Mobile */
+@media (max-width: 480px) {
+  .app-logo { width: 150px; }
+  .navbar-sidebar {
+    width: 100vw;
+    padding: 3rem 0.7rem 1rem 0.7rem;
+    font-size: 0.98rem;
+    gap: 1rem;
+  }
+}

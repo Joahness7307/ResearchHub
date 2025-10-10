@@ -1,39 +1,38 @@
-// filepath: researchhub-frontend/src/App.js
 import React from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
-// Ensure AuthProvider and AuthContext are imported
 import { AuthProvider, AuthContext } from "./context/AuthContext";
 import Home from "./components/Home";
 import Login from "./components/Auth/Login";
 import Signup from "./components/Auth/Signup";
+import ForgotPassword from "./components/Auth/ForgotPassword";
+import ResetPassword from "./components/Auth/ResetPassword";
 import AdminDashboard from "./components/Dashboard/AdminDashboard";
 import StudentDashboard from "./components/Dashboard/StudentDashboard";
 import SubmitResearch from "./components/Research/SubmitResearch";
 import MyAccount from "./components/Dashboard/MyAccount";
 import Navbar from "./components/Layout/Navbar";
-import ResearchDetails from "./components/Research/ResearchDetails";
+import ProjectDetails from "./components/Research/ProjectDetails";
+import RoleSelection from "./components/RoleSelectionPage";
+import GuestSignup from "./components/Auth/GuestSignup";
+import SeniorHighSignup from "./components/Auth/SeniorHighSignup";
+import NotificationPage from "./components/Dashboard/NotificationPage";
+import AdminLayout from "./components/Layout/AdminLayout";
+import SetupAccount from "./components/Dashboard/SetupAccount";
+import ResearchAdviserDashboard from "./components/Dashboard/ResearchAdviserDashboard";
+import ResearchAdviserLayout from "./components/Layout/ResearchAdviserLayout";
+import HeadAdminDashboard from "./components/Dashboard/HeadAdminDashboard";
+import MyAccountWithHeadAdminSidebar from "./components/Layout/MyAccountWithHeadAdminSidebar";
+import HeadAdminProjectDetails from "./components/Dashboard/HeadAdminProjectDetails";
+import GuestDashboard from "./components/Dashboard/GuestDashboard";
+import NotificationDetails from "./components/Dashboard/NotificationDetails";
+import HeadAdminLayout from "./components/Layout/HeadAdminLayout";
+import MyAccountWithAdviserSidebar from "./components/Layout/MyAccountWithAdviserSidebar";
 
-// Modified ProtectedRoute component
 const ProtectedRoute = ({ children, allowedRoles }) => {
-  // Destructure 'loading' from AuthContext
   const { user, loading } = React.useContext(AuthContext);
-
-  // If still loading the user session, show a loading message/spinner
-  if (loading) {
-    return <div>Loading authentication...</div>; // Or a more sophisticated spinner/component
-  }
-
-  // If not loading and no user, redirect to login
-  if (!user) {
-    return <Navigate to="/login" />;
-  }
-
-  // If user exists but role not allowed, redirect to home (or unauthorized page)
-  if (allowedRoles && !allowedRoles.includes(user.role)) {
-    return <Navigate to="/" />; // Or navigate to a specific unauthorized page
-  }
-
-  // If authenticated and authorized, render the children
+  if (loading) return <div>Loading authentication...</div>;
+  if (!user) return <Navigate to="/login" />;
+  if (allowedRoles && !allowedRoles.includes(user.role)) return <Navigate to="/" />;
   return children;
 };
 
@@ -46,11 +45,163 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Signup />} />
+          <Route path="/register-user" element={<GuestSignup />} />
+          <Route path="/register-seniorhigh" element={<SeniorHighSignup />} />
+          <Route path="/role-selection" element={<RoleSelection />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
           <Route
             path="/admin"
             element={
               <ProtectedRoute allowedRoles={["admin"]}>
-                <AdminDashboard />
+                <AdminLayout>
+                  <AdminDashboard />
+                </AdminLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/manage-users"
+            element={
+              <ProtectedRoute allowedRoles={["admin"]}>
+                <AdminLayout>
+                  <AdminDashboard activeSection="users" />
+                </AdminLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/notifications"
+            element={
+              <ProtectedRoute allowedRoles={["admin"]}>
+                <AdminLayout>
+                  <NotificationPage />
+                </AdminLayout>
+              </ProtectedRoute>
+            }
+          />
+
+         {/* <Route path="/head-admin" element={<HeadAdminLayout />}>
+          <Route index element={<HeadAdminDashboard />} />
+          <Route path="pending-projects" element={<HeadAdminDashboard section="pending" />} />
+          <Route path="approved-projects" element={<HeadAdminDashboard section="approved" />} />
+          <Route path="request-for-revision" element={<HeadAdminDashboard section="revision" />} />
+          <Route path="repository" element={<HeadAdminDashboard section="repository" />} />
+          <Route path="notifications" element={<NotificationPage />} />
+          <Route path="notifications/:id" element={<NotificationDetails />} />
+          <Route path="my-account" element={<MyAccount />} />
+          <Route path="projects/:id" element={<ProjectDetails />} />
+        </Route> */}
+
+        <Route
+    path="/head-admin"
+    element={
+        <ProtectedRoute allowedRoles={["head_admin"]}>
+            <HeadAdminLayout>
+                <HeadAdminDashboard section="dashboard" />
+            </HeadAdminLayout>
+        </ProtectedRoute>
+    }
+/>
+<Route
+    path="/head-admin/pending-projects"
+    element={
+        <ProtectedRoute allowedRoles={["head_admin"]}>
+            <HeadAdminLayout>
+                <HeadAdminDashboard section="pending" />
+            </HeadAdminLayout>
+        </ProtectedRoute>
+    }
+/>
+<Route
+    path="/head-admin/approved-projects"
+    element={
+        <ProtectedRoute allowedRoles={["head_admin"]}>
+            <HeadAdminLayout>
+                <HeadAdminDashboard section="approved" />
+            </HeadAdminLayout>
+        </ProtectedRoute>
+    }
+/>
+<Route
+    path="/head-admin/request-for-revision"
+    element={
+        <ProtectedRoute allowedRoles={["head_admin"]}>
+            <HeadAdminLayout>
+                <HeadAdminDashboard section="revision" />
+            </HeadAdminLayout>
+        </ProtectedRoute>
+    }
+/>
+<Route
+    path="/head-admin/repository"
+    element={
+        <ProtectedRoute allowedRoles={["head_admin"]}>
+            <HeadAdminLayout>
+                <HeadAdminDashboard section="repository" />
+            </HeadAdminLayout>
+        </ProtectedRoute>
+    }
+/>
+<Route
+    path="/head-admin/notifications"
+    element={
+        <ProtectedRoute allowedRoles={["head_admin"]}>
+            <HeadAdminLayout>
+                <NotificationPage />
+            </HeadAdminLayout>
+        </ProtectedRoute>
+    }
+/>
+<Route
+    path="/head-admin/projects/:id"
+    element={
+        <ProtectedRoute allowedRoles={["head_admin"]}>
+            <HeadAdminLayout>
+                <ProjectDetails />
+            </HeadAdminLayout>
+        </ProtectedRoute>
+    }
+/>
+<Route
+    path="/head-admin/notifications/:id"
+    element={
+        <ProtectedRoute allowedRoles={["head_admin"]}>
+            <HeadAdminLayout>
+                <NotificationDetails />
+            </HeadAdminLayout>
+        </ProtectedRoute>
+    }
+/>
+
+
+          <Route
+            path="/guest"
+            element={
+              <ProtectedRoute allowedRoles={["guest"]}>
+                <GuestDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/my-account"
+            element={
+              <ProtectedRoute allowedRoles={["admin", "head_admin", "student", "research_adviser", "guest"]}>
+                <AuthContext.Consumer>
+                  {({ user }) =>
+                    user?.role === "admin" ? (
+                      <AdminLayout>
+                        <MyAccount />
+                      </AdminLayout>
+                    ) : user?.role === "head_admin" ? (
+                      <MyAccountWithHeadAdminSidebar />
+                    ) : user?.role === "research_adviser" ? (
+                      <MyAccountWithAdviserSidebar />
+                    ) : (
+                      <MyAccount />
+                    )
+                  }
+                </AuthContext.Consumer>
               </ProtectedRoute>
             }
           />
@@ -66,26 +217,65 @@ function App() {
             path="/submit-research"
             element={
               <ProtectedRoute allowedRoles={["student"]}>
-                <SubmitResearch />
-              </ProtectedRoute>
-            }
-          />
-           <Route
-            path="/projects/:id"
-            element={
-              <ProtectedRoute allowedRoles={["student", "admin"]}>
-                <ResearchDetails />
+                <AuthContext.Consumer>
+                  {({ user }) =>
+                    (user &&
+                      ((user.year_level === "3rd" || user.year_level === "4th") ||
+                      user.grade_level === "12")
+                    ) ? (
+                      <SubmitResearch />
+                    ) : (
+                      <div style={{ padding: "8rem", textAlign: "center", color: "#b33834" }}>
+                        You are not eligible to submit a research project.
+                      </div>
+                    )
+                  }
+                </AuthContext.Consumer>
               </ProtectedRoute>
             }
           />
           <Route
-            path="/my-account"
+            path="/projects/:id"
             element={
-              <ProtectedRoute allowedRoles={["student", "admin"]}>
-                <MyAccount />
+              <ProtectedRoute allowedRoles={["student", "admin", "research_adviser", "guest"]}>
+                <ProjectDetails />
               </ProtectedRoute>
             }
           />
+          <Route
+            path="/notifications/:id"
+            element={
+              <ProtectedRoute allowedRoles={["student", "admin", "head_admin", "research_adviser", "guest"]}>
+                <NotificationDetails />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/notifications"
+            element={
+              <ProtectedRoute allowedRoles={["student", "admin", "guest"]}>
+                <NotificationPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route path="/setup-account" element={<SetupAccount />} />
+          
+          <Route path="/adviser/*" element={
+            <ResearchAdviserLayout>
+              <Routes>
+                <Route path="" element={<ResearchAdviserDashboard section="dashboard" />} />
+                <Route path="pending-projects" element={<ResearchAdviserDashboard section="pending" />} />
+                <Route path="approved-projects" element={<ResearchAdviserDashboard section="approved" />} />
+                <Route path="request-for-revision" element={<ResearchAdviserDashboard section="request-for-revision" />} />
+                <Route path="repository" element={<ResearchAdviserDashboard section="repository" />} />
+                <Route path="notifications" element={<NotificationPage />} />
+                <Route path="notifications/:id" element={<NotificationDetails />} />
+                <Route path="my-account" element={<MyAccount />} />
+                <Route path="projects/:id" element={<ProjectDetails />} />
+              </Routes>         
+            </ResearchAdviserLayout>
+          } />
+
           <Route path="*" element={<Navigate to="/login" />} />
         </Routes>
       </Router>

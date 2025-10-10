@@ -1,0 +1,18 @@
+# BACKEND .gitignore (Inside ./backend)
+
+# 1. Compiled/Transpiled Output (e.g., TypeScript)
+# If you compile source code (src) to an output folder (dist)
+/dist
+/out
+/lib
+*.tsbuildinfo
+
+# 2. Sensitive Config & Logs
+# Never commit credentials or local DB files
+.env
+.env.local
+/config/local-db.json # Example local database file
+/logs
+
+# 3. Temporary Files
+.nodemon

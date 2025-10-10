@@ -2,15 +2,16 @@ const { Comment, User } = require("../models");
 
 exports.addComment = async (req, res) => {
   try {
-    const { content } = req.body;
-    const { paperId } = req.params;
+    const { content, parentId } = req.body;
+    const { projectId } = req.params;
     if (!content) return res.status(400).json({ message: "Comment content is required." });
     const comment = await Comment.create({
-      paperId,
+      projectId,
       userId: req.user.id,
-      content
+      content,
+      parentId: parentId || null // <-- Add this line
     });
-    const user = await User.findByPk(req.user.id, { attributes: ['id', 'name', 'role'] });
+    const user = await User.findByPk(req.user.id, { attributes: ['id', 'full_name', 'role'] });
     res.status(201).json({ ...comment.toJSON(), user });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -19,10 +20,13 @@ exports.addComment = async (req, res) => {
 
 exports.getComments = async (req, res) => {
   try {
-    const { paperId } = req.params;
+    const { projectId } = req.params;
     const comments = await Comment.findAll({
-      where: { paperId },
-      include: [{ model: User, as: 'user', attributes: ['id', 'name', 'role'] }],
+      where: { projectId, parentId: null }, // Only top-level comments
+      include: [
+        { model: User, as: 'user', attributes: ['id', 'full_name', 'role'] },
+        { model: Comment, as: 'replies', include: [{ model: User, as: 'user', attributes: ['id', 'full_name', 'role'] }] }
+      ],
       order: [['createdAt', 'ASC']]
     });
     res.json(comments);

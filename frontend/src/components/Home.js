@@ -1,9 +1,10 @@
 import React, { useEffect } from "react";
-import { useLocation, Link } from "react-router-dom";
+import { useLocation, Link, useNavigate } from "react-router-dom";
 import "./Home.css";
 
 const Home = () => {
   const location = useLocation();
+  const navigate = useNavigate();
 
   // Scroll to section if state.scrollTo is set (when navigating from navbar)
   useEffect(() => {
@@ -25,7 +26,9 @@ const Home = () => {
           <p className="hero-subtitle">
             Centralize your research.<br />Empower your future.
           </p>
-          <Link to="/login" className="hero-btn">Get Started</Link>
+          <button onClick={() => navigate("/role-selection")} className="hero-btn">
+            Get Started
+          </button>
         </div>
       </section>
 
@@ -83,7 +86,7 @@ const Home = () => {
           <p>If you have any questions, suggestions, or issues, feel free to reach out. We're here to help!</p>
            <    div className="contacts">
             <p><b>Email:</b> researchhub@email.com</p>
-            <p><b>Location:</b> Your University, Philippines</p>
+            <p><b>Location:</b> Consolatrix College of Toledo City, Inc., Cebu, Philippines</p>
            </div>
         </div>
 
@@ -108,7 +111,7 @@ const Home = () => {
             <ul>
               <li><Link to="/">Home</Link></li>
               <li><Link to="/login">Login</Link></li>
-              <li><Link to="/register">Signup</Link></li>
+              <li><Link to="/role-selection">Signup</Link></li>
             </ul>
           </div>
           <div>
@@ -127,7 +130,7 @@ const Home = () => {
           </div>
         </div>
         <div className="footer-copy">
-          Copyright © {new Date().getFullYear()} ResearchHub. All rights reserved.
+          Copyright © {new Date().getFullYear()} Researchhub. All rights reserved.
         </div>
       </footer>
     </div>

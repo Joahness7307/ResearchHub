@@ -5,6 +5,6 @@ const authMiddleware = require("../middlewares/authMiddleware");
 const router = express.Router();
 
 // Only teachers/admins can review a research paper
-router.post("/submit", authMiddleware(["teacher", "admin"]), submitReview);
+router.post("/submit", authMiddleware(["user", "admin"]), submitReview);
 
 module.exports = router;

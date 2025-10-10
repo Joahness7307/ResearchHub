@@ -1,0 +1,295 @@
+.adviser-dashboard-container {
+  width: 100%;
+  padding: "5rem 2rem";
+}
+.adviser-dashboard-container h2 {
+  margin: 20px 0;
+}
+.dashboard-cards-row {
+  display: flex;
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+.dashboard-card {
+  background: #f5f6fa;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  padding: 1.2rem 1.5rem;
+  flex: 1;
+  min-width: 220px;
+  cursor: pointer;
+  transition: box-shadow 0.2s, background 0.2s;
+}
+.dashboard-card.active,
+.dashboard-card:hover {
+  background: #e0e7ff;
+  box-shadow: 0 4px 16px rgba(37,99,235,0.08);
+}
+.dashboard-card-count {
+  font-size: 2rem;
+  color: #2563eb;
+  font-weight: 700;
+  margin-top: 0.5rem;
+}
+.no-projects {
+  color: #888;
+  font-style: italic;
+  text-align: center;
+  margin-top: 2rem;
+}
+
+/* Desktop sidebar */
+.adviser-sidebar-desktop {
+  display: block;
+}
+.adviser-sidebar-mobile,
+.adviser-navbar-hamburger,
+.adviser-sidebar-overlay {
+  display: none;
+}
+
+/* Tablet & Mobile */
+@media (max-width: 768px) {
+  .adviser-sidebar-desktop {
+    display: none !important;
+  }
+  .adviser-navbar-hamburger {
+    display: block;
+    position: fixed;
+    top: 1.5rem;
+    right: 2rem;
+    z-index: 1201;
+    font-size: 2.2rem;
+    color: #fff;
+    cursor: pointer;
+  }
+  .adviser-sidebar-mobile {
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    top: 0; right: 0;
+    width: 220px;
+    height: 100vh;
+    background: #3a3e92;
+    box-shadow: -2px 0 12px rgba(0,0,0,0.13);
+    z-index: 1200;
+    padding: 5rem 1.2rem 2rem 1.2rem;
+    gap: 1.2rem;
+    transform: translateX(100%);
+    transition: transform 0.3s;
+  }
+  .adviser-sidebar-mobile.open {
+    transform: translateX(0);
+  }
+  .adviser-sidebar-link {
+    color: #fff;
+    background: none;
+    border: none;
+    font-size: 1.08rem;
+    text-align: left;
+    margin-bottom: 1.2rem;
+    cursor: pointer;
+    border-radius: 8px;
+    padding: 0.7rem 0.5rem;
+    transition: background 0.18s;
+  }
+  .adviser-sidebar-link.active,
+  .adviser-sidebar-link:hover {
+    background: #e0e7ff;
+    color: #2563eb;
+  }
+  .adviser-sidebar-overlay {
+    display: block;
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw; height: 100vh;
+    background: rgba(0,0,0,0.25);
+    z-index: 1199;
+  }
+  .adviser-dashboard-content-wrapper {
+    margin-left: 0 !important;
+    width: 100vw !important;
+    padding: 2.5rem 0.5rem 2rem 0.5rem !important;
+  }
+}
+
+/* Small Mobile */
+@media (max-width: 480px) {
+  .adviser-sidebar-mobile {
+    width: 100vw;
+    padding: 3rem 0.7rem 1rem 0.7rem;
+    font-size: 0.98rem;
+    gap: 1rem;
+  }
+}
+
+/* 🖥️ Large Screen */
+@media (min-width: 1441px) {
+  .adviser-dashboard-container {
+    max-width: 1400px;
+    padding: 6rem 4rem;
+    font-size: 1.08rem;
+  }
+  .dashboard-card {
+    min-width: 260px;
+    font-size: 1.15rem;
+    padding: 2rem 2.5rem;
+  }
+  .dashboard-card-count {
+    font-size: 2.2rem;
+  }
+  .repository-title {
+    font-size: 1.3rem;
+  }
+  .repository-item {
+    padding: 1.5rem 2rem;
+  }
+}
+
+/* 🖥️ Desktop */
+@media (max-width: 1440px) {
+  .adviser-dashboard-container {
+    max-width: 1100px;
+    padding: 5rem 3rem;
+    font-size: 1rem;
+  }
+  .dashboard-card {
+    min-width: 200px;
+    font-size: 1.05rem;
+    padding: 1.2rem 1.2rem;
+  }
+  .dashboard-card-count {
+    font-size: 1.8rem;
+  }
+  .repository-title {
+    font-size: 1.1rem;
+  }
+  .repository-item {
+    padding: 1.2rem 1.5rem;
+  }
+}
+
+/* 💻 Tablet Landscape / Small Laptops */
+@media (max-width: 1024px) {
+  .adviser-dashboard-container {
+    max-width: 900px;
+    padding: "5rem 2rem";
+    font-size: 0.98rem;
+  }
+  .adviser-dashboard-container h2 {
+  margin-top: 40px;
+}
+  .dashboard-cards-row,
+  .dashboard-main-content,
+  .dashboard-card-row {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  .dashboard-card {
+    min-width: 160px;
+    font-size: 1rem;
+    padding: 1rem;
+  }
+  .dashboard-card-count {
+    font-size: 1.5rem;
+  }
+  .repository-item {
+    padding: 1rem 0.7rem;
+  }
+  .repository-title {
+    font-size: 1rem;
+  }
+  .pagination-controls {
+    flex-direction: row;
+    gap: 0.7rem;
+  }
+}
+
+/* 📲 Tablet Portrait */
+@media (max-width: 768px) {
+  .adviser-dashboard-container {
+    max-width: 100vw;
+    padding: 2.2rem 1.5rem;
+    font-size: 0.97rem;
+    margin-left: 0
+  }
+  .adviser-dashboard-container h2 {
+    margin-top: 70px;
+}
+  .dashboard-card {
+    min-width: 140px;
+    font-size: 0.98rem;
+    padding: 0.8rem 0.8rem;
+  }
+  .dashboard-card-count {
+    font-size: 1.3rem;
+  }
+  .repository-title {
+    font-size: 0.98rem;
+  }
+  .dashboard-cards-row,
+  .dashboard-main-content,
+  .dashboard-card-row {
+    flex-direction: column;
+    gap: 0.7rem;
+  }
+  .search-wrapper input, .search-button {
+    font-size: 0.98rem;
+    padding: 0.8rem 0.8rem;
+  }
+  .pagination-controls {
+    flex-direction: row;
+    gap: 0.7rem;
+  }
+}
+
+/* 📱 Small Mobile */
+@media (max-width: 480px) {
+  .adviser-dashboard-container {
+    max-width: 100vw;
+    padding: 1.5rem 1.1rem;
+    font-size: 0.96rem;
+  }
+  .dashboard-card {
+    min-width: 110px;
+    font-size: 0.95rem;
+    padding: 0.5rem 0.5rem;
+  }
+  .dashboard-card-count {
+    font-size: 1.1rem;
+  }
+  .repository-title {
+    font-size: 0.95rem;
+  }
+  .dashboard-cards-row,
+  .dashboard-main-content,
+  .dashboard-card-row {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .search-wrapper {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+  }
+  .search-wrapper input {
+    min-width: 120px;
+    font-size: 0.95rem;
+    padding: 0.7rem 0.7rem;
+  }
+  .search-button {
+    width: 100%;
+    min-width: 0;
+    font-size: 0.95rem;
+    padding: 0.7rem 0.7rem;
+    margin-top: 0.2rem;
+  }
+  .repository-item {
+    padding: 0.7rem 0.3rem;
+  }
+  .pagination-controls {
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: stretch;
+  }
+}
