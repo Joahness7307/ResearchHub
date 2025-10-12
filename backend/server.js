@@ -50,7 +50,7 @@ app.use((err, req, res, next) => {
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, async () => {
   try {
-    await sequelize.authenticate();
+    await sequelize.sync({ alter: true });
     console.log("✅ Database connected successfully!");
     console.log(`🚀 Server running on port ${PORT}`);
   } catch (error) {
