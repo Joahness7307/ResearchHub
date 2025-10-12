@@ -61,19 +61,6 @@
   color: var(--hover-color);
 }
 
-.primary-btn {
-  padding: 0.6rem 1.2rem;
-  background: var(--secondary-color);
-  border-radius: 8px;
-  font-weight: 600;
-  color: var(--text-light) !important; /* Override link color */
-}
-
-.primary-btn:hover {
-  background: #1e52c9; /* Slightly darker shade on hover */
-  color: var(--text-light);
-}
-
 .app-logo {
   width: 200px;
   height: auto;
