@@ -260,12 +260,6 @@
   cursor: pointer;
 }
 
-.navbar-sidebar .primary-btn {
-  margin-top: 1rem;
-  text-align: center;
-  font-size: 1.1rem;
-}
-
 .navbar-overlay {
   display: none;
 }
