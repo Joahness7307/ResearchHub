@@ -1,6 +1,6 @@
 // userRoutes.js
 const express = require("express");
-const { register, login, forgotPassword, resetPassword, inviteUser, getInvitationInfo, setupAccount, getAllUsers, addUser, updateOwnProfile, updateUser, deleteUser, getUserProfile, getUserProjects } = require("../controllers/userController"); // Import getUserProfile
+const { register, login, forgotPassword, resetPassword, inviteUser, getInvitationInfo, setupAccount, getAllUsers, getUserCount, addUser, updateOwnProfile, updateUser, deleteUser, getUserProfile, getUserProjects } = require("../controllers/userController"); // Import getUserProfile
 const authMiddleware = require("../middlewares/authMiddleware");
 
 const router = express.Router();
@@ -19,6 +19,7 @@ router.post("/setup-account", setupAccount);
 
 // Admin-only routes for adding, updating, and deleting users
 router.get("/all", authMiddleware(["admin"]), getAllUsers);
+router.get("/count", authMiddleware(["admin"]), getUserCount);
 router.post("/add", authMiddleware(["admin", "research_adviser"]), addUser);
 router.put("/update/:id", authMiddleware(["admin", "research_adviser"]), updateUser);
 router.delete("/delete/:id", authMiddleware(["admin", "research_adviser"]), deleteUser);

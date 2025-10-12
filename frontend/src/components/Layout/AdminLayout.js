@@ -22,7 +22,7 @@ const AdminLayout = ({ children }) => {
   // Function to be passed to the sidebar to close itself (also used by overlay/close btn)
   const handleCloseSidebar = () => setSidebarOpen(false);
 
-  // --- FIX: Toggle function for Navbar ---
+  // --- Toggle function for Navbar ---
   const handleToggleSidebar = () => setSidebarOpen(prev => !prev);
 
   const handleLogout = () => {

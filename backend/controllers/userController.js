@@ -9,127 +9,197 @@ const { Op } = require("sequelize");
 require("dotenv").config();
 
 // Register User
+
 exports.register = async (req, res) => {
+
   try {
+
     const {
+
       full_name, username, email, department, year_level, block,
+
       password, confirm_password, role, strand, grade_level, major
+
     } = req.body;
 
+    // --- Universal Validation ---
+
+    if (!full_name || !username || !email || !password || !confirm_password) {
+
+      console.error("Register validation error: Missing universal required fields.");
+
+      return res.status(400).json({ message: "Full name, username, email, password, and confirmation are required." });
+
+    }
+
+    if (password !== confirm_password) {
+
+      console.error("Register validation error: Passwords do not match.");
+
+      return res.status(400).json({ message: "Passwords do not match." });
+
+    }
+
+    const existing = await User.findOne({ where: { [Op.or]: [{ email }, { username }] } });
+
+    if (existing) {
+
+      return res.status(400).json({ message: "Username or Email already registered." });
+
+    }
+
+    // ----------------------------
+
     // Only allow student and guest role for public registration
+
     const allowedRoles = ["student", "guest"];
-    const userRole = allowedRoles.includes(role) ? role : "student";
 
-    // Senior High registration
-    if (strand && grade_level) {
-      if (!full_name || !username || !email || !strand || !grade_level || !password || !confirm_password) {
-        console.error("Register validation error: Missing required fields for Senior High.");
-        return res.status(400).json({ message: "All fields are required for senior high students." });
-      }
-      if (password !== confirm_password) {
-        console.error("Register validation error: Passwords do not match.");
-        return res.status(400).json({ message: "Passwords do not match." });
-      }
-      const validStrands = ["ABM", "STEM", "TVL", "HUMSS"];
-      const validGradeLevels = ["11", "12"];
-      if (!validStrands.includes(strand) || !validGradeLevels.includes(grade_level)) {
-        return res.status(400).json({ message: "Invalid strand or grade level." });
-      }
-      const hashedPassword = await bcrypt.hash(password, 10);
-      const newUser = await User.create({
-        full_name,
-        username,
-        email,
-        strand,
-        grade_level,
-        password: hashedPassword,
-        role: "student",
-        type: "senior_high"
-      });
-      return res.status(201).json({ message: "Senior high student registered successfully", newUser });
-    }
+    // If role is missing or invalid, default to 'student' to enforce student validation
 
-    // College students registration
-    if (userRole === "student") {
-      // 🔑 CRITICAL FIX: Only check for universally required fields first
-      if (!full_name || !username || !email || !department || !year_level || !password || !confirm_password) {
-        console.error("Register validation error: Missing required fields for College (basic).");
-        return res.status(400).json({ message: "All required fields (name, username, email, department, year level, password) are required." });
-      }
+    const userRole = allowedRoles.includes(role) ? role : "student"; 
 
-      if (password !== confirm_password) {
-        console.error("Register validation error: Passwords do not match.");
-        return res.status(400).json({ message: "Passwords do not match." });
-      }
+    const hashedPassword = await bcrypt.hash(password, 10);
 
-      // Perform conditional checks after the basic fields are validated
+    let newUser;
 
-      // If department is BEED or BSED, major is required
-      if ((department === "BSED") && !major) {
-        console.error("Register validation error: Major is required for BEED/BSED department.");
-        return res.status(400).json({ message: "Major is required for BSED department." });
-      }
-      
-      // If department is BSIT or BSHM, block is required
-      if ((department === "BSIT" || department === "BSHM") && !block) {
-        console.error("Register validation error: Block is required for BSIT/BSHM department.");
-        return res.status(400).json({ message: "Block is required for BSIT/BSHM department." });
-      }
-      
-      // You might also want to prevent non-BSIT/BSHM students from sending a block, 
-      // and non-BSED students from sending a major, 
-      // but the next block handles setting them to null.
-      
-      // Continue with registration...
-      const hashedPassword = await bcrypt.hash(password, 10);
-      const newUser = await User.create({
-        full_name,
-        username,
-        email,
-        department,
-        year_level,
-        // Note: The logic below ensures only the relevant field is saved
-        block: (department === "BSIT" || department === "BSHM") ? block : null,
-        major: (department === "BSED") ? major : null,
-        password: hashedPassword,
-        role: "student",
-        type: "college"
-      });
-      return res.status(201).json({ message: "User registered successfully", newUser });
-    }
+    // 1. Guest registration
 
-    // Guest registration
     if (userRole === "guest") {
-      if (!full_name || !username || !email || !password || !confirm_password) {
-        console.error("Register validation error: Missing required fields for Guest.");
-        return res.status(400).json({ message: "All fields are required." });
-      }
-      if (password !== confirm_password) {
-        console.error("Register validation error: Passwords do not match.");
-        return res.status(400).json({ message: "Passwords do not match." });
-      }
-      const existing = await User.findOne({ where: { email } });
-      if (existing) {
-        return res.status(400).json({ message: "Email already registered." });
-      }
-      const hashedPassword = await bcrypt.hash(password, 10);
-      const newUser = await User.create({
+
+      // All required fields were checked in the universal validation
+
+      newUser = await User.create({
+
         full_name,
+
         username,
+
         email,
+
         password: hashedPassword,
+
         role: "guest"
+
       });
-      return res.status(201).json({ message: "Registration successful", newUser });
+
+      return res.status(201).json({ message: "Guest registered successfully", newUser });
+
     }
 
-    // If none matched
-    console.error("Register validation error: Invalid registration data.");
-    return res.status(400).json({ message: "Invalid registration data." });
+    // 2. Student registration (College OR Senior High)
+
+    if (userRole === "student") {
+
+      
+
+      // Senior High (Check for strand/grade_level)
+
+      if (strand && grade_level) {
+
+        const validStrands = ["ABM", "STEM", "TVL", "HUMSS"];
+
+        const validGradeLevels = ["11", "12"];
+
+        if (!validStrands.includes(strand) || !validGradeLevels.includes(grade_level)) {
+
+          return res.status(400).json({ message: "Invalid strand or grade level." });
+
+        }
+
+        newUser = await User.create({
+
+          full_name, username, email,
+
+          strand, grade_level,
+
+          password: hashedPassword,
+
+          role: "student",
+
+          type: "senior_high"
+
+        });
+
+        return res.status(201).json({ message: "Senior high student registered successfully", newUser });
+
+      }
+
+      // College (Check for department/year_level)
+
+      if (department && year_level) {
+
+        
+
+        // Conditional validation
+
+        if ((department === "BSED") && !major) {
+
+          console.error("Register validation error: Major is required for BSED department.");
+
+          return res.status(400).json({ message: "Major is required for BSED department." });
+
+        }
+
+        if ((department === "BSIT" || department === "BSHM") && !block) {
+
+          console.error("Register validation error: Block is required for BSIT/BSHM department.");
+
+          return res.status(400).json({ message: "Block is required for BSIT/BSHM department." });
+
+        }
+
+        
+
+        newUser = await User.create({
+
+          full_name, username, email, department, year_level,
+
+          block: (department === "BSIT" || department === "BSHM") ? block : null,
+
+          major: (department === "BSED") ? major : null,
+
+          password: hashedPassword,
+
+          role: "student",
+
+          type: "college"
+
+        });
+
+        return res.status(201).json({ message: "College student registered successfully", newUser });
+
+      }
+
+      
+
+      // If student role is specified but essential fields are missing
+
+      return res.status(400).json({ message: "Student registration requires either Department/Year Level (College) or Strand/Grade Level (SHS)." });
+
+    }
+
+    // Fallback if the logic flow is bypassed
+
+    console.error("Register validation error: Invalid registration attempt.");
+
+    return res.status(400).json({ message: "Invalid registration data or role." });
+
   } catch (error) {
+
     console.error("Register error:", error);
+
+    // Check for unique constraint error
+
+    if (error.name === 'SequelizeUniqueConstraintError') {
+
+      return res.status(400).json({ message: "Username or Email already in use." });
+
+    }
+
     res.status(500).json({ error: error.message });
+
   }
+
 };
 
 // Login User
@@ -243,6 +313,27 @@ exports.resetPassword = async (req, res) => {
   } catch (error) {
     res.status(500).json({ message: "Failed to reset password.", error: error.message });
   }
+};
+
+// NEW: Get total count of all users (for Admin Dashboard)
+exports.getUserCount = async (req, res) => {
+    try {
+        // Option A: Count ALL users (Simplest fix, matches your goal of 'Total Users')
+        const totalUsers = await User.count(); 
+
+        /* // Option B: Count all users excluding "guest" if you have temporary guest accounts
+        const totalUsers = await User.count({
+            where: {
+                role: { [Op.ne]: 'guest' } // Requires 'Op' from Sequelize
+            }
+        });
+        */
+
+        return res.status(200).json({ totalUsers }); 
+    } catch (error) {
+        console.error('Error fetching user count:', error);
+        return res.status(500).json({ message: "Failed to fetch user count." });
+    }
 };
 
 // Get all Users
@@ -436,7 +527,7 @@ exports.getUserProjects = async (req, res) => {
     const projects = await Project.findAll({
       where: { submitted_by: req.user.id },
       order: [["created_at", "DESC"]],
-    });
+    });   
     console.log("Found projects:", projects); // Add this line
     res.status(200).json({ projects });
   } catch (error) {
