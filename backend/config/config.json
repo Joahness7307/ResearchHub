@@ -4,7 +4,8 @@
     "password": "0postgresql",
     "database": "researchhub_db",
     "host": "127.0.0.1",
-    "dialect": "postgres"
+    "dialect": "postgres",
+    "schema": "public"
   },
   "production": {
     "use_env_variable": "DATABASE_URL",
