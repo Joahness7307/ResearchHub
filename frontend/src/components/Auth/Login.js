@@ -5,10 +5,12 @@ import { useNavigate, Link } from "react-router-dom";
 import "./AuthForm.css";
 
 const Login = () => {
-  const [email, setEmail] = useState("");
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const [identifier, setIdentifier] = useState("");
+  
+  // NOTE: setEmail and setPassword states were redundant; using identifier/password states is correct.
+  
   const { login } = useContext(AuthContext);
   const navigate = useNavigate();
 
@@ -19,11 +21,24 @@ const Login = () => {
       const res = await axios.post("/users/login", { identifier, password });
       const { token, user } = res.data;
       login(user, token);
-      if (user.role === "admin") navigate("/admin");
-      else if (user.role === "head_admin") navigate("/head-admin");
-      else if (user.role === "guest") navigate("/guest");
-      else if (user.role === "research_adviser") navigate("/adviser");
-      else navigate("/projects");
+      
+      // Determine navigation based on role
+      switch(user.role) {
+        case "admin":
+          navigate("/admin");
+          break;
+        case "head_admin":
+          navigate("/head-admin");
+          break;
+        case "guest":
+          navigate("/guest");
+          break;
+        case "research_adviser":
+          navigate("/adviser");
+          break;
+        default: // Includes 'student'
+          navigate("/projects");
+      }
     } catch (err) {
       setError(err.response?.data?.message || "Login failed");
     }
@@ -41,6 +56,7 @@ const Login = () => {
           value={identifier}
           onChange={e => setIdentifier(e.target.value)}
           required
+          className="auth-input"
         />
         <input
           type="password"
@@ -48,12 +64,13 @@ const Login = () => {
           value={password}
           onChange={e => setPassword(e.target.value)}
           required
+          className="auth-input"
         />
         <div style={{ textAlign: "right", marginBottom: "0.5rem" }}>
           <Link to="/forgot-password" className="forgot-password-link">
             Forgot Password?
           </Link>
-      </div>
+        </div>
         <button type="submit">Login</button>
         <div className="auth-switch">
           Don't have an account? <Link to="/role-selection">Signup</Link>

@@ -10,7 +10,7 @@ const NotificationDetails = () => {
   const [projectId, setProjectId] = useState(null);
   const navigate = useNavigate();
 
- useEffect(() => {
+  useEffect(() => {
     if (!id || !user) return;
     let notifUrl = "";
     if (user.role === "student") {
@@ -80,7 +80,7 @@ const NotificationDetails = () => {
           }}
             onClick={() => {
               if (user && user.role === "research_adviser") {
-                navigate(`/adviser/projects/${projectId}`); // <-- This is correct!
+                navigate(`/adviser/projects/${projectId}`); // This is correct!
               } else if (user && user.role === "head_admin") {
                 navigate(`/head-admin/projects/${projectId}`);
               } else if (user && user.role === "admin") {
@@ -88,7 +88,7 @@ const NotificationDetails = () => {
               } else {
                 navigate(`/projects/${projectId}`);
               }
-            }}        
+            }}      
             >
           VIEW PROJECT
         </button>

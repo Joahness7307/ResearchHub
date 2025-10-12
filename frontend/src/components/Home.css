@@ -6,7 +6,7 @@
 /* --- Hero Section --- */
 
 .hero {
-  margin-top: 80px;
+  margin-top: 50px;
   display: flex;
   align-items: center;
   justify-content: flex-start;
@@ -167,9 +167,6 @@
   background: #4e54c8;
 
   border-radius: 2px;
-
-  margin: 0
-
 }
 
 
@@ -686,6 +683,19 @@
 
   }
 
+  .hero-content h1 {
+  font-size: 3.8rem;
+  margin-bottom: 2.2rem;
+  letter-spacing: 1.4px;
+  }
+
+  .hero-subtitle {
+    font-size: 1.7rem;
+    margin-bottom: 2rem;
+    font-weight: 400;
+    letter-spacing: 1px;
+  }
+
 }
 
 
@@ -716,17 +726,15 @@
 
   .hero-content h1 {
 
-    font-size: 3.5rem;
+    font-size: 3.3rem;
 
   }
 
   .hero-subtitle {
 
-    font-size: 1.5rem;
+    font-size: 1.4rem;
 
   }
-
-
 
   .about {
 
@@ -799,10 +807,14 @@
 /* 📱 Small Mobile (Max-width 480px) */
 
 @media (max-width: 480px) {
+  .hero {
+    min-height: 320px;
+    padding: 1rem;
+  }
 
   .hero-content h1 {
 
-    font-size: 2.2rem;
+    font-size: 2.5rem;
 
     margin-bottom: 1.5rem;
 
@@ -810,7 +822,7 @@
 
   .hero-subtitle {
 
-    font-size: 1.1rem;
+    font-size: 1.2rem;
 
   }
 
@@ -827,7 +839,12 @@
   .about h2, .features h2, .contact h2 {
 
     font-size: 1.5rem;
+    text-align: center;
 
+  }
+
+  .contact-bar, .about-bar {
+    margin: auto;
   }
 
   .about-text {

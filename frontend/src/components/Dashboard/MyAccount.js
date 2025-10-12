@@ -17,14 +17,34 @@ const MyAccount = () => {
   });
   const navigate = useNavigate();
 
-  // Only fetch projects for studentsX
-  useEffect(() => {
-  if (user && user.role === "student" && isEligible(user)) {
-    axios.get("/users/my-projects")
-      .then(res => setProjects(res.data.projects || []))
-      .catch(() => setProjects([]));
+  // Helper: check if student is eligible to upload/see two-column layout
+  function isEligible(user) {
+    if (user.role !== "student") return false;
+    if (user.year_level === "3rd" || user.year_level === "4th") return true;
+    if (user.grade_level === "12") return true;
+    return false;
   }
-}, [user]);
+
+  // Only fetch projects for students
+  useEffect(() => {
+    if (user && user.role === "student" && isEligible(user)) {
+      axios.get("/users/my-projects")
+        .then(res => setProjects(res.data.projects || []))
+        .catch(() => setProjects([]));
+    }
+  }, [user]);
+
+  // Only show projects with status "need_revision" (not "admin_revision")
+  const grouped = {
+    pending: [],
+    endorsed: [],
+    need_revision: [],
+    approved: []
+  };
+  projects.forEach(project => {
+    if (grouped[project.status]) grouped[project.status].push(project);
+  });
+  // Do NOT show admin_revision to students
 
   // Helper to render each group (for students only)
   const renderGroup = (title, statusKey) => (
@@ -104,26 +124,6 @@ const MyAccount = () => {
       )}
     </div>
   );
-
-// Only show projects with status "need_revision" (not "admin_revision")
-const grouped = {
-  pending: [],
-  endorsed: [],
-  need_revision: [],
-  approved: []
-};
-projects.forEach(project => {
-  if (grouped[project.status]) grouped[project.status].push(project);
-});
-// Do NOT show admin_revision to students
-
-  // Helper: check if student is eligible to upload/see two-column layout
-  function isEligible(user) {
-  if (user.role !== "student") return false;
-  if (user.year_level === "3rd" || user.year_level === "4th") return true;
-  if (user.grade_level === "12") return true;
-  return false;
-}
 
   // Two-column layout for eligible students
   if (user && user.role === "student" && isEligible(user)) {

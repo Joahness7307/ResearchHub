@@ -65,9 +65,9 @@ exports.register = async (req, res) => {
       // Perform conditional checks after the basic fields are validated
 
       // If department is BEED or BSED, major is required
-      if ((department === "BEED" || department === "BSED") && !major) {
+      if ((department === "BSED") && !major) {
         console.error("Register validation error: Major is required for BEED/BSED department.");
-        return res.status(400).json({ message: "Major is required for BEED/BSED department." });
+        return res.status(400).json({ message: "Major is required for BSED department." });
       }
       
       // If department is BSIT or BSHM, block is required
@@ -77,7 +77,7 @@ exports.register = async (req, res) => {
       }
       
       // You might also want to prevent non-BSIT/BSHM students from sending a block, 
-      // and non-BEED/BSED students from sending a major, 
+      // and non-BSED students from sending a major, 
       // but the next block handles setting them to null.
       
       // Continue with registration...
@@ -90,7 +90,7 @@ exports.register = async (req, res) => {
         year_level,
         // Note: The logic below ensures only the relevant field is saved
         block: (department === "BSIT" || department === "BSHM") ? block : null,
-        major: (department === "BEED" || department === "BSED") ? major : null,
+        major: (department === "BSED") ? major : null,
         password: hashedPassword,
         role: "student",
         type: "college"

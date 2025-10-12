@@ -1,12 +1,12 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import HeadAdminSideNavbar from "../Layout/HeadAdminSideNavbar";
-import NotificationPage from "./NotificationPage";
+import HeadAdminSideNavbar from "../Layout/HeadAdminSideNavbar"; // Assumed component
+import NotificationPage from "./NotificationPage"; // Assumed component
 import axios from "../../api/axios";
-import "./AdminDashboard.css";
-import categoryColors from "../../constants/categoryColors";          
-import "../Dashboard/StudentDashboard.css"; // Reuse student styles for project cards
-import HeadAdminLayout from "../Layout/HeadAdminLayout";
+import "./AdminDashboard.css"; // Assumed CSS file
+import categoryColors from "../../constants/categoryColors";
+import "../Dashboard/StudentDashboard.css"; // Reused student styles for project cards (assumed)
+import HeadAdminLayout from "../Layout/HeadAdminLayout"; // Assumed Layout
 
 const projectsPerPage = 10;
 
@@ -66,13 +66,13 @@ const HeadAdminDashboard = ({ section }) => {
 
   // Use useMemo to filter projects based on status and search term
   const {
-    allProjects,
+    // allProjects, // Not used in render
     pendingProjects,
     approvedProjects,
     revisionProjects,
     repositoryProjects,
-    displayedProjects,
-    filteredProjects,
+    // displayedProjects, // Not used in render
+    // filteredProjects, // Not used in render
     totalPages,
     paginatedProjects
   } = useMemo(() => {
@@ -116,12 +116,12 @@ const HeadAdminDashboard = ({ section }) => {
     const paginated = filtered.slice(startIndex, endIndex);
 
     // Ensure currentPage doesn't exceed new totalPages after filtering/search
+    // NOTE: Direct state update inside useMemo can be tricky, but is common for resetting pagination
     if (currentPage > totalPagesCount && totalPagesCount > 0) {
         setCurrentPage(totalPagesCount);
     } else if (currentPage > 1 && totalPagesCount === 0) {
         setCurrentPage(1); // Reset page if search yields no results
     }
-
 
     return {
       allProjects: all,
@@ -138,7 +138,7 @@ const HeadAdminDashboard = ({ section }) => {
 
   // Latest 3 pending projects for the dashboard view
   const latestPending = pendingProjects.slice(0, 3);
-  
+
   // Handlers for pagination
   const handleNextPage = () => {
     if (currentPage < totalPages) {
@@ -151,7 +151,7 @@ const HeadAdminDashboard = ({ section }) => {
       setCurrentPage(currentPage - 1);
     }
   };
-  
+
   // This function is for the search button, which essentially just triggers the memo re-calculation
   const handleSearchClick = () => {
     // Re-evaluates filteredProjects via useMemo
@@ -161,7 +161,7 @@ const HeadAdminDashboard = ({ section }) => {
 
   // Helper component for the search bar (to reduce duplication)
   const SearchBar = () => (
-    <div style={{ display: "flex", alignItems: "center", marginBottom: "2rem", marginTop: "1.5rem" }}>
+    <div className="search-wrapper" style={{ display: "flex", alignItems: "center", marginBottom: "2rem", marginTop: "1.5rem" }}>
       <input
         type="text"
         placeholder="Search projects by title, category, or author..."
@@ -174,7 +174,7 @@ const HeadAdminDashboard = ({ section }) => {
         style={{ marginRight: "1rem", flex: 1, padding: "1rem 1.3rem" }}
       />
       {/* Search button is not strictly necessary as search updates on change, but kept for UX consistency */}
-      <button className="admin-btn" onClick={handleSearchClick} style={{ padding: "1rem 1.3rem" }}>Search</button>
+      <button className="admin-btn search-button" onClick={handleSearchClick} style={{ padding: "1rem 1.3rem" }}>Search</button>
     </div>
   );
 
@@ -184,7 +184,7 @@ const HeadAdminDashboard = ({ section }) => {
     if (totalPages <= 1) return null;
 
     return (
-      <div style={{ display: "flex", justifyContent: "center", gap: "1rem", marginTop: "2rem" }}>
+      <div className="pagination-controls" style={{ display: "flex", justifyContent: "center", gap: "1rem", marginTop: "2rem" }}>
         <button
           className="admin-btn"
           disabled={currentPage === 1}
@@ -209,110 +209,107 @@ const HeadAdminDashboard = ({ section }) => {
   };
 
   return (
-    <div>
-      {/* Main Layout */}
-      <div>
-        <div style={{
-          maxWidth: "1200px", // Keep max-width to constrain content on large screens
-          margin: "0 auto", // THIS CENTERS the content within the available space
-          minHeight: "100vh",
-          padding: "2.5rem 2.5rem",
-          background: "#f9f9ff17"
-        }}>
-          {/* Dashboard Cards and Latest Pending Projects */}
-          {selectedCard === "dashboard" && (
-            <>
-              <h2 style={{ marginTop: "5rem", marginBottom: "2rem" }}>Head Admin Dashboard</h2>
-              <div className="dashboard-cards-row">
-                <div className="dashboard-card" onClick={() => navigate("/head-admin/pending-projects")}>
-                  <h3>Pending Projects</h3>
-                  <div className="dashboard-card-count">{pendingProjects.length}</div>
-                </div>
-                <div className="dashboard-card" onClick={() => navigate("/head-admin/approved-projects")}>
-                  <h3>Approved Projects</h3>
-                  <div className="dashboard-card-count">{approvedProjects.length}</div>
-                </div>
-                <div className="dashboard-card" onClick={() => navigate("/head-admin/request-for-revision")}>
-                  <h3>Request for Revision</h3>
-                  <div className="dashboard-card-count">{revisionProjects.length}</div>
-                </div>
-                <div className="dashboard-card" onClick={() => navigate("/head-admin/repository")}>
-                  <h3>Repository Projects</h3>
-                  <div className="dashboard-card-count">{repositoryProjects.length}</div>
-                </div>
+    <div className="head-admin-dashboard-wrapper">
+      <div style={{
+        maxWidth: "1200px", // Keep max-width to constrain content on large screens
+        margin: "0 auto", // THIS CENTERS the content within the available space
+        minHeight: "100vh",
+        padding: "2.5rem 2.5rem",
+        background: "#f9f9ff17"
+      }}>
+        {/* Dashboard Cards and Latest Pending Projects */}
+        {selectedCard === "dashboard" && (
+          <>
+            <h2 style={{ marginTop: "5rem", marginBottom: "2rem" }}>Head Admin Dashboard</h2>
+            <div className="dashboard-cards-row">
+              <div className="dashboard-card" onClick={() => navigate("/head-admin/pending-projects")}>
+                <h3>Pending Projects</h3>
+                <div className="dashboard-card-count">{pendingProjects.length}</div>
               </div>
-
-              {/* Latest Pending Projects */}
-              <h3 style={{ marginBottom: "1.2rem", marginTop: "3rem", color: "#2563eb" }}>Latest Pending Projects</h3>
-              <ProjectList projects={latestPending} navigate={navigate} />
-
-              {/* See All Pending Projects Button */}
-              <div style={{ textAlign: "center", marginTop: "2rem" }}>
-                <button
-                  className="admin-btn"
-                  style={{
-                    padding: "1rem 2rem",
-                    background: "#3a3e92",
-                    color: "#fff",
-                    border: "none",
-                    borderRadius: "8px",
-                    fontWeight: 600,
-                    fontSize: "1.1rem",
-                    cursor: "pointer"
-                  }}
-                  onClick={() => navigate("/head-admin/pending-projects")}
-                >
-                  See All Pending Projects
-                </button>
+              <div className="dashboard-card" onClick={() => navigate("/head-admin/approved-projects")}>
+                <h3>Approved Projects</h3>
+                <div className="dashboard-card-count">{approvedProjects.length}</div>
               </div>
-            </>
-          )}
+              <div className="dashboard-card" onClick={() => navigate("/head-admin/request-for-revision")}>
+                <h3>Request for Revision</h3>
+                <div className="dashboard-card-count">{revisionProjects.length}</div>
+              </div>
+              <div className="dashboard-card" onClick={() => navigate("/head-admin/repository")}>
+                <h3>Repository Projects</h3>
+                <div className="dashboard-card-count">{repositoryProjects.length}</div>
+              </div>
+            </div>
 
-          {/* Pending Projects */}
-          {selectedCard === "pending" && (
-            <>
-              <h2 style={{ marginTop: "5rem", marginBottom: "2rem" }}>Pending Projects ({pendingProjects.length})</h2>
-              <SearchBar />
-              <ProjectList projects={paginatedProjects} navigate={navigate} />
-              <PaginationControls />
-            </>
-          )}
+            {/* Latest Pending Projects */}
+            <h3 style={{ marginBottom: "1.2rem", marginTop: "3rem", color: "#2563eb" }}>Latest Pending Projects</h3>
+            <ProjectList projects={latestPending} navigate={navigate} />
 
-          {/* Approved Projects */}
-          {selectedCard === "approved" && (
-            <>
-              <h2 style={{ marginTop: "5rem", marginBottom: "2rem" }}>Approved Projects ({approvedProjects.length})</h2>
-              <SearchBar />
-              <ProjectList projects={paginatedProjects} navigate={navigate} />
-              <PaginationControls />
-            </>
-          )}
+            {/* See All Pending Projects Button */}
+            <div style={{ textAlign: "center", marginTop: "2rem" }}>
+              <button
+                className="admin-btn"
+                style={{
+                  padding: "1rem 2rem",
+                  background: "#3a3e92",
+                  color: "#fff",
+                  border: "none",
+                  borderRadius: "8px",
+                  fontWeight: 600,
+                  fontSize: "1.1rem",
+                  cursor: "pointer"
+                }}
+                onClick={() => navigate("/head-admin/pending-projects")}
+              >
+                See All Pending Projects
+              </button>
+            </div>
+          </>
+        )}
 
-          {/* Request for Revision */}
-          {selectedCard === "revision" && (
-            <>
-              <h2 style={{ marginTop: "5rem", marginBottom: "2rem" }}>Request for Revision ({revisionProjects.length})</h2>
-              <SearchBar />
-              <ProjectList projects={paginatedProjects} navigate={navigate} />
-              <PaginationControls />
-            </>
-          )}
+        {/* Pending Projects */}
+        {selectedCard === "pending" && (
+          <>
+            <h2 style={{ marginTop: "5rem", marginBottom: "2rem" }}>Pending Projects ({pendingProjects.length})</h2>
+            <SearchBar />
+            <ProjectList projects={paginatedProjects} navigate={navigate} />
+            <PaginationControls />
+          </>
+        )}
 
-          {/* Project Repository */}
-          {selectedCard === "repository" && (
-            <>
-              <h2 style={{ marginTop: "5rem", marginBottom: "2rem" }}>Project Repository ({repositoryProjects.length})</h2>
-              <SearchBar />
-              <ProjectList projects={paginatedProjects} navigate={navigate} />
-              <PaginationControls />
-            </>
-          )}
+        {/* Approved Projects */}
+        {selectedCard === "approved" && (
+          <>
+            <h2 style={{ marginTop: "5rem", marginBottom: "2rem" }}>Approved Projects ({approvedProjects.length})</h2>
+            <SearchBar />
+            <ProjectList projects={paginatedProjects} navigate={navigate} />
+            <PaginationControls />
+          </>
+        )}
 
-          {/* Notifications */}
-          {selectedCard === "notifications" && (
-            <NotificationPage />
-          )}
-        </div>
+        {/* Request for Revision */}
+        {selectedCard === "revision" && (
+          <>
+            <h2 style={{ marginTop: "5rem", marginBottom: "2rem" }}>Request for Revision ({revisionProjects.length})</h2>
+            <SearchBar />
+            <ProjectList projects={paginatedProjects} navigate={navigate} />
+            <PaginationControls />
+          </>
+        )}
+
+        {/* Project Repository */}
+        {selectedCard === "repository" && (
+          <>
+            <h2 style={{ marginTop: "5rem", marginBottom: "2rem" }}>Project Repository ({repositoryProjects.length})</h2>
+            <SearchBar />
+            <ProjectList projects={paginatedProjects} navigate={navigate} />
+            <PaginationControls />
+          </>
+        )}
+
+        {/* Notifications */}
+        {selectedCard === "notifications" && (
+          <NotificationPage />
+        )}
       </div>
     </div>
   );

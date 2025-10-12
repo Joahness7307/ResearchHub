@@ -12,6 +12,7 @@ const ForgotPassword = () => {
     e.preventDefault();
     setMsg(""); setError("");
     try {
+      // NOTE: Ensure your backend endpoint is correctly configured to send the email
       await axios.post("/users/forgot-password", { email });
       setMsg("Please check your email, a reset link has been sent.");
     } catch (err) {
@@ -32,6 +33,7 @@ const ForgotPassword = () => {
           value={email}
           onChange={e => setEmail(e.target.value)}
           required
+          className="auth-input"
         />
         <button type="submit">Send Email</button>
         <div className="auth-switch">

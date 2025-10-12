@@ -100,6 +100,7 @@
   padding: 1.2rem 1rem 1rem 1rem;
   box-shadow: 0 1px 4px rgba(37,99,235,0.04);
   position: relative;
+  cursor: pointer; /* Added for click navigation */
 }
 
 .my-paper-item:hover {
@@ -122,7 +123,7 @@
   border-radius: 8px;
   font-size: 1rem;
   font-weight: 600;
-  margin-bottom: 0.7  rem;
+  margin-bottom: 0.7rem;
   margin-right: 0.7rem;
   color: #fff;
 }
@@ -166,6 +167,7 @@
   font-style: italic;
 }
 
+/* Two-Column Layout for Eligible Students */
 .two-column-layout {
   display: flex;
   gap: 2.5rem;
@@ -283,22 +285,27 @@
   font-weight: 500;
 }
 
+/* --- Media Queries for Responsiveness --- */
+
+/* Switches two-column layout to single-column */
 @media (max-width: 900px) {
   .two-column-layout {
-    flex-direction: column;
+    flex-direction: column; /* Stacks columns vertically */
     padding: 2rem 1rem;
   }
   .account-info-col {
-    border-right: none;
+    border-right: none; /* Removes the vertical divider */
     padding-right: 0;
     margin-right: 0;
     margin-bottom: 2rem;
   }
-  .my-account {
+  .my-account { /* Also adjusts the single-column view */
     padding: 1.2rem 0.5rem;
     max-width: 98vw;
   }
 }
+
+/* Further adjustments for very small screens */
 @media (max-width: 600px) {
   .my-account {
     padding: 0.7rem 0.2rem;

@@ -1,4 +1,5 @@
 import React from "react";
+// Corrected path to use the existing SubmitResearch.css which now contains modal styles
 import "./Research/SubmitResearch.css";
 
 const SuccessModal = ({ show, onClose, message }) => {
@@ -14,4 +15,4 @@ const SuccessModal = ({ show, onClose, message }) => {
   );
 };
 
-export default SuccessModal;  
+export default SuccessModal;

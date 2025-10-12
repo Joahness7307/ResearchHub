@@ -55,7 +55,7 @@
 
   z-index: 1200;
 
-  padding: 6rem 1.5rem;
+  padding: 4rem 1.5rem;
 
   transition: right 0.35s ease-in-out;
 
@@ -129,6 +129,18 @@
 
 }
 
+/* Ensures the icon/close symbol is correctly sized */
+.navbar-hamburger {
+    font-size: 2.2rem; /* Should be large enough to see */
+    color: var(--text-light); /* Should be white/light */
+    z-index: 1300; /* Must be high enough to overlay content */
+}
+
+/* Ensures the two symbols sit correctly within the button area */
+.hamburger-close, .hamburger-icon {
+    line-height: 1; 
+    display: block;
+}
 
 
 
@@ -198,17 +210,20 @@
 
 .mobile-sidebar-close-btn {
     position: absolute; /* Position relative to the .mobile-sidebar */
-    top: 10px;
-    right: 15px;
+    top: 0;
+    right: 20px;
+    width: 85px;
+    height: 50px;
+    margin: 0;
     
     /* Styling for the close icon */
     background: none;
     border: none;
-    color: #3a3e92; /* A strong color that contrasts with the sidebar background */
+    color: #ffffff; /* A strong color that contrasts with the sidebar background */
     font-size: 1.8rem;
     font-weight: 600;
     cursor: pointer;
-    padding: 10px;
+    padding: 0;
     line-height: 1;
     z-index: 10; /* Ensure it's above content inside the sidebar */
 }

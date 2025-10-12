@@ -15,8 +15,7 @@ const Navbar = ({
   const [studentNotifCount, setStudentNotifCount] = useState(0);
   const [showStudentDropdown, setShowStudentDropdown] = useState(false);
   const [studentNotifications, setStudentNotifications] = useState([]);
-  const [authHamburgerOpen, setAuthHamburgerOpen] = useState(false);
-  const [unauthHamburgerOpen, setUnauthHamburgerOpen] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false); // Unified state for hamburger
   const studentBellRef = useRef(null);
   const studentDropdownRef = useRef(null);
   const navigate = useNavigate();
@@ -82,6 +81,15 @@ const Navbar = ({
     navigate("/login");
   };
 
+  // Helper function to toggle unified sidebar state
+  const toggleSidebar = (openState) => {
+    setIsSidebarOpen(openState);
+    if (isAdminRole) {
+      // Allow Admin/Adviser hamburger to use its external prop/function
+      onHamburgerClick(); 
+    }
+  }
+
   // Hamburger sidebar links for student/guest
   const sidebarLinks = [
     ...(user && user.role === "student" && (user.year_level === "3rd" || user.year_level === "4th" || user.grade_level === "12")
@@ -116,7 +124,7 @@ const Navbar = ({
     } else {
       navigate("/", { state: { scrollTo: id } });
     }
-    setUnauthHamburgerOpen(false);
+    toggleSidebar(false); // Close sidebar on navigation
   };
 
   return (
@@ -135,30 +143,33 @@ const Navbar = ({
 
       {/* --- Unauthenticated Navbar --- */}
       {isUnauthenticated && (
-         <>
+        <>
           <div className="navbar-center desktop-nav">
             {unauthLinks.map(link => (
               <a
                 key={link.label}
                 href={`#${link.id}`}
                 onClick={e => handleNavClick(e, link.id)}
+                className="nav-link"
               >
                 {link.label}
               </a>
             ))}
           </div>
           <div className="navbar-right desktop-nav">
-            <a href="#login" onClick={() => navigate("/login")} className="navbar-link">Login</a>
-            <a href="#signup" onClick={() => navigate("/role-selection")} className="navbar-link">Signup</a>
+            <Link to="/login" className="nav-link nav-btn">Login</Link>
+            <Link to="/role-selection" className="nav-link nav-btn primary-btn">Signup</Link>
           </div>
-          <div className="navbar-hamburger" onClick={() => setUnauthHamburgerOpen(!unauthHamburgerOpen)}>
-            {unauthHamburgerOpen ? (
+
+          {/* Mobile Hamburger (Unauth) */}
+          <div className="navbar-hamburger" onClick={() => toggleSidebar(!isSidebarOpen)}>
+            {isSidebarOpen ? (
               <span className="hamburger-close">&#10005;</span>
             ) : (
               <span className="hamburger-icon">&#9776;</span>
             )}
           </div>
-          <div className={`navbar-sidebar ${unauthHamburgerOpen ? "open" : ""}`}>
+          <div className={`navbar-sidebar ${isSidebarOpen ? "open" : ""}`}>
             {unauthLinks.map(link => (
               <a
                 key={link.label}
@@ -169,27 +180,27 @@ const Navbar = ({
                 {link.label}
               </a>
             ))}
-            <a href="#login" onClick={() => { navigate("/login"); setUnauthHamburgerOpen(false); }} className="sidebar-link">Login</a>
-            <a href="#signup" onClick={() => { navigate("/role-selection"); setUnauthHamburgerOpen(false); }} className="sidebar-link">Signup</a>
+            <Link to="/login" onClick={() => toggleSidebar(false)} className="sidebar-link">Login</Link>
+            <Link to="/role-selection" onClick={() => toggleSidebar(false)} className="sidebar-link primary-btn">Signup</Link>
           </div>
-          {unauthHamburgerOpen && <div className="navbar-overlay" onClick={() => setUnauthHamburgerOpen(false)}></div>}
+          {isSidebarOpen && <div className="navbar-overlay" onClick={() => toggleSidebar(false)}></div>}
         </>
       )}
 
       {/* --- Authenticated Student/Guest Navbar --- */}
       {isStudentOrGuest && (
         <>
-          <div className="navbar-right desktop-nav">
+          <div className="navbar-right desktop-nav student-nav-links">
             {user.role === "student" && (user.year_level === "3rd" || user.year_level === "4th" || user.grade_level === "12") && (
-              <Link to="/submit-research" style={{ fontSize: '1.1rem' }}>Upload Project</Link>
+              <Link to="/submit-research" className="nav-link nav-btn primary-btn">Upload Project</Link>
             )}
-            <Link to="/my-account" style={{ fontSize: '1.1rem', marginLeft: "5rem" }}>My Account</Link>
-            <span style={{ position: "relative", marginLeft: "5rem" }}>
+            <Link to="/my-account" className="nav-link">My Account</Link>
+            <span style={{ position: "relative" }}>
               <img
                 src={notifIcon}
                 alt="Notifications"
                 ref={studentBellRef}
-                style={{ width: 26, height: 26, cursor: "pointer", filter: "invert(1)" }}
+                className="notification-icon"
                 onClick={handleStudentBellClick}
               />
               {studentNotifCount > 0 && (
@@ -214,7 +225,9 @@ const Navbar = ({
                             navigate(`/notifications/${notif.id}`);
                           }}
                         >
-                          {notif.reason}
+                          <div className="dropdown-item-reason">
+                            {notif.reason}
+                          </div>
                           <div className="projects-dropdown-date">
                             {notif.createdAt ? new Date(notif.createdAt).toLocaleString() : ""}
                           </div>
@@ -234,42 +247,47 @@ const Navbar = ({
                 </div>
               )}
             </span>
-            <button onClick={handleLogout} className="navbar-logout-btn">Logout</button>
+            <button onClick={handleLogout} className="nav-link logout-btn">Logout</button>
           </div>
-          <div className="navbar-hamburger auth-hamburger" onClick={() => setAuthHamburgerOpen(!authHamburgerOpen)}>
-            {authHamburgerOpen ? <span className="hamburger-close">&#10005;</span> : <span className="hamburger-icon">&#9776;</span>}
+
+          {/* Mobile Hamburger (Auth Student) */}
+          <div className="navbar-hamburger auth-hamburger" onClick={() => toggleSidebar(!isSidebarOpen)}>
+            {isSidebarOpen ? <span className="hamburger-close">&#10005;</span> : <span className="hamburger-icon">&#9776;</span>}
           </div>
-          <div className={`navbar-sidebar auth-navbar-sidebar ${authHamburgerOpen ? "open" : ""}`}>
+          <div className={`navbar-sidebar ${isSidebarOpen ? "open" : ""}`}>
             {sidebarLinks.map((link) =>
               link.action ? (
-                <button key={link.label} className="sidebar-link" onClick={() => { link.action(); setAuthHamburgerOpen(false); }}>
+                <button key={link.label} className="sidebar-link" onClick={() => { link.action(); toggleSidebar(false); }}>
                   {link.label}
                 </button>
               ) : (
-                <Link key={link.label} to={link.to} className="sidebar-link" onClick={() => setAuthHamburgerOpen(false)}>
+                <Link key={link.label} to={link.to} className="sidebar-link" onClick={() => toggleSidebar(false)}>
                   {link.label}
                 </Link>
               )
             )}
           </div>
-          {authHamburgerOpen && <div className="navbar-overlay" onClick={() => setAuthHamburgerOpen(false)}></div>}
+          {isSidebarOpen && <div className="navbar-overlay" onClick={() => toggleSidebar(false)}></div>}
         </>
       )}
 
       {/* --- Admin / Adviser / Head Admin Navbar --- */}
       {isAdminRole && (
         <div className="navbar-right">
-            {/* "My Account" link for larger screens */}
-            <Link to="/my-account" className="my-account-link">My Account</Link>
+          <Link to="/my-account" className="nav-link my-account-link">My Account</Link>
 
-            {/* Hamburger for Tablet/Mobile */}
-            <div className="navbar-hamburger" onClick={onHamburgerClick}>
-                {isHamburgerOpen ? (
-                    <span className="hamburger-close">&#10005;</span>
-                ) : (
-                    <span className="hamburger-icon">&#9776;</span>
-                )}
-            </div>
+          {/* Hamburger controlled by external prop */}
+          <div 
+              className={`navbar-hamburger admin-hamburger ${isHamburgerOpen ? "is-open" : ""}`} 
+              onClick={onHamburgerClick}
+          >
+            {/* FIX: Ensure the correct HTML symbols and class names are used here */}
+            {isHamburgerOpen ? (
+              <span className="hamburger-close">&#10005;</span> // <-- The Close Icon
+            ) : (
+              <span className="hamburger-icon">&#9776;</span> // <-- The Hamburger Icon
+            )}
+          </div>
         </div>
       )}
     </nav>

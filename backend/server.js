@@ -13,6 +13,7 @@ const projectRoutes = require("./routes/projectRoutes");
 const reviewRoutes = require("./routes/reviewRoutes");
 const commentRoutes = require("./routes/commentRoutes");
 const notificationRoutes = require("./routes/notificationRoutes");
+const contactRoutes = require('./routes/contactRoutes');
 
 const app = express();
 
@@ -39,6 +40,7 @@ app.use("/api/projects", projectRoutes);
 app.use("/api/reviews", reviewRoutes);
 app.use("/api/comments", commentRoutes);
 app.use("/api/notifications", notificationRoutes);
+app.use('/api/contact', contactRoutes);
 
 // Global error handler
 app.use((err, req, res, next) => {
@@ -50,7 +52,9 @@ app.use((err, req, res, next) => {
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, async () => {
   try {
-    await sequelize.sync({ alter: true });
+    // await sequelize.sync({ alter: true });
+    // 1. New: Test the database connection without modifying the schema
+    await sequelize.authenticate(); 
     console.log("✅ Database connected successfully!");
     console.log(`🚀 Server running on port ${PORT}`);
   } catch (error) {
