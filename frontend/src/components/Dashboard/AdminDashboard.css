@@ -1,181 +1,689 @@
-/* Main outer wrapper for admin dashboard */
+/* AdminDashboard.css (COMPLETED - NEW STYLES ADDED) */
+
+
+
+/* Global Variables (Suggested) */
+
+:root {
+
+  --primary-color: #2563eb;     /* Blue */
+
+  --secondary-color: #3a3e92;   /* Deep Purple */
+
+  --success-color: #10b981;
+
+  --warning-color: #f59e0b;
+
+  --danger-color: #ef4444;
+
+  --bg-light: #f9f9ff;
+
+  --border-color: #e5e7eb;
+
+}
+
+
+
+/* Main outer wrapper for admin dashboard (Retained) */
+
 .admin-dashboard-outer {
+
   max-width: 1600px;
+
   margin: 120px auto 40px auto;
+
   background: #fff;
+
   padding: 2.5rem 2rem;
+
   border-radius: 16px;
+
   box-shadow: 0 2px 12px rgba(37,99,235,0.07);
+
 }
 
-/* Cards for project status */
-.dashboard-cards-row {
+
+
+
+
+/* --- NEW STYLES FOR SUMMARY CARDS (Retained) --- */
+
+.dashboard-summary-cards {
+
   display: flex;
+
   gap: 2rem;
+
+  margin-top: 5rem;
+
   margin-bottom: 2rem;
+
 }
 
-.dashboard-card {
-  background: #f5f6fa;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-  padding: 1.2rem 1.5rem;
+
+
+.summary-card {
+
   flex: 1;
-  min-width: 220px;
+
+  min-width: 250px;
+
+  background: var(--bg-light);
+
+  padding: 1.5rem 2rem;
+
+  border-radius: 12px;
+
+  box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+
+  transition: transform 0.2s;
+
 }
+
+
+
+.summary-card:hover {
+
+  transform: translateY(-3px);
+
+}
+
+
+
+.summary-card h3 {
+
+  color: var(--secondary-color);
+
+  margin-bottom: 0.5rem;
+
+  font-size: 1.2rem;
+
+}
+
+
+
+.summary-card .count-number {
+
+  font-size: 2.5rem;
+
+  font-weight: 700;
+
+  color: var(--primary-color);
+
+}
+
+
+
+
+
+/* --- NEW STYLES FOR STATUS BREAKDOWN CARDS (Retained) --- */
+
+.dashboard-status-cards {
+
+  display: grid;
+
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+
+  gap: 1.5rem;
+
+  margin-bottom: 3rem;
+
+}
+
+
+
+.status-card {
+
+  background: #fff;
+
+  padding: 1rem;
+
+  border-radius: 8px;
+
+  border-left: 5px solid;
+
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+
+}
+
+
+
+.status-card h3 {
+
+  font-size: 1rem;
+
+  color: #4b5563;
+
+  margin-bottom: 0.5rem;
+
+}
+
+
+
+.status-card .count-number {
+
+  font-size: 2rem;
+
+  font-weight: 600;
+
+}
+
+
+
+/* Color definitions for status cards */
+
+.status-card.pending { border-color: var(--warning-color); }
+
+.status-card.pending .count-number { color: var(--warning-color); }
+
+
+
+.status-card.endorsed { border-color: var(--success-color); }
+
+.status-card.endorsed .count-number { color: var(--success-color); }
+
+
+
+.status-card.revision { border-color: var(--danger-color); }
+
+.status-card.revision .count-number { color: var(--danger-color); }
+
+
+
+.status-card.approved { border-color: var(--primary-color); }
+
+.status-card.approved .count-number { color: var(--primary-color); }
+
+
+
+
+
+/* Cards for project status list (Retained) */
+
+.dashboard-cards-row {
+
+  display: flex;
+
+  gap: 2rem;
+
+  margin-bottom: 2rem;
+
+}
+
+
+
+.dashboard-card { 
+
+  background: var(--bg-light);
+
+  border-radius: 12px;
+
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+
+  padding: 1.2rem 1.5rem;
+
+  flex: 1;
+
+  min-width: 220px;
+
+}
+
+
 
 .dashboard-card h3 {
+
   margin-bottom: 1rem;
-  color: #2563eb;
+
+  color: var(--primary-color);
+
   font-size: 1.2rem;
+
 }
+
+
 
 .dashboard-card-item {
+
   margin-bottom: 1rem;
+
   padding-bottom: 0.5rem;
+
   border-bottom: 1px solid #e0e0e0;
+
 }
 
-/* User management section */
+.dashboard-card-item a {
+
+  color: var(--primary-color);
+
+  text-decoration: none;
+
+  font-weight: 500;
+
+}
+
+
+
+
+
+/* --- USER MANAGEMENT SECTION STYLES --- */
+
+
+
 .admin-section {
-  background: #f9f9ff;
+
+  background: #fff; /* Use white background for the main content area */
+
   border-radius: 12px;
+
   padding: 2rem 1.5rem;
-  box-shadow: 0 1px 8px rgba(37,99,235,0.04);
-  min-width: 320px;
+
+  box-shadow: 0 1px 10px rgba(0,0,0,0.05);
+
 }
 
-.admin-management-header {
-  display: flex;
-  align-items: center;
-  gap: 2rem;
-  margin-bottom: 1.5rem;
-  flex-wrap: wrap;
-  justify-content: space-between;
+
+
+.admin-section h3 {
+
+  color: var(--secondary-color);
+
 }
 
-.admin-search-input {
-  padding: 0.7rem 1.2rem;
-  border-radius: 8px;
-  border: 1px solid #d1d5db;
-  font-size: 1rem;
-  min-width: 220px;
-}
 
-.admin-form {
-  display: flex;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
-  flex-wrap: wrap;
-}
-
-.admin-form input, .admin-form select {
-  padding: 0.5rem;
-  border-radius: 6px;
-  border: 1px solid #d1d5db;
-  font-size: 1rem;
-  min-width: 120px;
-}
-
-.admin-btn {
-  padding: 0.5rem 1.1rem;
-  background: #3a3e92;
-  color: #fff;
-  border: none;
-  border-radius: 6px;
-  font-weight: 600;
-  cursor: pointer;
-  font-size: 1rem;
-  transition: background 0.2s;
-}
-
-.admin-btn:hover {
-  background: #4e54c8;
-}
-
-.cancel-btn {
-  background: #b33834;
-}
-
-.edit-btn {
-  background: #38bdf8;
-  color: #fff;
-  margin-right: 10px;
-}
-
-.delete-btn {
-  background: #b33834;
-  color: #fff;
-}
 
 .admin-message {
-  color: green;
-  margin-bottom: 1rem;
+
+  padding: 0.75rem 1rem;
+
+  border-radius: 6px;
+
+  margin-top: 1rem;
+
   font-weight: 500;
+
+  background-color: #d1fae5;
+
+  color: #065f46;
+
+  border: 1px solid #a7f3d0;
+
 }
+
+.admin-message[style*="color: red"] {
+
+  background-color: #fee2e2;
+
+  color: #991b1b;
+
+  border-color: #fca5a5;
+
+}
+
+
+
+/* Form Styles: Invite User */
+
+.admin-form {
+
+  display: flex;
+
+  flex-wrap: wrap;
+
+  gap: 1rem;
+
+  padding: 1.5rem;
+
+  background: var(--bg-light);
+
+  border-radius: 8px;
+
+  margin-bottom: 2rem;
+
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+
+}
+
+
+
+.admin-form input,
+
+.admin-form select {
+
+  flex: 1;
+
+  padding: 0.75rem;
+
+  border: 1px solid var(--border-color);
+
+  border-radius: 6px;
+
+  min-width: 180px;
+
+  transition: border-color 0.2s, box-shadow 0.2s;
+
+}
+
+
+
+.admin-form input:focus,
+
+.admin-form select:focus {
+
+  border-color: var(--primary-color);
+
+  outline: none;
+
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
+
+}
+
+
+
+.admin-btn {
+
+  padding: 0.75rem 1.5rem;
+
+  border: none;
+
+  border-radius: 6px;
+
+  cursor: pointer;
+
+  font-weight: 600;
+
+  background-color: var(--primary-color);
+
+  color: white;
+
+  transition: background-color 0.2s;
+
+  flex-shrink: 0;
+
+}
+
+
+
+.admin-btn:hover {
+
+  background-color: #1e40af;
+
+}
+
+
+
+/* User List Table Styles */
 
 .admin-list-wrapper {
-  max-height: 420px;
-  overflow-y: auto;
-  margin-top: 1rem;
+
+  overflow-x: auto; /* Enables horizontal scrolling for the table on small screens */
+
+  background: #fff;
+
+  border-radius: 8px;
+
+  border: 1px solid var(--border-color);
+
+  box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+
 }
+
+
 
 .admin-table {
+
   width: 100%;
+
   border-collapse: collapse;
-  margin-top: 1.5rem;
-  background: #fff;
-  border-radius: 10px;
-  overflow: hidden;
-  box-shadow: 0 1px 4px rgba(37,99,235,0.04);
+
+  min-width: 700px; /* Ensures the table has minimum width for readability */
+
 }
 
-.admin-table th, .admin-table td {
-  padding: 1rem;
-  text-align: left;
-  border-bottom: 1px solid #e5e7eb;
+
+
+.admin-table thead {
+
+  background-color: var(--bg-light);
+
+  border-bottom: 2px solid var(--primary-color);
+
 }
+
+
+
+.admin-table th,
+
+.admin-table td {
+
+  padding: 1rem 1.5rem;
+
+  text-align: left;
+
+  border-bottom: 1px solid var(--border-color);
+
+}
+
+
 
 .admin-table th {
-  background: #f3f4f6;
-  color: #2563eb;
-  font-weight: 700;
+
+  font-weight: 600;
+
+  color: var(--secondary-color);
+
+  text-transform: uppercase;
+
+  font-size: 0.85rem;
+
+  letter-spacing: 0.05em;
+
 }
 
-.admin-table tr:last-child td {
+
+
+.admin-table tbody tr:last-child td {
+
   border-bottom: none;
+
 }
+
+
+
+.admin-table tbody tr:hover {
+
+  background-color: #f0f4ff;
+
+}
+
+
+
+/* Role Badges */
 
 .role-badge {
-  background: #e0e7ff;
-  color: #2563eb;
-  font-size: 0.95rem;
-  padding: 0.15rem 0.7rem;
-  border-radius: 6px;
-  font-weight: 600;
-  margin-left: 0.3rem;
+
+  display: inline-block;
+
+  padding: 0.3em 0.7em;
+
+  border-radius: 12px;
+
+  font-size: 0.75rem;
+
+  font-weight: 700;
+
   text-transform: capitalize;
+
 }
 
-.role-admin {
-  background: #b33834;
-  color: #fff;
+
+
+.role-student { background-color: #dbeafe; color: #1e40af; }
+
+.role-admin, .role-head_admin { background-color: #fef3c7; color: #b45309; }
+
+.role-research_adviser { background-color: #d1fae5; color: #065f46; }
+
+
+
+/* Action Buttons */
+
+.admin-table td button {
+
+  margin-right: 0.5rem;
+
+  padding: 0.5rem 0.8rem;
+
+  font-size: 0.85rem;
+
 }
 
-.role-teacher {
-  background: #38bdf8;
-  color: #fff;
+
+
+.edit-btn {
+
+  background-color: #f59e0b;
+
 }
 
-/* Responsive adjustments */
+.edit-btn:hover {
+
+  background-color: #d97706;
+
+}
+
+
+
+.delete-btn {
+
+  background-color: var(--danger-color);
+
+}
+
+.delete-btn:hover {
+
+  background-color: #b91c1c;
+
+}
+
+
+
+
+
+/* --- RESPONSIVENESS --- */
+
+
+
 @media (max-width: 1100px) {
+
   .dashboard-cards-row {
+
     flex-direction: column;
+
     gap: 1.5rem;
+
   }
-  .admin-management-header {
+
+  .dashboard-summary-cards {
+
     flex-direction: column;
-    gap: 1rem;
-    align-items: flex-start;
+
+    gap: 1.5rem;
+
   }
+
+  /* Remove admin-management-header as that class wasn't used */
+
+  .dashboard-status-cards {
+
+    grid-template-columns: repeat(2, 1fr);
+
+  }
+
+  .admin-form {
+
+    flex-direction: column; /* Stack form inputs vertically */
+
+    padding: 1rem;
+
+  }
+
+  .admin-form input,
+
+  .admin-form select,
+
+  .admin-btn {
+
+    min-width: 100%;
+
+  }
+
+}
+
+
+
+@media (max-width: 768px) {
+
+  .admin-dashboard-outer {
+
+    padding: 1.5rem 1rem;
+
+    margin-top: 100px;
+
+  }
+
+  .admin-table th,
+
+  .admin-table td {
+
+    padding: 0.8rem 1rem;
+
+  }
+
+  .admin-table td button {
+
+    padding: 0.4rem 0.6rem;
+
+    font-size: 0.75rem;
+
+  }
+
+  .role-badge {
+
+    font-size: 0.7rem;
+
+  }
+
+}
+
+
+
+@media (max-width: 600px) {
+
+  .dashboard-status-cards {
+
+    grid-template-columns: 1fr;
+
+  }
+
+  .summary-card, .status-card {
+
+    min-width: unset;
+
+  }
+
+  .summary-card .count-number {
+
+    font-size: 2rem;
+
+  }
+
+  .admin-form input,
+
+  .admin-form select {
+
+    font-size: 1rem; /* Adjust font size on small screens */
+
+  }
+
 }

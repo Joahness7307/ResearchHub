@@ -152,6 +152,48 @@ exports.markStudentNotificationRead = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+// NEW: Get total project counts grouped by status (for Admin Dashboard)
+exports.getProjectCounts = async (req, res) => {
+  try {
+    // 1. Fetch counts grouped by status
+    const counts = await Project.findAll({
+      attributes: [
+        'status',
+        [Project.sequelize.fn('COUNT', Project.sequelize.col('id')), 'count']
+      ],
+      group: ['status']
+    });
+
+    // 2. Map results to a simpler object for easier access
+    const countMap = counts.reduce((acc, curr) => {
+      acc[curr.status] = parseInt(curr.dataValues.count, 10);
+      return acc;
+    }, {});
+
+    // 3. Calculate the total and group the revision statuses
+    const totalProjects = counts.reduce((sum, curr) => sum + parseInt(curr.dataValues.count, 10), 0);
+
+    // Combine 'need_revision', 'admin_revision', and potentially 'rejected' into 'revision'
+    const revisionCount = 
+      (countMap['need_revision'] || 0) + 
+      (countMap['admin_revision'] || 0) +
+      (countMap['rejected'] || 0); // Include 'rejected' just in case it's still used
+
+    // 4. Map the final desired status names for the frontend
+    const results = {
+      totalProjects: totalProjects,
+      'pending': countMap['pending'] || 0,
+      'endorsed': countMap['endorsed'] || 0, // Endorsed is kept separate as requested
+      'approved': countMap['approved'] || 0,
+      'revision': revisionCount, // This is the new combined count
+    };
+
+    res.status(200).json(results);
+  } catch (error) {
+    console.error("getProjectCounts error:", error);
+    res.status(500).json({ error: error.message });
+  }
+};
 
 // Get all research projects (repository)
 exports.getAllProjects = async (req, res) => {

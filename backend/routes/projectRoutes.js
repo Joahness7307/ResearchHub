@@ -1,6 +1,6 @@
 const express = require("express");
 const path = require("path");
-const { submitProject, getAdminNotifications, markNotificationRead, getStudentNotifications, getAllProjects, endorseProject, needRevision, approveProject, getAllProjectsAdmin, editProjectMetadata, hideProject, deleteProject, informStudentOfRevision, reuploadProjectDocument  } = require("../controllers/projectController");
+const { submitProject, getAdminNotifications, markNotificationRead, getStudentNotifications, getAllProjects, getProjectCounts, endorseProject, needRevision, approveProject, getAllProjectsAdmin, editProjectMetadata, hideProject, deleteProject, informStudentOfRevision, reuploadProjectDocument  } = require("../controllers/projectController");
 const categories = require("../config/categories");
 const { Project, User } = require("../models");
 const authMiddleware = require("../middlewares/authMiddleware");
@@ -18,6 +18,8 @@ router.post("/submit", authMiddleware(["student"]), upload.single("document"), s
 
 // Anyone logged in can view repository
 router.get("/", getAllProjects);
+
+router.get("/counts", authMiddleware(["admin"]), getProjectCounts);
 
 // Get sinlge research project
 router.get("/:id", authMiddleware(["student", "admin", "head_admin", "research_adviser", "guest"]), async (req, res) => {
