@@ -1,144 +1,67 @@
-// AdminDashboard.js
-
-
-
 import React, { useEffect, useState } from "react";
-
 import axios from "../../api/axios";
-
 import "./AdminDashboard.css"
 
-
-
 const AdminDashboard = ({ activeSection }) => {
-
   const [projects, setProjects] = useState([]);
-
   const [users, setUsers] = useState([]);
-
   const [counts, setCounts] = useState({ 
-
     totalUsers: 0, 
-
     totalProjects: 0,
-
     pending: 0,
-
     endorsed: 0,
-
     approved: 0,
-
     revision: 0,
-
   });
-
-  
 
   const [userSearch, setUserSearch] = useState("");
-
   const [editUserId, setEditUserId] = useState(null); 
-
   // FIX 6: Ensure full_name is used in state to match the server
-
   const [editForm, setEditForm] = useState({ full_name: "", email: "", role: "", password: "" }); 
-
   const [message, setMessage] = useState(""); 
-
-  
-
   const [msg, setMsg] = useState(""); 
-
   const [error, setError] = useState(""); 
 
-
-
-
-
   const [inviteForm, setInviteForm] = useState({
-
     email: "",
-
     role: "admin", // Default is Admin role
-
     type: "",
-
     department: "",
-
     strand: "",
-
   });
-
-
 
   const handleInviteChange = e => setInviteForm({ ...inviteForm, [e.target.name]: e.target.value });
 
-
-
   const handleInviteSubmit = async e => {
-
     e.preventDefault();
-
     setMsg(""); setError("");
-
     try {
-
       // This sends the invitation for admin, head_admin, or adviser
-
       await axios.post("/users/invite-user", inviteForm);
-
       setMsg("Invitation sent!");
-
       setInviteForm({ email: "", role: "admin", type: "", department: "", strand: "" });
-
     } catch (err) {
-
       setError(err.response?.data?.message || "Failed to send invitation.");
-
     }
-
   };
 
-
-
   // ... (useEffect for projects and counts remains the same) ...
-
   useEffect(() => {
-
     if (activeSection === "dashboard" || activeSection === undefined) {
-
       axios.get("/projects/admin/all")
-
         .then(res => setProjects(res.data.projects || []))
-
         .catch(() => setProjects([]));
-
     }
-
-    
-
     if (activeSection === "dashboard" || activeSection === undefined) {
-
       axios.get("/users/count")
-
         .then(res => setCounts(prev => ({ ...prev, totalUsers: res.data.totalUsers || 0 })))
-
         .catch(err => console.error("Failed to fetch user count:", err));
 
-      
-
       axios.get("/projects/counts")
-
         .then(res => setCounts(prev => ({ ...prev, ...res.data })))
-
         .catch(err => console.error("Failed to fetch project counts:", err));
-
     }
-
   }, [activeSection]);
-
-
-
-
 
   // Fetch users for user management
 

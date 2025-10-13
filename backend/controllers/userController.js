@@ -1,21 +1,11 @@
-// userController.js
-
 const bcrypt = require("bcryptjs");
-
 const jwt = require("jsonwebtoken");
-
 const { User } = require("../models");
-
 const { Project } = require("../models");
-
 const { Invitation } = require("../models");
-
 const crypto = require("crypto");
-
 const nodemailer = require("nodemailer");
-
 const { Op } = require("sequelize");
-
 require("dotenv").config();
 
 
@@ -500,6 +490,8 @@ exports.inviteUser = async (req, res) => {
 
     const allowedInviteRoles = ["admin", "head_admin", "research_adviser"];
 
+
+
     if (!allowedInviteRoles.includes(role)) {
 
       return res.status(400).json({ message: "Invalid role for invitation." });
@@ -544,13 +536,13 @@ exports.inviteUser = async (req, res) => {
 
 
 
-    // FIX: Explicitly set username to null to prevent NOT NULL constraint failure
+    // Database Insert
 
-    await Invitation.create({
+    const invitation = await Invitation.create({
 
       email,
 
-      username: null, // <--- Username is intentionally null at this stage
+      username: null, 
 
       token,
 
@@ -564,17 +556,21 @@ exports.inviteUser = async (req, res) => {
 
     });
 
+    console.log(`✅ Invitation record for ${email} created in DB with ID: ${invitation.id}`);
 
 
-    // Send email (Nodemailer setup remains the same)
+
+
+
+    // Nodemailer setup - Using Secure Port 465 (Recommended for hosting)
 
     const transporter = nodemailer.createTransport({
 
       host: "smtp.gmail.com",
 
-      port: 587,
+      port: 465, // Changed from 587
 
-      secure: false,
+      secure: true, // Changed from false
 
       auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS }
 
@@ -582,25 +578,41 @@ exports.inviteUser = async (req, res) => {
 
     const inviteUrl = `${process.env.FRONTEND_URL}/setup-account?token=${token}`;
 
-    await transporter.sendMail({
+    // Email Sending
 
-      from: process.env.SMTP_USER,
+    try {
 
-      to: email,
+      const info = await transporter.sendMail({
 
-      subject: `ResearchHub Invitation (${role})`,
+        from: process.env.SMTP_USER,
 
-      html: `<p>You have been invited as <b>${role.replace("_", " ")}</b>.<br><a href="${inviteUrl}">Click here to setup your account</a></p>`
+        to: email,
 
-    });
+        subject: `ResearchHub Invitation (${role})`,
 
+        html: `<p>You have been invited as <b>${role.replace("_", " ")}</b>.<br><a href="${inviteUrl}">Click here to setup your account</a></p>`
 
+      });
+
+      console.log("📧 Email sent successfully! Message ID:", info.messageId);
+
+    } catch (emailError) {
+
+      console.error("❌ NODEMAILER EMAIL SENDING FAILED:", emailError);
+
+      // We continue to send the success response to the frontend 
+
+      // because the invitation is saved, but log the email failure.
+
+    }
+
+    // Success Response
 
     res.json({ message: "Invitation sent!" });
 
   } catch (error) {
 
-    console.error("Invite User Error:", error); // Log the full error on the server
+    console.error("Invite User Error (Catch Block):", error); // Log the full error on the server
 
     res.status(500).json({ error: error.message, message: "Server failed to process invitation. Check server logs." });
 
