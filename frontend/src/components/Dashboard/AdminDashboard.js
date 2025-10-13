@@ -1,4 +1,4 @@
-// AdminDashboard.js (COMPLETED & FIXED for DOM Nesting Warnings)
+// AdminDashboard.js
 
 
 
@@ -15,8 +15,6 @@ const AdminDashboard = ({ activeSection }) => {
   const [projects, setProjects] = useState([]);
 
   const [users, setUsers] = useState([]);
-
-  // ADDED: New state for Dashboard Counts
 
   const [counts, setCounts] = useState({ 
 
@@ -38,17 +36,21 @@ const AdminDashboard = ({ activeSection }) => {
 
   const [userSearch, setUserSearch] = useState("");
 
-  const [form, setForm] = useState({ name: "", email: "", password: "", role: "student" });
+  const [editUserId, setEditUserId] = useState(null); 
 
-  const [editUserId, setEditUserId] = useState(null);
+  // FIX 6: Ensure full_name is used in state to match the server
 
-  const [message, setMessage] = useState("");
+  const [editForm, setEditForm] = useState({ full_name: "", email: "", role: "", password: "" }); 
 
-  const [email, setEmail] = useState("");
+  const [message, setMessage] = useState(""); 
 
-  const [msg, setMsg] = useState("");
+  
 
-  const [error, setError] = useState("");
+  const [msg, setMsg] = useState(""); 
+
+  const [error, setError] = useState(""); 
+
+
 
 
 
@@ -56,7 +58,7 @@ const AdminDashboard = ({ activeSection }) => {
 
     email: "",
 
-    role: "admin",
+    role: "admin", // Default is Admin role
 
     type: "",
 
@@ -80,6 +82,8 @@ const AdminDashboard = ({ activeSection }) => {
 
     try {
 
+      // This sends the invitation for admin, head_admin, or adviser
+
       await axios.post("/users/invite-user", inviteForm);
 
       setMsg("Invitation sent!");
@@ -96,11 +100,9 @@ const AdminDashboard = ({ activeSection }) => {
 
 
 
-  // Fetch projects for project list/cards
+  // ... (useEffect for projects and counts remains the same) ...
 
   useEffect(() => {
-
-    // Only run this when on the dashboard section or on initial mount
 
     if (activeSection === "dashboard" || activeSection === undefined) {
 
@@ -114,13 +116,7 @@ const AdminDashboard = ({ activeSection }) => {
 
     
 
-    // FIX: Fetch total user count and project counts immediately on mount
-
-    // Combined into one useEffect for cleaner code on initial dashboard load.
-
     if (activeSection === "dashboard" || activeSection === undefined) {
-
-      // Fetch total user count
 
       axios.get("/users/count")
 
@@ -130,8 +126,6 @@ const AdminDashboard = ({ activeSection }) => {
 
       
 
-      // Fetch project status counts
-
       axios.get("/projects/counts")
 
         .then(res => setCounts(prev => ({ ...prev, ...res.data })))
@@ -140,13 +134,7 @@ const AdminDashboard = ({ activeSection }) => {
 
     }
 
-    
-
-    // The fetches are intentionally run here based on activeSection's initial state
-
-    // or when it explicitly changes to "dashboard".
-
-  }, [activeSection]); // Keep the dependency array to run when the section changes.
+  }, [activeSection]);
 
 
 
@@ -154,15 +142,23 @@ const AdminDashboard = ({ activeSection }) => {
 
   // Fetch users for user management
 
+  const fetchUsers = () => {
+
+    axios.get("/users/all")
+
+      .then(res => setUsers(res.data.users || []))
+
+      .catch(() => setUsers([]));
+
+  };
+
+
+
   useEffect(() => {
 
     if (activeSection === "users") {
 
-      axios.get("/users/all")
-
-        .then(res => setUsers(res.data.users || []))
-
-        .catch(() => setUsers([]));
+      fetchUsers();
 
     }
 
@@ -180,27 +176,29 @@ const AdminDashboard = ({ activeSection }) => {
 
     try {
 
-      if (editUserId) {
+      // FIX 7: Send the fields the server expects: name (mapped to full_name), email, role
 
-        await axios.put(`/users/update/${editUserId}`, form);
+      await axios.put(`/users/update/${editUserId}`, { 
 
-        setMessage("User updated!");
+        name: editForm.full_name, // Send as 'name' for controller
 
-      } else {
+        email: editForm.email, 
 
-        await axios.post("/users/add", form);
+        role: editForm.role 
 
-        setMessage("User added!");
+      });
 
-      }
 
-      setForm({ name: "", email: "", password: "", role: "student" });
 
-      setEditUserId(null);
+      setMessage("User updated!");
+
+      setEditUserId(null); // Close modal/form
+
+      fetchUsers(); // Re-fetch users
 
     } catch (err) {
 
-      setMessage("Error updating/adding user.");
+      setMessage(err.response?.data?.message || "Error updating user.");
 
     }
 
@@ -208,7 +206,15 @@ const AdminDashboard = ({ activeSection }) => {
 
 
 
+
+
   const handleDeleteUser = async (id) => {
+
+    // Confirm before deleting
+
+    if (!window.confirm("Are you sure you want to delete this user?")) return;
+
+    
 
     try {
 
@@ -218,9 +224,9 @@ const AdminDashboard = ({ activeSection }) => {
 
       setUsers(users.filter(u => u.id !== id));
 
-    } catch {
+    } catch (err) {
 
-      setMessage("Error deleting user.");
+      setMessage(err.response?.data?.message || "Error deleting user.");
 
     }
 
@@ -230,9 +236,13 @@ const AdminDashboard = ({ activeSection }) => {
 
   const handleEditUser = (user) => {
 
+    // Open edit modal/form with user data
+
     setEditUserId(user.id);
 
-    setForm({ name: user.full_name, email: user.email, password: "", role: user.role });
+    // FIX 8: Populate full_name for the edit form
+
+    setEditForm({ full_name: user.full_name, email: user.email, role: user.role, password: "" }); 
 
   };
 
@@ -250,13 +260,7 @@ const AdminDashboard = ({ activeSection }) => {
 
 
 
-  // Project status groups
-
   const pendingProjects = projects.filter(p => p.status === "pending" || p.status === "endorsed");
-
-  const approvedProjects = projects.filter(p => p.status === "approved");
-
-  const rejectedProjects = projects.filter(p => p.status === "rejected" || p.status === "need_revision" || p.status === "admin_revision");
 
 
 
@@ -265,28 +269,6 @@ const AdminDashboard = ({ activeSection }) => {
   const section = activeSection || window.location.pathname.includes("manage-users") ? "users" : "dashboard";
 
 
-
-  const handleInvite = async (e) => {
-
-    e.preventDefault();
-
-    setMsg(""); setError("");
-
-    try {
-
-      const token = localStorage.getItem("token");
-
-      // This function seems redundant and should rely on handleInviteSubmit above
-
-      console.log("Invite Adviser logic executed, usually handled by handleInviteSubmit.");
-
-    } catch (err) {
-
-      setError(err.response?.data?.message || "Failed to send invitation.");
-
-    }
-
-  };
 
 
 
@@ -297,8 +279,6 @@ const AdminDashboard = ({ activeSection }) => {
       {section === "dashboard" && (
 
         <>
-
-          {/* NEW: Top-level Count Cards */}
 
           <div className="dashboard-summary-cards">
 
@@ -322,7 +302,7 @@ const AdminDashboard = ({ activeSection }) => {
 
           
 
-          {/* NEW: Project Status Breakdown */}
+          {/* Project Status Breakdown */}
 
           <h2 style={{ marginTop: '3rem', marginBottom: '1.5rem', fontSize: '1.8rem', color: '#3a3e92' }}>Project Status Summary</h2>
 
@@ -398,8 +378,6 @@ const AdminDashboard = ({ activeSection }) => {
 
             </div>
 
-            {/* Removed the approved and rejected cards here to make room for summary and focus on the main list */}
-
           </div>
 
         </>
@@ -414,9 +392,15 @@ const AdminDashboard = ({ activeSection }) => {
 
           <h3 style={{ marginTop: '5rem', marginBottom: '2rem', fontSize: '1.5rem' }}>User Management</h3>
 
+        
+
+          {/* Invite Form */}
+
         <form onSubmit={handleInviteSubmit} className="admin-form">
 
           <input name="email" type="email" placeholder="Invite Email" value={inviteForm.email} onChange={handleInviteChange} required />
+
+          {/* FIX 9: Include Head Admin in the invite options */}
 
           <select name="role" value={inviteForm.role} onChange={handleInviteChange}>
 
@@ -428,11 +412,13 @@ const AdminDashboard = ({ activeSection }) => {
 
           </select>
 
+          {/* Conditional fields for Research Adviser */}
+
           {inviteForm.role === "research_adviser" && (
 
             <>
 
-              <select name="type" value={inviteForm.type} onChange={handleInviteChange}>
+              <select name="type" value={inviteForm.type} onChange={handleInviteChange} required>
 
                 <option value="">Select Type</option>
 
@@ -444,7 +430,7 @@ const AdminDashboard = ({ activeSection }) => {
 
               {inviteForm.type === "college" && (
 
-                <select name="department" value={inviteForm.department} onChange={handleInviteChange}>
+                <select name="department" value={inviteForm.department} onChange={handleInviteChange} required>
 
                   <option value="">Select Department</option>
 
@@ -460,7 +446,7 @@ const AdminDashboard = ({ activeSection }) => {
 
               {inviteForm.type === "senior_high" && (
 
-                <select name="strand" value={inviteForm.strand} onChange={handleInviteChange}>
+                <select name="strand" value={inviteForm.strand} onChange={handleInviteChange} required>
 
                   <option value="">Select Strand</option>
 
@@ -486,9 +472,61 @@ const AdminDashboard = ({ activeSection }) => {
 
         </form>
 
+        {/* End Invite Form */}
+
+
+
 
 
           {message && <div className="admin-message">{message}</div>}
+
+
+
+          {/* Edit User Modal/Form */}
+
+          {editUserId && (
+
+            <div className="admin-edit-modal">
+
+              <form onSubmit={handleUserSubmit} className="admin-edit-form">
+
+                <h4>Edit User</h4>
+
+                <input name="full_name" value={editForm.full_name} onChange={e => setEditForm({...editForm, full_name: e.target.value})} placeholder="Full Name" required />
+
+                <input name="email" type="email" value={editForm.email} onChange={e => setEditForm({...editForm, email: e.target.value})} placeholder="Email" required />
+
+                {/* FIX 10: Include all roles in the edit dropdown */}
+
+                <select name="role" value={editForm.role} onChange={e => setEditForm({...editForm, role: e.target.value})}>
+
+                  <option value="head_admin">Head Admin</option>
+
+                  <option value="admin">Admin</option>
+
+                  <option value="research_adviser">Research Adviser</option>
+
+                  <option value="student">Student</option>
+
+                  <option value="guest">Guest</option>
+
+                </select>
+
+                <button type="submit" className="admin-btn edit-btn">Save Changes</button>
+
+                <button type="button" onClick={() => setEditUserId(null)} className="admin-btn delete-btn">Cancel</button>
+
+              </form>
+
+            </div>
+
+          )}
+
+          {/* End Edit User Modal/Form */}
+
+
+
+
 
           <div className="admin-list-wrapper">
 
@@ -553,6 +591,8 @@ const AdminDashboard = ({ activeSection }) => {
   );
 
 };
+
+
 
 
 
