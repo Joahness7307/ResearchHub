@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import "././Auth/AuthForm.css";
+import "./Auth/AuthForm.css";
 
 const RoleSelection = () => {
   const navigate = useNavigate();
@@ -24,32 +24,36 @@ const RoleSelection = () => {
 
   return (
     <div className="auth-container">
-      <div className="auth-signup-form" style={{ maxWidth: 400, textAlign: "center" }}>
+      <div className="auth-signup-form role-selection-form">
         <h2>Get Started</h2>
         <p className="subtext">Choose your role to continue</p>
         {!studentPrompt ? (
           <>
-            <button style={{ marginBottom: 20 }} onClick={() => handleSelect("student")}>
+            <button className="role-btn" onClick={() => handleSelect("student")}>
               Signup as Student
             </button>
-            <button onClick={() => handleSelect("user")}>
+            <button className="role-btn" onClick={() => handleSelect("user")}>
               Signup as Guest 
             </button>
-            <div className="auth-switch">
-            Already have an account? <Link to="/login">Login</Link>
-          </div>
+            <div className="auth-switch" style={{ marginTop: '20px' }}>
+              Already have an account? <Link to="/login">Login</Link>
+            </div>
           </>
         ) : (
           <>
             <p style={{ marginBottom: 16 }}>Are you a College or Senior High student?</p>
-            <button style={{ marginBottom: 12 }} onClick={() => handleStudentType("college")}>
+            <button className="role-btn" onClick={() => handleStudentType("college")}>
               College Student
             </button>
-            <button onClick={() => handleStudentType("seniorhigh")}>
+            <button className="role-btn" onClick={() => handleStudentType("seniorhigh")}>
               Senior High Student
             </button>
             <div style={{ marginTop: 20 }}>
-              <button type="button" onClick={() => setStudentPrompt(false)} style={{ fontSize: 12 }}>
+              <button 
+                type="button" 
+                onClick={() => setStudentPrompt(false)} 
+                className="back-btn"
+              >
                 Back
               </button>
             </div>

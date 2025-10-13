@@ -1,3 +1,18 @@
+:root {
+  /* Colors */
+  --primary-color: #3a3e92; /* Main navbar background color */
+  --secondary-color: #2563eb; /* Primary button/link color */
+  --text-light: #fff;
+  --text-dark: #222;
+  --text-muted: #888;
+  --hover-color: rgba(211, 211, 211, 0.699);
+  --notification-badge-color: #b33834;
+  --sidebar-bg: var(--primary-color);
+  --sidebar-hover: #b3b3ff;
+  --dropdown-bg: #fff;
+}
+
+/* Base Navbar Styles */
 .navbar {
   position: fixed;
   top: 0;
@@ -7,10 +22,10 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: #3a3e92;
+  background: var(--primary-color);
   padding: 1.5rem 2rem;
-  color: #fff;
-  box-shadow: 0 2px 6px rgba(255, 255, 255, 0.1);
+  color: var(--text-light);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
 }
 
 .navbar-left,
@@ -23,66 +38,90 @@
 .navbar-center {
   flex: 1;
   justify-content: center;
-  gap: 2rem;
+  gap: 3rem; /* Increased space between unauthenticated links */
 }
 
-.navbar-right a,
-.navbar-center a,
-.navbar-right {
-  color: #fff;
-  margin-left: 2.5rem;
+/* General Link/Button Styles */
+.nav-link,
+.logout-btn,
+.navbar-center a {
+  color: var(--text-light);
   text-decoration: none;
   background: none;
   border: none;
   font-size: 1.1rem;
   cursor: pointer;
-  transition: color 0.2s;
+  transition: color 0.2s, background-color 0.2s;
+  margin-left: 4rem; /* Default spacing for links on the right */
 }
 
-.navbar-link {
-  color: #fff;
-  margin-left: 2.5rem;
-  text-decoration: none;
-  background: none;
-  border: none;
-  font-size: 1rem;
-  cursor: pointer;
-  transition: color 0.2s;
-}
-.navbar-link:hover {
-  color: rgba(211, 211, 211, 0.699);
+.nav-link:hover,
+.logout-btn:hover,
+.navbar-center a:hover {
+  color: var(--hover-color);
 }
 
-.navbar-center a:hover,
-.navbar-right a:hover,
-.navbar-right button:hover {
-  color: rgba(211, 211, 211, 0.699) ;
+.primary-btn {
+  padding: 0.6rem 1.2rem;
+  background: var(--secondary-color);
+  border-radius: 8px;
+  font-weight: 600;
+  color: var(--text-light) !important; /* Override link color */
+}
+
+.primary-btn:hover {
+  background: #1e52c9; /* Slightly darker shade on hover */
+  color: var(--text-light);
 }
 
 .app-logo {
   width: 200px;
+  height: auto;
 }
 
-/* Notification Dropdown */
+/* --- Notification Dropdown (Student/Guest) --- */
+.notification-icon {
+  margin-left: 40px;
+  width: 26px;
+  height: 26px;
+  cursor: pointer;
+  filter: invert(1); /* Makes the icon white */
+  transition: opacity 0.2s;
+}
+
+.notification-icon:hover {
+  opacity: 0.8;
+}
+
+.notification-badge {
+  position: absolute;
+  top: -7px;
+  right: -7px;
+  background: var(--notification-badge-color);
+  color: var(--text-light);
+  border-radius: 50%;
+  font-size: 12px;
+  padding: 2px 7px;
+  font-weight: 700;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+}
+
 .projects-dropdown {
   position: absolute;
-  top: 36px;
+  top: 40px; /* Slightly lower than before */
   right: 0;
-  left: auto;
-  background: #fff;
-  color: #222;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.13);
-  border-radius: 8px;
-  min-width: 360px;
-  max-width: 340px;
+  background: var(--dropdown-bg);
+  color: var(--text-dark);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border-radius: 10px;
+  min-width: 380px; /* Slightly wider */
+  max-width: 90vw;
   z-index: 2000;
   padding: 0.5rem 0;
   display: flex;
   flex-direction: column;
-  height: 510px;
-  max-height: 600px;
-  overflow-y: auto;
-  overflow-x: hidden;
+  height: 500px;
+  overflow-y: hidden; /* Manage overflow only on the list */
 }
 
 .projects-dropdown-list {
@@ -90,306 +129,208 @@
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
-  padding: 0 18px 0 18px;
+  padding: 0;
   overflow-y: auto;
-  overflow-x: hidden;
 }
 
 .projects-dropdown-empty {
-  padding: 1.2rem;
-  color: #888;
-  font-size: 15px;
+  padding: 1.5rem;
+  color: var(--text-muted);
+  font-size: 1rem;
   text-align: center;
 }
 
 .projects-dropdown-item {
   white-space: normal;
-  font-size: 15px;
-  padding: 0.8rem 1.2rem;
+  font-size: 0.95rem;
+  padding: 0.8rem 1.5rem;
   border-bottom: 1px solid #e0e0e0;
-  color: #2563eb;
-  font-weight: 500;
   cursor: pointer;
-  min-height: 60px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  margin-bottom: 0;
-  background: none;
-  transition: background 0.18s;
+  min-height: 65px;
+  transition: background 0.15s;
 }
+
+.dropdown-item-reason {
+  line-height: 1.3;
+}
+
 .projects-dropdown-item.unread {
-  color: #000;
+  color: var(--text-dark);
   font-weight: 700;
+  background: #f8f8ff; /* Light background for unread */
 }
+
 .projects-dropdown-item.read {
   color: #555;
   font-weight: 400;
 }
+
 .projects-dropdown-item:hover {
   background: #e0e7ff;
 }
 
 .projects-dropdown-date {
-  font-size: 12px;
-  color: #888;
-  margin-top: 2px;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-top: 4px;
 }
 
 .dropdown-see-all-btn {
-  width: calc(100% - 36px);
-  margin: 0 18px;
+  margin: 10px 18px 10px 18px;
   padding: 0.8rem;
-  background: #2563eb;
-  color: #fff;
+  background: var(--secondary-color);
+  color: var(--text-light);
   border: none;
-  border-radius: 10px;
+  border-radius: 8px;
   font-weight: 600;
-  font-size: 16px;
+  font-size: 1rem;
   cursor: pointer;
   letter-spacing: 0.5px;
-  margin-top: 10px;
+  transition: background 0.2s;
 }
 
-/* Styles for Admin/Adviser Roles */
-.navbar-right .my-account-link {
-  color: #fff;
-  text-decoration: none;
-  font-size: 1.1rem;
-  display: block; /* Visible by default on large screens */
+.dropdown-see-all-btn:hover {
+  background: #1e52c9;
 }
 
-/* Hide the generic .navbar-hamburger on large screens by default */
-.navbar-hamburger {
-  display: none;
-  cursor: pointer;
-  z-index: 1300; /* Ensure it's above other elements */ 
-}
+/* --- Responsive & Mobile Sidebar --- */
 
-/* New: Increased Z-index for Admin hamburger */
-.admin-hamburger {
-    z-index: 1301; /* Higher than the mobile sidebar (1100) and overlay (1099) */
-}
-
-/* Responsive Notification Dropdown */
+/* Hide desktop navigation elements by default on smaller screens */
 @media (max-width: 1024px) {
-  .projects-dropdown {
-    min-width: 220px;
-    max-width: 90vw;
-    right: 0;
-    left: auto;
-    top: 36px;
-    padding: 0.5rem 0;
-    font-size: 15px;
-    height: 400px;
-    max-height: 400px;
+  .desktop-nav {
+    display: none !important;
+  }
+  .navbar-left {
+    flex: 1;
   }
 }
 
-@media (max-width: 768px) {
-  .projects-dropdown {
-    min-width: 180px;
-    max-width: 98vw;
-    right: 0;
-    left: auto;
-    top: 36px;
-    padding: 0.3rem 0;
-    font-size: 14px;
-    height: 320px;
-    max-height: 320px;
-  }
-  .projects-dropdown-item {
-    font-size: 14px;
-    padding: 0.6rem 1rem;
-  }
-  .dropdown-see-all-btn {
-    font-size: 15px;
-    padding: 0.7rem;
-  }
-}
-
-@media (max-width: 480px) {
-  .projects-dropdown {
-    min-width: 120px;
-    max-width: 98vw;
-    right: 0;
-    left: auto;
-    top: 36px;
-    padding: 0.2rem 0;
-    font-size: 13px;
-    height: 220px;
-    max-height: 220px;
-    border-radius: 0 0 12px 12px;
-  }
-  .projects-dropdown-item {
-    font-size: 13px;
-    padding: 0.5rem 0.7rem;
-  }
-  .dropdown-see-all-btn {
-    font-size: 14px;
-    padding: 0.6rem;
-  }
-}
-
-/* Hamburger and Sidebar Styles */
+/* Mobile Hamburger Icon */
 .navbar-hamburger {
-  display: none;
+  display: none; /* Hidden on desktop */
   cursor: pointer;
   font-size: 2.2rem;
-  color: #fff;
-  margin-left: auto;
-  z-index: 1101;
+  color: var(--text-light);
+  margin-left: 2rem;
+  z-index: 1300;
+  /* Adjust for admin/adviser role if using external sidebar */
+  &.is-open {
+      color: var(--hover-color);
+  }
 }
-.hamburger-icon, .hamburger-close {
-  font-size: 2.2rem;
-  color: #fff;
-}
-.navbar-sidebar {
-  display: none;
-}
-.navbar-overlay {
-  display: none;
-}
-
-/* Ensure the adviser hamburger icon is always visible and above the sidebar */
-.adviser-navbar-hamburger {
-  display: block;
-  position: fixed;
-  top: 1.5rem;
-  right: 2rem;
-  z-index: 1301; /* Higher than sidebar (sidebar is 1200) */
-  font-size: 2.2rem;
-  color: #fff;
-  cursor: pointer;
-  background: none;
-  border: none;
-}
-
-/* Hide the icon on desktop */
-@media (min-width: 769px) {
-  .adviser-navbar-hamburger {
+@media (max-width: 1024px) {
+  .navbar-hamburger {
+    display: block; /* Show on tablet/mobile */
+  }
+  /* Hide My Account link for Admin/Adviser on mobile */
+  .my-account-link {
     display: none !important;
   }
 }
 
-/* 🖥️ Large Screen */
-@media (min-width: 1441px) {
-  .app-logo { width: 220px; }
-  .navbar-center a, .navbar-right a, .navbar-right button { font-size: 1.2rem; }
+/* Sidebar Container */
+.navbar-sidebar {
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 280px; /* Wider sidebar for better content space */
+  height: 100vh;
+  background: var(--sidebar-bg);
+  box-shadow: -4px 0 15px rgba(0, 0, 0, 0.2);
+  z-index: 1200;
+  padding: 5rem 2rem 2rem 2rem;
+  gap: 1.5rem;
+  transition: transform 0.3s ease-out;
+  transform: translateX(100%); /* Start off-screen */
 }
 
-/* Desktop */
-@media (max-width: 1440px) {
-  .app-logo { width: 180px; }
-  .navbar-center a, .navbar-right a, .navbar-right button { font-size: 1.05rem; }
+.navbar-sidebar.open {
+  transform: translateX(0);
 }
 
-/* Tablet & Mobile Hamburger */
-@media (max-width: 1024px) {
-  .app-logo { width: 180px; }
-  .desktop-nav { display: none; }
-  .navbar-hamburger { display: block; }
-  .navbar-sidebar {
-    display: flex;
-    flex-direction: column;
-    position: fixed;
-    top: 0; right: 0;
-    width: 260px;
-    height: 100vh;
-    background: #3a3e92;
-    box-shadow: -2px 0 12px rgba(0,0,0,0.13);
-    z-index: 1100;
-    padding: 5rem 2rem 2rem 2rem;
-    gap: 2rem;
-    transition: right 0.3s;
-    font-size: 1.1rem;
-    transform: translateX(100%);
-  }
-  .navbar-sidebar.open {
-    transform: translateX(0);
-  }
-  .navbar-sidebar a {
-    color: #fff;
-    text-decoration: none;
-    font-size: 1.1rem;
-    margin-bottom: 1.2rem;
-    transition: color 0.2s;
-  }
-  .navbar-sidebar a:hover {
-    color: #b3b3ff;
-  }
-  .navbar-sidebar button {
-background-color: #333;
-outline: none;
-    border: none;
-    color: white;
-    padding: 12px;
-    font-size: 1rem;
-    border-radius: 8px
-  }
-  .navbar-overlay {
-    display: block;
-    position: fixed;
-    top: 0; left: 0;
-    width: 100vw; height: 100vh;
-    background: rgba(0,0,0,0.25);
-    z-index: 1099;
-  }
-}
-/* Style for logout button */
-.navbar-logout-btn {
-    font-size: 1.1rem;
-    margin-left: 5rem;
-    background: none;
-    color: #fff;
-    text-decoration: none;
-    border: none;
-    cursor: pointer;
-}
-.navbar-logout-btn:hover {
-    color: rgba(211, 211, 211, 0.699);
+.navbar-sidebar .sidebar-link {
+  color: var(--text-light);
+  text-decoration: none;
+  font-size: 1.1rem;
+  padding: 0.5rem 0;
+  transition: color 0.2s;
 }
 
-/* Style for notification badge */
-.notification-badge {
-    position: absolute;
-    top: -7px;
-    right: -7px;
-    background: #b33834;
-    color: #fff;
-    border-radius: 50%;
-    font-size: 12px;
-    padding: 2px 7px;
-    font-weight: 700;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.13);
+.navbar-sidebar .sidebar-link:hover {
+  color: var(--sidebar-hover);
 }
 
-/* Tablet Portrait */
+.navbar-sidebar button.sidebar-link {
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  color: var(--text-light);
+  font-size: 1.1rem;
+  padding: 0.5rem 0;
+  cursor: pointer;
+}
+
+.navbar-sidebar .primary-btn {
+  margin-top: 1rem;
+  text-align: center;
+  font-size: 1.1rem;
+}
+
+.navbar-overlay {
+  display: none;
+}
+
+.navbar-sidebar.open ~ .navbar-overlay {
+  display: block;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 1199;
+}
+
+/* Tablet & Smaller Mobile Adjustments */
 @media (max-width: 768px) {
-  .app-logo { width: 180px; }
+  .navbar {
+    padding: 1rem 1.2rem;
+  }
+  .app-logo {
+    width: 150px;
+  }
   .navbar-sidebar {
-    width: 200px;
-    padding: 4rem 1rem 1rem 1rem;
-    font-size: 1rem;
+    width: 250px;
+    padding: 4rem 1.5rem 1.5rem 1.5rem;
   }
-   /* Hide "My Account" on small screens */
-  .navbar-right .my-account-link {
-    display: none;
+  .projects-dropdown {
+    min-width: 280px;
+    height: 400px;
+    top: 35px;
   }
-
-  /* Show the hamburger icon on small screens */
-  .navbar-hamburger {
-    display: block;
+  .notification-icon {
+    width: 24px;
+    height: 24px;
   }
 }
 
-/* Small Mobile */
 @media (max-width: 480px) {
-  .app-logo { width: 150px; }
+  .navbar {
+    padding: 0.8rem 1rem;
+  }
+  .app-logo {
+    width: 130px;
+  }
   .navbar-sidebar {
-    width: 100vw;
-    padding: 3rem 0.7rem 1rem 0.7rem;
-    font-size: 0.98rem;
-    gap: 1rem;
+    width: 80vw;
+    padding: 3.5rem 1rem 1rem 1rem;
+  }
+  .projects-dropdown {
+    min-width: 200px;
+    height: 350px;
+    top: 30px;
   }
 }

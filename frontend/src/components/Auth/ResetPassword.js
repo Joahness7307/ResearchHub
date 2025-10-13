@@ -14,7 +14,14 @@ const ResetPassword = () => {
   const handleSubmit = async e => {
     e.preventDefault();
     setMsg(""); setError("");
+    
+    if (!token) {
+        setError("Invalid or missing reset token.");
+        return;
+    }
+    
     try {
+      // NOTE: Ensure your backend endpoint matches the structure
       await axios.post(`/users/reset-password/${token}`, { password });
       setMsg("Password reset successful! You can now login.");
       setTimeout(() => navigate("/login"), 2000);
@@ -36,6 +43,7 @@ const ResetPassword = () => {
           value={password}
           onChange={e => setPassword(e.target.value)}
           required
+          className="auth-input"
         />
         <button type="submit">Save New Password</button>
         <div className="auth-switch">

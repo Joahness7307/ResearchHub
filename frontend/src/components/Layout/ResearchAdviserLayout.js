@@ -1,4 +1,4 @@
-// ResearchAdviserLayout.js - COMPLETED FILE
+// ResearchAdviserLayout.js
 import React, { useState, useContext } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { AuthContext } from "../../context/AuthContext";
@@ -22,8 +22,11 @@ const ResearchAdviserLayout = ({ children }) => {
   const location = useLocation();
   const { logout } = useContext(AuthContext);
 
-  // Function to be passed to the sidebar to close itself
+  // Function to be passed to the sidebar to close itself (also used by overlay/close btn)
   const handleCloseSidebar = () => setSidebarOpen(false);
+
+  // --- FIX: Toggle function for Navbar ---
+  const handleToggleSidebar = () => setSidebarOpen(prev => !prev);
 
   const handleLogout = () => {
     logout();
@@ -39,9 +42,9 @@ const ResearchAdviserLayout = ({ children }) => {
   return (
     <div className="dashboard-layout">
       <Navbar
-        // MODIFIED: Only need to toggle the sidebar on hamburger click
-        onHamburgerClick={() => setSidebarOpen(true)}
-        // REMOVED: isHamburgerOpen prop is no longer needed in Navbar for icon switch
+        // CORRECTED: Pass the toggle function and the current state
+        onHamburgerClick={handleToggleSidebar}
+        isHamburgerOpen={sidebarOpen}
       />
 
       {/* Desktop Sidebar */}

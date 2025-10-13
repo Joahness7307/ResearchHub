@@ -3,7 +3,8 @@ import axios from "../../api/axios";
 import { AuthContext } from "../../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import "./StudentDashboard.css";
-import categoryColors from "../../constants/categoryColors";
+// NOTE: categoryColors is not provided, assuming it's correctly mapped in your constants
+import categoryColors from "../../constants/categoryColors"; 
 
 const StudentDashboard = () => {
   const { user } = useContext(AuthContext);
@@ -18,7 +19,10 @@ const StudentDashboard = () => {
     // Only fetch approved projects for the repository
     axios.get("/projects")
       .then(res => setProjects(res.data))
-      .catch(() => setProjects([]));
+      .catch((err) => {
+        console.error("Error fetching projects:", err);
+        setProjects([]);
+      });
   }, []);
 
   // Only approved projects
@@ -28,7 +32,7 @@ const StudentDashboard = () => {
   const collegeProjects = approvedProjects.filter(
     project =>
       project.submitter &&
-      project.submitter.department && // Check if department has a value (non-null/non-empty string)
+      project.submitter.department && // Check if department has a value
       project.submitter.year_level && // Check if year_level has a value
       !project.submitter.strand && // Ensure SHS fields are not present
       !project.submitter.grade_level
@@ -64,17 +68,25 @@ const StudentDashboard = () => {
     return titleMatch || categoryMatch || uploaderMatch;
   });
 
-  // Pagination logic (if needed) 
+  // Pagination logic
   const totalProjects = filteredProjects.length;
   const totalPages = Math.ceil(totalProjects / projectsPerPage);
   const startIndex = (currentPage - 1) * projectsPerPage;
   const endIndex = startIndex + projectsPerPage;
   const paginatedProjects = filteredProjects.slice(startIndex, endIndex);
 
-    useEffect(() => {
-    console.log("Selected card:", selectedCard);
-    console.log("Displayed projects:", displayedProjects);
-  }, [selectedCard, displayedProjects]);
+  // Reset page when filter changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedCard, searchTerm]);
+
+  const handlePageChange = (newPage) => {
+    setCurrentPage(Math.max(1, Math.min(newPage, totalPages)));
+  };
+
+  const projectCardClick = (projectId) => {
+    navigate(`/projects/${projectId}`);
+  };
 
   return (
     <div className="student-dashboard-container">
@@ -104,97 +116,99 @@ const StudentDashboard = () => {
       </div>
 
       <div className="dashboard-search-row">
-      <div className="search-wrapper">
-        <input
-          type="text"
-          placeholder="Search by project title..."
-          value={searchTerm}
-          onChange={e => setSearchTerm(e.target.value)}
-        />
-        <button
-          type="button"
-          className="search-button"
-          onClick={() => console.log("Searching for:", searchTerm)} // Replace with actual search logic if needed
-        >
-          Search
-        </button>
-      </div>  
-    </div>
+        <div className="search-wrapper">
+          <input
+            type="text"
+            placeholder="Search by title, category, or author..."
+            value={searchTerm}
+            onChange={e => setSearchTerm(e.target.value)}
+          />
+          <button
+            type="button"
+            className="search-button"
+            onClick={() => { /* Search is instant on change, no need for extra logic here */ }}
+          >
+            Search
+          </button>
+        </div>
+      </div>
 
       <div className="dashboard-main-content">
         {filteredProjects.length === 0 ? (
           <div className="no-projects">No projects found.</div>
         ) : (
-          <ul className="repository-list">
-            {paginatedProjects.map(project => (
-              <li
-                key={project.id}
-                className="repository-item"
-                onClick={() => navigate(`/projects/${project.id}`)}
-              >
-                <div className="repository-title">{project.title}</div>
-                <div className="repository-meta">
-                  <span
-                   className="repository-category"
-                   style={{
-                    background: categoryColors[project.category] || "#586b94ff",
-                    color: "#fff"
-                   }}
-                  >
-                   {project.category}
-                 </span>
-                  <span className="repository-authors">{project.authors}</span>
-                </div>
-                <div className="repository-abstract">
-                  <b>Abstract:</b> {project.abstract.length > 120 ? project.abstract.slice(0, 120) + "..." : project.abstract}
-                </div>
-              </li>
-            ))}
+          <>
+            <ul className="repository-list">
+              {paginatedProjects.map(project => (
+                <li
+                  key={project.id}
+                  className="repository-item"
+                  onClick={() => projectCardClick(project.id)}
+                >
+                  <div className="repository-title">{project.title}</div>
+                  <div className="repository-meta">
+                    <span
+                      className="repository-category"
+                      style={{
+                        background: categoryColors[project.category] || "#586b94ff",
+                        color: "#fff"
+                      }}
+                    >
+                      {project.category}
+                    </span>
+                    <span className="repository-authors">{project.authors}</span>
+                  </div>
+                  <div className="repository-abstract">
+                    <b>Abstract:</b> {project.abstract.length > 120 ? project.abstract.slice(0, 120) + "..." : project.abstract}
+                  </div>
+                </li>
+              ))}
+            </ul>
+
             <div className="pagination-controls" style={{ textAlign: "center", marginTop: "2rem" }}>
-            <button
-              className="pagination-btn"
-              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-              disabled={currentPage === 1}
-              style={{
-                padding: "0.7rem 1.5rem",
-                marginRight: "1rem",
-                background: "#2563eb",
-                color: "#fff",
-                border: "none",
-                borderRadius: "8px",
-                fontWeight: 600,
-                fontSize: "1rem",
-                cursor: currentPage === 1 ? "not-allowed" : "pointer",
-                opacity: currentPage === 1 ? 0.6 : 1
-              }}
-            >
-              Previous
-            </button>
-            <span style={{ fontWeight: 600, fontSize: "1.1rem", color: "#2563eb" }}>
-              Page {currentPage} of {totalPages}
-            </span>
-            <button
-              className="pagination-btn"
-              onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-              disabled={currentPage === totalPages || totalPages === 0}
-              style={{
-                padding: "0.7rem 1.5rem",
-                marginLeft: "1rem",
-                background: "#2563eb",
-                color: "#fff",
-                border: "none",
-                borderRadius: "8px",
-                fontWeight: 600,
-                fontSize: "1rem",
-                cursor: (currentPage === totalPages || totalPages === 0) ? "not-allowed" : "pointer",
-                opacity: (currentPage === totalPages || totalPages === 0) ? 0.6 : 1
-              }}
-            >
-              Next
-            </button>
-          </div>
-          </ul>
-          
+              <button
+                className="pagination-btn"
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 1}
+                style={{
+                  padding: "0.7rem 1.5rem",
+                  marginRight: "1rem",
+                  background: "#2563eb",
+                  color: "#fff",
+                  border: "none",
+                  borderRadius: "8px",
+                  fontWeight: 600,
+                  fontSize: "1rem",
+                  cursor: currentPage === 1 ? "not-allowed" : "pointer",
+                  opacity: currentPage === 1 ? 0.6 : 1
+                }}
+              >
+                Previous
+              </button>
+              <span style={{ fontWeight: 600, fontSize: "1.1rem", color: "#2563eb" }}>
+                Page {currentPage} of {totalPages}
+              </span>
+              <button
+                className="pagination-btn"
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage === totalPages || totalPages === 0}
+                style={{
+                  padding: "0.7rem 1.5rem",
+                  marginLeft: "1rem",
+                  background: "#2563eb",
+                  color: "#fff",
+                  border: "none",
+                  borderRadius: "8px",
+                  fontWeight: 600,
+                  fontSize: "1rem",
+                  cursor: (currentPage === totalPages || totalPages === 0) ? "not-allowed" : "pointer",
+                  opacity: (currentPage === totalPages || totalPages === 0) ? 0.6 : 1
+                }}
+              >
+                Next
+              </button>
+            </div>
+          </>
         )}
       </div>
     </div>

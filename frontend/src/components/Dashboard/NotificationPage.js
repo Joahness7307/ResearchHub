@@ -1,13 +1,13 @@
 import React, { useEffect, useState, useContext } from "react";
 import axios from "../../api/axios";
 import { AuthContext } from "../../context/AuthContext";
-import { useNavigate } from "react-router-dom"; // <-- Import useNavigate
+import { useNavigate } from "react-router-dom"; 
 import "./NotificationPage.css";
 
 const NotificationPage = () => {
   const { user } = useContext(AuthContext);
   const [notifications, setNotifications] = useState([]);
-  const navigate = useNavigate(); // <-- Initialize navigate
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (user && user.role === "research_adviser") {
@@ -39,7 +39,7 @@ const NotificationPage = () => {
               style={{ cursor: "pointer" }}
               onClick={() => {
                 if (user && user.role === "head_admin") {
-                  navigate(`/head-admin/notifications/${notif.id}`); // <-- Always use this for head admin
+                  navigate(`/head-admin/notifications/${notif.id}`); // Always use this for head admin
                 } else if (user && user.role === "admin") {
                   navigate(`/admin/notifications/${notif.id}`);
                 } else if (user && user.role === "research_adviser") {

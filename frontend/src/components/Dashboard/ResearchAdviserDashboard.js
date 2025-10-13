@@ -3,10 +3,8 @@ import { AuthContext } from "../../context/AuthContext";
 import axios from "../../api/axios";
 import { useNavigate } from "react-router-dom";
 import { io } from "socket.io-client";
-import "./ResearchAdviserPage.css";
+import "./ResearchAdviserPage.css"; // Corrected file name
 import categoryColors from "../../constants/categoryColors";
-// import NotificationPage from "./NotificationPage"; // Not used here
-// import MyAccount from "./MyAccount"; // Not used here
 
 const ResearchAdviserDashboard = ({ section }) => {
   const { user } = useContext(AuthContext);
@@ -37,7 +35,7 @@ const ResearchAdviserDashboard = ({ section }) => {
 
   // --- Real-time Notifications ---
   useEffect(() => {
-    if (!user) return;
+    if (!user || !process.env.REACT_APP_BACKEND_URL) return;
     socketRef.current = io(process.env.REACT_APP_BACKEND_URL);
     socketRef.current.on(`adviser_notify_${user.id}`, (data) => {
       alert(`${data.message}`);
@@ -57,7 +55,7 @@ const ResearchAdviserDashboard = ({ section }) => {
   // --- Project Filtering (Status) ---
   const pending = projects.filter(p => p.status === "pending");
   // Assuming 'endorsed' projects belong to this adviser
-  const endorsed = projects.filter(p => p.status === "endorsed"); 
+  const endorsed = projects.filter(p => p.status === "endorsed");
   const needRevision = projects.filter(p => p.status === "need_revision");
   const adminRevision = projects.filter(p => p.status === "admin_revision");
   const repository = projects.filter(p => p.status === "approved");
@@ -104,7 +102,7 @@ const ResearchAdviserDashboard = ({ section }) => {
   // --- Pagination Controls Component ---
   const PaginationControls = () => (
     totalPages > 1 && (
-      <div style={{ display: "flex", justifyContent: "center", gap: "1rem", marginTop: "2rem" }}>
+      <div className="pagination-controls" style={{ display: "flex", justifyContent: "center", gap: "1rem", marginTop: "2rem" }}>
         <button
           className="admin-btn"
           disabled={currentPage === 1}
@@ -159,10 +157,10 @@ const ResearchAdviserDashboard = ({ section }) => {
       </ul>
     )
   );
-  
+
   // --- Search Input Component ---
   const SearchInput = ({ value, onChange }) => (
-    <div style={{ display: "flex", alignItems: "center", marginBottom: "2rem", marginTop: "1.5rem" }}>
+    <div className="search-wrapper" style={{ display: "flex", alignItems: "center", marginBottom: "2rem", marginTop: "1.5rem" }}>
       <input
         type="text"
         placeholder="Search projects..."
@@ -171,7 +169,7 @@ const ResearchAdviserDashboard = ({ section }) => {
         className="admin-search-input"
         style={{ marginRight: "1rem", flex: 1, padding: "1rem 1.3rem" }}
       />
-      <button className="admin-btn" onClick={() => {}} style={{ padding: "1rem 1.3rem" }}>Search</button>
+      <button className="admin-btn search-button" onClick={() => {}} style={{ padding: "1rem 1.3rem" }}>Search</button>
     </div>
   );
 
@@ -180,11 +178,10 @@ const ResearchAdviserDashboard = ({ section }) => {
   // Render: Request for Revision (Custom Layout)
   // =========================================================
   if (section === "request-for-revision") {
-    // Note: The logic for projectsToFilter and paginatedProjects now correctly handles the revision cards.
     return (
       <div className="adviser-dashboard-container" style={{ padding: "5rem 2rem" }}>
         <h2 style={{ marginBottom: 20 }}>{sectionTitles[section]}</h2>
-        <div style={{ display: "flex", gap: "2rem", marginBottom: "2rem" }}>
+        <div className="dashboard-card-row" style={{ display: "flex", gap: "2rem", marginBottom: "2rem" }}>
           <div
             className={`dashboard-card${selectedRevisionCard === "adviser" ? " active" : ""}`}
             style={{ cursor: "pointer" }}
@@ -202,13 +199,13 @@ const ResearchAdviserDashboard = ({ section }) => {
             <div className="dashboard-card-count">{adminRevision.length}</div>
           </div>
         </div>
-        
+
         {/* Search Input for Revision Section (uses main searchTerm state) */}
-        <SearchInput 
-          value={searchTerm} 
-          onChange={e => setSearchTerm(e.target.value)} 
+        <SearchInput
+          value={searchTerm}
+          onChange={e => setSearchTerm(e.target.value)}
         />
-        
+
         <div className="dashboard-main-content">
           <ProjectList projects={paginatedProjects} />
           <PaginationControls />
@@ -232,28 +229,28 @@ const ResearchAdviserDashboard = ({ section }) => {
         <h2>{sectionTitles[section]}</h2>
         {/* Quick Stats Row */}
         <div className="dashboard-cards-row" style={{ marginBottom: "2.5rem" }}>
-          <div className="dashboard-card">
+          <div className="dashboard-card" onClick={() => navigate("/adviser/pending-projects")}>
             <h3>Pending Projects</h3>
             <div className="dashboard-card-count">{pendingCount}</div>
           </div>
-          <div className="dashboard-card">
+          <div className="dashboard-card" onClick={() => navigate("/adviser/endorsed-projects")}>
             <h3>Endorsed Projects</h3>
             <div className="dashboard-card-count">{endorsedCount}</div>
           </div>
-          <div className="dashboard-card">
+          <div className="dashboard-card" onClick={() => navigate("/adviser/approved-projects")}>
             <h3>Approved Projects</h3>
             <div className="dashboard-card-count">{approvedCount}</div>
           </div>
-          <div className="dashboard-card">
+          <div className="dashboard-card" onClick={() => navigate("/adviser/request-for-revision")}>
             <h3>Revision Requests</h3>
             <div className="dashboard-card-count">{revisionCount}</div>
           </div>
         </div>
-        
+
         {/* Search Input for dashboard (only affects "See All" view later, but here for consistency) */}
-        <SearchInput 
-          value={searchTerm} 
-          onChange={e => setSearchTerm(e.target.value)} 
+        <SearchInput
+          value={searchTerm}
+          onChange={e => setSearchTerm(e.target.value)}
         />
 
         {/* Latest Pending Projects */}
@@ -289,11 +286,11 @@ const ResearchAdviserDashboard = ({ section }) => {
   return (
     <div className="adviser-dashboard-container" style={{ padding: "5rem 2rem" }}>
       <h2>{sectionTitles[section] || "Research Adviser Dashboard"}</h2>
-      
+
       {/* Search Input */}
-      <SearchInput 
-        value={searchTerm} 
-        onChange={e => setSearchTerm(e.target.value)} 
+      <SearchInput
+        value={searchTerm}
+        onChange={e => setSearchTerm(e.target.value)}
       />
 
       <div className="dashboard-main-content">

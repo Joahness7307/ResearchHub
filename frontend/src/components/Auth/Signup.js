@@ -26,49 +26,47 @@ const Signup = () => {
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
-  // Dynamic field rendering
+  // Dynamic field rendering logic
   const showBlock = form.department === "BSIT" || form.department === "BSHM";
-  const showMajor = form.department === "BEED" || form.department === "BSED";
+  const showMajor = form.department === "BSED";
   const blocks = blocksByDept[form.department] || [];
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  // Signup.js - inside handleSubmit
-const handleSubmit = async (e) => {
-  e.preventDefault();
-  setError("");
-  
-  if (form.password !== form.confirm_password) {
-    setError("Passwords do not match");
-    return;
-  }
-  
-  // 🔑 Crucial changes here: Prepare the data payload
-  const dataToSend = { ...form, role: "student" }; // Add the role
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError("");
+    
+    if (form.password !== form.confirm_password) {
+      setError("Passwords do not match");
+      return;
+    }
+    
+    const dataToSend = { ...form, role: "student" }; 
 
-  if (!showBlock) {
-    dataToSend.block = null; // Set to null if block isn't shown (e.g., for BEED/BSED)
-  }
-  
-  if (!showMajor) {
-    dataToSend.major = null; // Set to null if major isn't shown (e.g., for BSIT/BSHM)
-  }
+    // Handle conditional fields
+    if (!showBlock) {
+      delete dataToSend.block; // Remove key completely if not needed
+    }
+    
+    if (!showMajor) {
+      delete dataToSend.major; // Remove key completely if not needed
+    }
+    
+    // Remove fields for Senior High, just to be safe (though server should ignore)
+    delete dataToSend.strand;
+    delete dataToSend.grade_level;
+    delete dataToSend.confirm_password; // Server usually expects password only
 
-  // Remove the strand/gradeLevel fields which are for senior high, 
-  // although the server should ignore them for college registration
-  delete dataToSend.strand;
-  delete dataToSend.grade_level;
-
-  try {
-    // Send the prepared data
-    await axios.post("/users/register", dataToSend);
-    navigate("/login");
-  } catch (err) {
-    setError(err.response?.data?.message || "Registration failed");
-  }
-};
+    try {
+      await axios.post("/users/register", dataToSend);
+      navigate("/login");
+    } catch (err) {
+      setError(err.response?.data?.message || "Registration failed");
+    }
+  };
 
   return (
     <div className="auth-container">
@@ -118,8 +116,8 @@ const handleSubmit = async (e) => {
           </div>
         </div>
 
-        {showBlock && (
-          <div className="auth-row">
+        <div className="auth-row">
+          {showBlock && (
             <div className="auth-col">
               <label className="auth-label" htmlFor="block">Block</label>
               <select
@@ -136,11 +134,9 @@ const handleSubmit = async (e) => {
                 ))}
               </select>
             </div>
-          </div>
-        )}
+          )}
 
-        {showMajor && (
-          <div className="auth-row">
+          {showMajor && (
             <div className="auth-col">
               <label className="auth-label" htmlFor="major">Major</label>
               <select
@@ -157,14 +153,26 @@ const handleSubmit = async (e) => {
                 ))}
               </select>
             </div>
-          </div>
-        )}
+          )}
+          
+          {/* Add an empty div for layout if only one conditional field is shown */}
+          {((showBlock && !showMajor) || (showMajor && !showBlock)) && <div className="auth-col"></div>}
+          
+          {/* Fallback to fill the row if neither are shown (e.g., for BEED, BPED, BSENTREP) */}
+          {(!showBlock && !showMajor) && (
+            <>
+              <div className="auth-col"></div>
+              <div className="auth-col"></div>
+            </>
+          )}
+        </div>
+
 
         <label className="auth-label" htmlFor="password">Password</label>
         <input id="password" name="password" type="password" placeholder="Password" value={form.password} onChange={handleChange} required className="auth-input" />
 
         <label className="auth-label" htmlFor="confirm_password">Confirm Password</label>
-        <input id="confirm_Password" name="confirm_password" type="password" placeholder="Confirm Password" value={form.confirm_password} onChange={handleChange} required className="auth-input" />
+        <input id="confirm_password" name="confirm_password" type="password" placeholder="Confirm Password" value={form.confirm_password} onChange={handleChange} required className="auth-input" />
 
         <button type="submit">Signup</button>
         <div className="auth-switch">
