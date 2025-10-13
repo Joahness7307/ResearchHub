@@ -158,7 +158,7 @@ const Navbar = ({
           </div>
           <div className="navbar-right desktop-nav">
             <Link to="/login" className="nav-link nav-btn">Login</Link>
-            <Link to="/role-selection" className="nav-link nav-btn primary-btn">Signup</Link>
+            <Link to="/role-selection" className="nav-link nav-btn">Signup</Link>
           </div>
 
           {/* Mobile Hamburger (Unauth) */}
