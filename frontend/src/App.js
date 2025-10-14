@@ -94,85 +94,85 @@ function App() {
         </Route> */}
 
         <Route
-    path="/head-admin"
-    element={
-        <ProtectedRoute allowedRoles={["head_admin"]}>
-            <HeadAdminLayout>
-                <HeadAdminDashboard section="dashboard" />
-            </HeadAdminLayout>
-        </ProtectedRoute>
-    }
-/>
-<Route
-    path="/head-admin/pending-projects"
-    element={
-        <ProtectedRoute allowedRoles={["head_admin"]}>
-            <HeadAdminLayout>
-                <HeadAdminDashboard section="pending" />
-            </HeadAdminLayout>
-        </ProtectedRoute>
-    }
-/>
-<Route
-    path="/head-admin/approved-projects"
-    element={
-        <ProtectedRoute allowedRoles={["head_admin"]}>
-            <HeadAdminLayout>
-                <HeadAdminDashboard section="approved" />
-            </HeadAdminLayout>
-        </ProtectedRoute>
-    }
-/>
-<Route
-    path="/head-admin/request-for-revision"
-    element={
-        <ProtectedRoute allowedRoles={["head_admin"]}>
-            <HeadAdminLayout>
-                <HeadAdminDashboard section="revision" />
-            </HeadAdminLayout>
-        </ProtectedRoute>
-    }
-/>
-<Route
-    path="/head-admin/repository"
-    element={
-        <ProtectedRoute allowedRoles={["head_admin"]}>
-            <HeadAdminLayout>
-                <HeadAdminDashboard section="repository" />
-            </HeadAdminLayout>
-        </ProtectedRoute>
-    }
-/>
-<Route
-    path="/head-admin/notifications"
-    element={
-        <ProtectedRoute allowedRoles={["head_admin"]}>
-            <HeadAdminLayout>
-                <NotificationPage />
-            </HeadAdminLayout>
-        </ProtectedRoute>
-    }
-/>
-<Route
-    path="/head-admin/projects/:id"
-    element={
-        <ProtectedRoute allowedRoles={["head_admin"]}>
-            <HeadAdminLayout>
-                <ProjectDetails />
-            </HeadAdminLayout>
-        </ProtectedRoute>
-    }
-/>
-<Route
-    path="/head-admin/notifications/:id"
-    element={
-        <ProtectedRoute allowedRoles={["head_admin"]}>
-            <HeadAdminLayout>
-                <NotificationDetails />
-            </HeadAdminLayout>
-        </ProtectedRoute>
-    }
-/>
+          path="/head-admin"
+          element={
+              <ProtectedRoute allowedRoles={["head_admin"]}>
+                  <HeadAdminLayout>
+                      <HeadAdminDashboard section="dashboard" />
+                  </HeadAdminLayout>
+              </ProtectedRoute>
+          }
+          />
+          <Route
+              path="/head-admin/pending-projects"
+              element={
+                  <ProtectedRoute allowedRoles={["head_admin"]}>
+                      <HeadAdminLayout>
+                          <HeadAdminDashboard section="pending" />
+                      </HeadAdminLayout>
+                  </ProtectedRoute>
+              }
+          />
+          <Route
+              path="/head-admin/approved-projects"
+              element={
+                  <ProtectedRoute allowedRoles={["head_admin"]}>
+                      <HeadAdminLayout>
+                          <HeadAdminDashboard section="approved" />
+                      </HeadAdminLayout>
+                  </ProtectedRoute>
+              }
+          />
+          <Route
+              path="/head-admin/request-for-revision"
+              element={
+                  <ProtectedRoute allowedRoles={["head_admin"]}>
+                      <HeadAdminLayout>
+                          <HeadAdminDashboard section="revision" />
+                      </HeadAdminLayout>
+                  </ProtectedRoute>
+              }
+          />
+          <Route
+              path="/head-admin/repository"
+              element={
+                  <ProtectedRoute allowedRoles={["head_admin"]}>
+                      <HeadAdminLayout>
+                          <HeadAdminDashboard section="repository" />
+                      </HeadAdminLayout>
+                  </ProtectedRoute>
+              }
+          />
+          <Route
+              path="/head-admin/notifications"
+              element={
+                  <ProtectedRoute allowedRoles={["head_admin"]}>
+                      <HeadAdminLayout>
+                          <NotificationPage />
+                      </HeadAdminLayout>
+                  </ProtectedRoute>
+              }
+          />
+          <Route
+              path="/head-admin/projects/:id"
+              element={
+                  <ProtectedRoute allowedRoles={["head_admin"]}>
+                      <HeadAdminLayout>
+                          <ProjectDetails />
+                      </HeadAdminLayout>
+                  </ProtectedRoute>
+              }
+          />
+          <Route
+              path="/head-admin/notifications/:id"
+              element={
+                  <ProtectedRoute allowedRoles={["head_admin"]}>
+                      <HeadAdminLayout>
+                          <NotificationDetails />
+                      </HeadAdminLayout>
+                  </ProtectedRoute>
+              }
+          />
 
 
           <Route
@@ -265,6 +265,7 @@ function App() {
               <Routes>
                 <Route path="" element={<ResearchAdviserDashboard section="dashboard" />} />
                 <Route path="pending-projects" element={<ResearchAdviserDashboard section="pending" />} />
+                <Route path="endorsed-projects" element={<ResearchAdviserDashboard section="endorsed" />} /> 
                 <Route path="approved-projects" element={<ResearchAdviserDashboard section="approved" />} />
                 <Route path="request-for-revision" element={<ResearchAdviserDashboard section="request-for-revision" />} />
                 <Route path="repository" element={<ResearchAdviserDashboard section="repository" />} />
