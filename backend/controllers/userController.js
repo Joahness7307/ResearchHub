@@ -584,7 +584,7 @@ exports.inviteUser = async (req, res) => {
 
       const info = await transporter.sendMail({
 
-        from: process.env.SMTP_USER,
+        from: `"ResearchHub" <${process.env.SMTP_USER}>`,
 
         to: email,
 
