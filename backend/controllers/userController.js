@@ -518,7 +518,7 @@ exports.inviteUser = async (req, res) => {
 
     // Send email via Resend
     try {
-      const fromAddress = "ResearchHub <replies@researchhub.com>"; // change if you have verified sender
+      const fromAddress = "ResearchHub <onboarding@resend.dev>"; // change if you have verified sender
       const subject = `ResearchHub Invitation (${role.replace("_", " ")})`;
       const htmlBody = `
         <p>You have been invited as <b>${role.replace("_", " ")}</b>.</p>
