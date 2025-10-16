@@ -6,9 +6,10 @@ const { Invitation } = require("../models");
 const crypto = require("crypto");
 const nodemailer = require("nodemailer");
 const { Op } = require("sequelize");
+const { Resend } = require("resend");
 require("dotenv").config();
 
-
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 // Register User
 
@@ -481,145 +482,73 @@ exports.getAllUsers = async (req, res) => {
 // Invite user
 
 exports.inviteUser = async (req, res) => {
-
   try {
-
-    // Username is intentionally not destructured here as it's not sent by the admin.
-
-    const { email, role, type, department, strand } = req.body; 
-
+    const { email, role, type, department, strand } = req.body;
     const allowedInviteRoles = ["admin", "head_admin", "research_adviser"];
 
-
-
     if (!allowedInviteRoles.includes(role)) {
-
       return res.status(400).json({ message: "Invalid role for invitation." });
-
     }
-
-    
-
-    // Specific validation for research_adviser roles
 
     if (role === "research_adviser") {
-
-      if (!type) {
-
-        return res.status(400).json({ message: "Type is required for research adviser." });
-
-      }
-
-      if (type === "college" && !department) {
-
-        return res.status(400).json({ message: "Department is required for college adviser." });
-
-      }
-
-      if (type === "senior_high" && !strand) {
-
-        return res.status(400).json({ message: "Strand is required for senior high adviser." });
-
-      }
-
+      if (!type) return res.status(400).json({ message: "Type is required for research adviser." });
+      if (type === "college" && !department) return res.status(400).json({ message: "Department is required for college adviser." });
+      if (type === "senior_high" && !strand) return res.status(400).json({ message: "Strand is required for senior high adviser." });
     }
 
-    
-
     const existingUser = await User.findOne({ where: { email } });
-
     if (existingUser) return res.status(400).json({ message: "User already exists." });
-
-
 
     const token = crypto.randomBytes(32).toString("hex");
 
-
-
-    // Database Insert
-
     const invitation = await Invitation.create({
-
       email,
-
-      username: null, 
-
+      username: null,
       token,
-
       role,
-
       type: type || null,
-
       department: department || null,
-
       strand: strand || null,
-
     });
 
     console.log(`✅ Invitation record for ${email} created in DB with ID: ${invitation.id}`);
 
-
-
-
-
-    // Nodemailer setup - Using Secure Port 465 (Recommended for hosting)
-
-    const transporter = nodemailer.createTransport({
-
-      host: "smtp.gmail.com",
-
-      port: 465, // Changed from 587
-
-      secure: true, // Changed from false
-
-      auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS }
-
-    });
-
+    // Build invite URL
     const inviteUrl = `${process.env.FRONTEND_URL}/setup-account?token=${token}`;
 
-    // Email Sending
-
+    // Send email via Resend
     try {
+      const fromAddress = "ResearchHub <replies@researchhub.com>"; // change if you have verified sender
+      const subject = `ResearchHub Invitation (${role.replace("_", " ")})`;
+      const htmlBody = `
+        <p>You have been invited as <b>${role.replace("_", " ")}</b>.</p>
+        <p>Click the link below to set up your account:</p>
+        <p><a href="${inviteUrl}">Set up account</a></p>
+        <p>If the link doesn't open, copy and paste this URL into your browser:</p>
+        <p>${inviteUrl}</p>
+      `;
 
-      const info = await transporter.sendMail({
-
-        from: process.env.SMTP_USER,
-
+      const resp = await resend.emails.send({
+        from: fromAddress,
         to: email,
-
-        subject: `ResearchHub Invitation (${role})`,
-
-        html: `<p>You have been invited as <b>${role.replace("_", " ")}</b>.<br><a href="${inviteUrl}">Click here to setup your account</a></p>`
-
+        subject,
+        html: htmlBody,
       });
 
-      console.log("📧 Email sent successfully! Message ID:", info.messageId);
-
+      console.log("📧 Resend email send response:", resp);
+      console.log("📧 Email sent successfully!");
     } catch (emailError) {
-
-      console.error("❌ NODEMAILER EMAIL SENDING FAILED:", emailError);
-
-      // We continue to send the success response to the frontend 
-
-      // because the invitation is saved, but log the email failure.
-
+      // Log the error but keep successful DB insert/response behavior
+      console.error("❌ RESEND EMAIL SENDING FAILED:", emailError);
     }
 
-    // Success Response
-
-    res.json({ message: "Invitation sent!" });
-
+    // Success response
+    res.json({ message: "Invitation processed (DB saved). Email send attempted." });
   } catch (error) {
-
-    console.error("Invite User Error (Catch Block):", error); // Log the full error on the server
-
+    console.error("Invite User Error (Catch Block):", error);
     res.status(500).json({ error: error.message, message: "Server failed to process invitation. Check server logs." });
-
   }
-
 };
-
 
 
 exports.getInvitationInfo = async (req, res) => {
