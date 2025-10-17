@@ -7,9 +7,8 @@ const crypto = require("crypto");
 const nodemailer = require("nodemailer");
 const { Op } = require("sequelize");
 require("dotenv").config();
-const { Resend } = require("resend");
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+
 
 // Register User
 
@@ -579,19 +578,32 @@ exports.inviteUser = async (req, res) => {
 
     const inviteUrl = `${process.env.FRONTEND_URL}/setup-account?token=${token}`;
 
+    // Email Sending
+
     try {
-      const resp = await resend.emails.send({
-        from: "ResearchHub <onboarding@resend.dev>", // must be verified in Resend
+
+      const info = await transporter.sendMail({
+
+        from: `"ResearchHub" <${process.env.SMTP_USER}>`,
+
         to: email,
-        subject: `ResearchHub Invitation (${role.replace("_", " ")})`,
-        html: `<p>You have been invited as <b>${role.replace("_", " ")}</b>.</p>
-              <p>Click the link below to set up your account:</p>
-              <p><a href="${inviteUrl}">${inviteUrl}</a></p>`
+
+        subject: `ResearchHub Invitation (${role})`,
+
+        html: `<p>You have been invited as <b>${role.replace("_", " ")}</b>.<br><a href="${inviteUrl}">Click here to setup your account</a></p>`
+
       });
 
-      console.log("📧 Email sent via Resend:", resp);
-    } catch (err) {
-      console.error("❌ RESEND EMAIL FAILED:", err);
+      console.log("📧 Email sent successfully! Message ID:", info.messageId);
+
+    } catch (emailError) {
+
+      console.error("❌ NODEMAILER EMAIL SENDING FAILED:", emailError);
+
+      // We continue to send the success response to the frontend 
+
+      // because the invitation is saved, but log the email failure.
+
     }
 
     // Success Response
