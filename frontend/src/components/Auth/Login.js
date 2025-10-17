@@ -21,6 +21,12 @@ const Login = () => {
       const res = await axios.post("/users/login", { identifier, password });
       const { token, user } = res.data;
       login(user, token);
+
+      // If backend / user indicates force_password_change, send user to force-change page
+      if (user && user.force_password_change) {
+        navigate("/force-change-password");
+        return;
+      }
       
       // Determine navigation based on role
       switch(user.role) {

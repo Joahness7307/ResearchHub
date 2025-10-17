@@ -263,48 +263,27 @@ exports.login = async (req, res) => {
 
     }
 
-
-
-    res.status(200).json({
-
+res.status(200).json({
       message: "Login successful",
-
       token,
-
       user: {
-
         id: user.id,
-
         full_name: user.full_name,
-
         username: user.username,
-
         email: user.email,
-
         role: user.role,
-
         department: user.department,
-
         year_level: user.year_level,
-
         block: user.block,
-
         major: user.major,
-
         strand: user.strand,
-
         grade_level: user.grade_level,
-
         type: user.type,
-
+        force_password_change: !!user.force_password_change, // NEW
         created_at: user.created_at,
-
         updated_at: user.updated_at
-
       }
-
     });
-
   } catch (error) {
 
     console.error("Login error:", error);
@@ -315,7 +294,26 @@ exports.login = async (req, res) => {
 
 };
 
+// NEW controller: forceChangePassword
+exports.forceChangePassword = async (req, res) => {
+  try {
+    const { password, confirm_password } = req.body;
+    if (!password || !confirm_password) return res.status(400).json({ message: "Password and confirmation required." });
+    if (password !== confirm_password) return res.status(400).json({ message: "Passwords do not match." });
 
+    const user = await User.findByPk(req.user.id);
+    if (!user) return res.status(404).json({ message: "User not found." });
+
+    user.password = await bcrypt.hash(password, 10);
+    user.force_password_change = false; // mark as completed
+    await user.save();
+
+    return res.json({ message: "Password changed successfully." });
+  } catch (error) {
+    console.error("Force change password error:", error);
+    return res.status(500).json({ message: "Failed to change password." });
+  }
+};
 
 // Forgot Password
 
@@ -505,146 +503,122 @@ exports.inviteUser = async (req, res) => {
 };
 
 exports.getInvitationInfo = async (req, res) => {
-
   try {
-
     const { token } = req.query;
-
     const invitation = await Invitation.findOne({ where: { token, used: false } });
-
     if (!invitation) return res.status(404).json({ message: "Invalid or expired invitation." });
-
     res.json({ invitation });
-
   } catch (error) {
-
     res.status(500).json({ error: error.message });
-
   }
-
 };
-
-
 
 // Setup Account
-
 exports.setupAccount = async (req, res) => {
-
   try {
-
     const { token, full_name, username, password, confirm_password } = req.body;
-
     // Username is REQUIRED here
-
     if (!token || !full_name || !username || !password || !confirm_password) {
-
       return res.status(400).json({ message: "Missing required fields." });
-
     }
-
     if (password !== confirm_password) {
-
       return res.status(400).json({ message: "Passwords do not match." });
-
     }
-
     const invitation = await Invitation.findOne({ where: { token, used: false } });
-
     if (!invitation) return res.status(400).json({ message: "Invalid or expired invitation." });
 
-
-
     const userObj = {
-
       full_name,
-
       username,
-
       email: invitation.email,
-
       password: await bcrypt.hash(password, 10),
-
       role: invitation.role
-
     };
-
     if (invitation.role === "research_adviser") {
-
       if (invitation.type === "college") userObj.department = invitation.department;
-
       if (invitation.type === "senior_high") userObj.strand = invitation.strand;
-
     }
-
     await User.create(userObj);
-
     invitation.used = true;
-
     await invitation.save();
 
-
-
     res.json({ message: "Account setup successful. You can now login." });
-
   } catch (error) {
-
     res.status(500).json({ error: error.message });
-
   }
-
 };
 
-
-
-// Add User (Manual Add)
-
+// Add User (Manual Add) - updated to accept username, full_name, role, type, department, strand
 exports.addUser = async (req, res) => {
-
   try {
-
-    if (req.user.role !== "admin") {
-
-      return res.status(403).json({ message: "Access denied: Only admin can add users." });
-
-    }
-
-    
-
-    const { name, email, password, role } = req.body;
-
-    // Admin can manually add any user role, including admin/head_admin if necessary.
+    // Only admin can add users (router already enforces this via authMiddleware)
+    const { username, full_name, email, password, role, type, department, strand } = req.body;
 
     const allowedRoles = ["admin", "head_admin", "research_adviser", "student", "guest"];
-
     if (!allowedRoles.includes(role)) {
-
       return res.status(400).json({ message: "Invalid role." });
-
     }
 
-    if (!password) {
-
-      return res.status(400).json({ message: "Password is required" });
-
+    if (!username || !full_name || !email || !password) {
+      return res.status(400).json({ message: "username, full_name, email and password are required." });
     }
 
-    
+    // If creating adviser, require type and assigned department/strand
+    if (role === "research_adviser") {
+      if (!type) return res.status(400).json({ message: "Adviser type is required (college or senior_high)." });
+      if (type === "college" && !department) return res.status(400).json({ message: "Department is required for college adviser." });
+      if (type === "senior_high" && !strand) return res.status(400).json({ message: "Strand is required for senior high adviser." });
+    }
+
+    // Prevent duplicate username/email
+    const existing = await User.findOne({ where: { [Op.or]: [{ email }, { username }] } });
+    if (existing) {
+      return res.status(400).json({ message: "Username or Email already in use." });
+    }
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const user = await User.create({ full_name: name, email, password: hashedPassword, role }); 
+    const userObj = {
+      username,
+      full_name,
+      email,
+      password: hashedPassword,
+      role,
+      force_password_change: true,
+    };
 
-    res.status(201).json({ message: "User added successfully", user });
+    if (role === "research_adviser") {
+      userObj.type = type;
+      if (type === "college") userObj.department = department;
+      if (type === "senior_high") userObj.strand = strand;
+    } else if (role === "student") {
+      // keep defaults for student if needed
+    }
 
+    const newUser = await User.create(userObj);
+
+    // Do not return password
+    const safeUser = {
+      id: newUser.id,
+      username: newUser.username,
+      full_name: newUser.full_name,
+      email: newUser.email,
+      role: newUser.role,
+      department: newUser.department,
+      strand: newUser.strand,
+      type: newUser.type,
+      created_at: newUser.created_at
+    };
+
+    return res.status(201).json({ message: "User added successfully", user: safeUser });
   } catch (error) {
-
-    res.status(500).json({ error: error.message });
-
+    console.error("Add user error:", error);
+    if (error.name === "SequelizeUniqueConstraintError") {
+      return res.status(400).json({ message: "Username or Email already in use." });
+    }
+    return res.status(500).json({ message: "Failed to add user", error: error.message });
   }
-
 };
-
-
 
 // Update own profile
 
@@ -794,7 +768,7 @@ exports.getUserProfile = async (req, res) => {
 
         "id", "full_name", "username", "email", "role", "department", "year_level",
 
-        "block", "major", "strand", "grade_level", "created_at", "updated_at"
+        "block", "major", "strand", "grade_level", "created_at", "updated_at", "force_password_change"
 
       ]
 

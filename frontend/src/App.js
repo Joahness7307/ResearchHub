@@ -27,6 +27,7 @@ import GuestDashboard from "./components/Dashboard/GuestDashboard";
 import NotificationDetails from "./components/Dashboard/NotificationDetails";
 import HeadAdminLayout from "./components/Layout/HeadAdminLayout";
 import MyAccountWithAdviserSidebar from "./components/Layout/MyAccountWithAdviserSidebar";
+import ForceChangePassword from "./components/Auth/ForceChangePassword";
 
 const ProtectedRoute = ({ children, allowedRoles }) => {
   const { user, loading } = React.useContext(AuthContext);
@@ -50,6 +51,14 @@ function App() {
           <Route path="/role-selection" element={<RoleSelection />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
+          <Route
+            path="/force-change-password"
+            element={
+              <ProtectedRoute>
+                <ForceChangePassword />
+              </ProtectedRoute>
+            }
+          />
           <Route
             path="/admin"
             element={
