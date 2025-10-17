@@ -3,7 +3,7 @@ module.exports = (sequelize, DataTypes) => {
   const User = sequelize.define('User', {
     id: { type: DataTypes.INTEGER, autoIncrement: true, allowNull: false, primaryKey: true },
     full_name: { type: DataTypes.STRING, allowNull: false },
-    username: { type: DataTypes.STRING, allowNul: false, unique: true },
+    username: { type: DataTypes.STRING, allowNull: false, unique: true },
     email: { type: DataTypes.STRING, allowNull: false, unique: true },
     password: { type: DataTypes.STRING, allowNull: false },
     department: { type: DataTypes.ENUM("BSIT", "BSHM", "BSENTREP", "BEED", "BSED", "BPED"), allowNull: true },
@@ -13,6 +13,7 @@ module.exports = (sequelize, DataTypes) => {
     strand: { type: DataTypes.ENUM("ABM", "HUMSS", "STEM", "TVL"), allowNull: true },
     grade_level: { type: DataTypes.ENUM("11", "12"), allowNull: true },
     role: { type: DataTypes.ENUM("admin", "head_admin", "research_adviser", "student", "guest"), allowNull: false, defaultValue: "guest" },
+    force_password_change: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
     created_at: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW },
     updated_at: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW },
     resetToken: { type: DataTypes.STRING, allowNull: true },
@@ -22,4 +23,4 @@ module.exports = (sequelize, DataTypes) => {
     timestamps: false // If you use custom created_at/updated_at
   });
   return User;
-};  
+};

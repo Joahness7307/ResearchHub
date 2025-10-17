@@ -1,6 +1,6 @@
 // userRoutes.js
 const express = require("express");
-const { register, login, forgotPassword, resetPassword, inviteUser, getInvitationInfo, setupAccount, getAllUsers, getUserCount, addUser, updateOwnProfile, updateUser, deleteUser, getUserProfile, getUserProjects } = require("../controllers/userController");
+const { register, login, forgotPassword, resetPassword, inviteUser, getInvitationInfo, setupAccount, getAllUsers, getUserCount, addUser, updateOwnProfile, updateUser, deleteUser, getUserProfile, getUserProjects, forceChangePassword } = require("../controllers/userController");
 const authMiddleware = require("../middlewares/authMiddleware");
 
 const router = express.Router();
@@ -8,6 +8,8 @@ const router = express.Router();
 // Public routes - no role protection needed
 router.post("/register", register);
 router.post("/login", login);
+
+router.post("/force-change-password", authMiddleware(), forceChangePassword);
 
 router.post("/forgot-password", forgotPassword);
 router.post("/reset-password/:token", resetPassword);
