@@ -4,7 +4,6 @@ const { User } = require("../models");
 const { Project } = require("../models");
 const { Invitation } = require("../models");
 const crypto = require("crypto");
-const nodemailer = require("nodemailer");
 const { Op } = require("sequelize");
 require("dotenv").config();
 const { Resend } = require("resend");
