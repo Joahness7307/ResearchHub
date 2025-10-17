@@ -4,11 +4,12 @@ const { User } = require("../models");
 const { Project } = require("../models");
 const { Invitation } = require("../models");
 const crypto = require("crypto");
-const nodemailer = require("nodemailer");
 const { Op } = require("sequelize");
 require("dotenv").config();
+const { Resend } = require("resend");
 
-
+// Initialize Resend client
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 // Register User
 
@@ -320,67 +321,25 @@ exports.login = async (req, res) => {
 
 exports.forgotPassword = async (req, res) => {
 
+  const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${token}`;
+
   try {
-
-    const { email } = req.body;
-
-    const user = await User.findOne({ where: { email } });
-
-    // if (!user) return res.status(200).json({ message: "If your email exists, a reset link has been sent." });
-
-
-
-    // Generate token
-
-    const token = crypto.randomBytes(32).toString("hex");
-
-    user.resetToken = token;
-
-    user.resetTokenExpiry = Date.now() + 1000 * 60 * 60; // 1 hour
-
-    await user.save();
-
-
-
-    // Send email
-
-    const transporter = nodemailer.createTransport({
-
-      host: "smtp.gmail.com",
-
-      port: 587,
-
-      secure: false,
-
-      auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS }
-
-    });
-
-    const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${token}`;
-
-    await transporter.sendMail({
-
-      from: process.env.SMTP_USER,
-
-      to: email,
-
+    const sent = await resend.emails.send({
+      from: "ResearchHub <onboarding@resend.dev>",
+      to: [email],
       subject: "ResearchHub Password Reset",
-
-      html: `<p>Click <a href="${resetUrl}">here</a> to reset your password. This link expires in 1 hour.</p>`
-
+      html: `
+        <p>Click <a href="${resetUrl}" target="_blank">here</a> to reset your password.</p>
+        <p>This link expires in 1 hour.</p>
+      `,
     });
-
-
-
+    console.log("📧 Password reset email sent:", sent);
     res.json({ message: "Please check your email, a reset link has been sent." });
-
   } catch (error) {
-
+    console.error("❌ RESEND PASSWORD RESET FAILED:", error);
     res.status(500).json({ message: "Failed to send reset email.", error: error.message });
-
   }
-
-};
+}
 
 
 
@@ -479,148 +438,71 @@ exports.getAllUsers = async (req, res) => {
 
 
 // Invite user
-
 exports.inviteUser = async (req, res) => {
-
   try {
-
-    // Username is intentionally not destructured here as it's not sent by the admin.
-
-    const { email, role, type, department, strand } = req.body; 
-
+    const { email, role, type, department, strand } = req.body;
     const allowedInviteRoles = ["admin", "head_admin", "research_adviser"];
 
-
-
     if (!allowedInviteRoles.includes(role)) {
-
       return res.status(400).json({ message: "Invalid role for invitation." });
-
     }
 
-    
-
-    // Specific validation for research_adviser roles
-
+    // Validation for adviser roles
     if (role === "research_adviser") {
-
-      if (!type) {
-
-        return res.status(400).json({ message: "Type is required for research adviser." });
-
-      }
-
-      if (type === "college" && !department) {
-
-        return res.status(400).json({ message: "Department is required for college adviser." });
-
-      }
-
-      if (type === "senior_high" && !strand) {
-
-        return res.status(400).json({ message: "Strand is required for senior high adviser." });
-
-      }
-
+      if (!type) return res.status(400).json({ message: "Type is required." });
+      if (type === "college" && !department)
+        return res.status(400).json({ message: "Department is required." });
+      if (type === "senior_high" && !strand)
+        return res.status(400).json({ message: "Strand is required." });
     }
-
-    
 
     const existingUser = await User.findOne({ where: { email } });
-
-    if (existingUser) return res.status(400).json({ message: "User already exists." });
-
-
+    if (existingUser)
+      return res.status(400).json({ message: "User already exists." });
 
     const token = crypto.randomBytes(32).toString("hex");
 
-
-
-    // Database Insert
-
+    // Save invitation record
     const invitation = await Invitation.create({
-
       email,
-
-      username: null, 
-
+      username: null,
       token,
-
       role,
-
       type: type || null,
-
       department: department || null,
-
       strand: strand || null,
-
     });
 
     console.log(`✅ Invitation record for ${email} created in DB with ID: ${invitation.id}`);
 
-
-
-
-
-    // Nodemailer setup - Using Secure Port 465 (Recommended for hosting)
-
-    const transporter = nodemailer.createTransport({
-
-      host: "smtp.gmail.com",
-
-      port: 465, // Changed from 587
-
-      secure: true, // Changed from false
-
-      auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS }
-
-    });
-
+    // Send invitation email via Resend
     const inviteUrl = `${process.env.FRONTEND_URL}/setup-account?token=${token}`;
-
-    // Email Sending
+    const emailData = {
+      from: "ResearchHub <onboarding@resend.dev>", // works without domain
+      to: [email],
+      subject: `ResearchHub Invitation (${role.replace("_", " ")})`,
+      html: `
+        <p>Hello,</p>
+        <p>You have been invited as <b>${role.replace("_", " ")}</b>.</p>
+        <p><a href="${inviteUrl}" target="_blank">Click here to set up your account</a></p>
+        <p>If you didn’t expect this invitation, please ignore this email.</p>
+        <p>— ResearchHub Team</p>
+      `,
+    };
 
     try {
-
-      const info = await transporter.sendMail({
-
-        from: `"ResearchHub" <${process.env.SMTP_USER}>`,
-
-        to: email,
-
-        subject: `ResearchHub Invitation (${role})`,
-
-        html: `<p>You have been invited as <b>${role.replace("_", " ")}</b>.<br><a href="${inviteUrl}">Click here to setup your account</a></p>`
-
-      });
-
-      console.log("📧 Email sent successfully! Message ID:", info.messageId);
-
-    } catch (emailError) {
-
-      console.error("❌ NODEMAILER EMAIL SENDING FAILED:", emailError);
-
-      // We continue to send the success response to the frontend 
-
-      // because the invitation is saved, but log the email failure.
-
+      const sent = await resend.emails.send(emailData);
+      console.log("📧 Email sent successfully:", sent);
+    } catch (error) {
+      console.error("❌ RESEND EMAIL SENDING FAILED:", error);
     }
 
-    // Success Response
-
-    res.json({ message: "Invitation sent!" });
-
+    res.json({ message: "Invitation sent successfully!" });
   } catch (error) {
-
-    console.error("Invite User Error (Catch Block):", error); // Log the full error on the server
-
-    res.status(500).json({ error: error.message, message: "Server failed to process invitation. Check server logs." });
-
+    console.error("Invite User Error:", error);
+    res.status(500).json({ error: error.message });
   }
-
 };
-
-
 
 exports.getInvitationInfo = async (req, res) => {
 
