@@ -25,7 +25,12 @@ const io = new Server(server, {
 app.set("io", io);
 
 // Middleware
-app.use(cors({ origin: process.env.FRONTEND_URL || "*" }));
+app.use(cors({
+  origin: [process.env.FRONTEND_URL],
+  methods: ["GET", "POST", "PUT", "DELETE"],
+  credentials: true
+}));
+
 app.use(bodyParser.json());
 app.use("/uploads", express.static("uploads"));
 
