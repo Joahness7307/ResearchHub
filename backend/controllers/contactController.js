@@ -1,15 +1,8 @@
 // controllers/contactController.js
+const { Resend } = require("resend");
+require("dotenv").config();
 
-const nodemailer = require('nodemailer');
-
-// 1. Configure the Transporter using environment variables
-const transporter = nodemailer.createTransport({
-    service: 'gmail', // Use 'gmail' for simplicity, or 'smtp' if needed
-    auth: {
-        user: process.env.SMTP_USER, // joahnesscaparas358@gmail.com
-        pass: process.env.SMTP_PASS  // fkuv fzpf nkoo mohc
-    }
-});
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 /**
  * @desc    Send a contact message to the developer
@@ -17,47 +10,32 @@ const transporter = nodemailer.createTransport({
  * @access  Public
  */
 const sendContactEmail = async (req, res) => {
-    const { email, message } = req.body;
+  const { email, message } = req.body;
 
-    if (!email || !message) {
-        return res.status(400).json({ message: 'Please provide both email and message.' });
-    }
+  if (!email || !message) {
+    return res.status(400).json({ message: "Please provide both email and message." });
+  }
 
-    try {
-        // 2. Define the email content
-        const mailOptions = {
-            from: process.env.SMTP_USER, // The sending account
-            to: process.env.SMTP_USER,   // The recipient (the developer)
-            subject: `New Contact Form Submission from ${email}`,
-            text: `
-                A new message has been submitted via the contact form:
-                
-                Sender Email: ${email}
-                
-                Message:
-                ---
-                ${message}
-                ---
-            `,
-            html: `
-                <p>A new message has been submitted via the contact form:</p>
-                <p><b>Sender Email:</b> ${email}</p>
-                <p><b>Message:</b></p>
-                <p style="white-space: pre-wrap; padding: 10px; border: 1px solid #ccc;">${message}</p>
-            `
-        };
+  try {
+    const response = await resend.emails.send({
+      from: process.env.CONTACT_FROM_EMAIL, // e.g., "ResearchHub <onboarding@resend.dev>"
+      to: [process.env.CONTACT_TO_EMAIL],   // your email to receive messages
+      subject: `New Contact Form Submission from ${email}`,
+      html: `
+        <p>A new message has been submitted via the contact form:</p>
+        <p><b>Sender Email:</b> ${email}</p>
+        <p><b>Message:</b></p>
+        <p style="white-space: pre-wrap; padding: 10px; border: 1px solid #ccc;">${message}</p>
+      `,
+    });
 
-        // 3. Send the email
-        await transporter.sendMail(mailOptions);
+    console.log("Contact email sent:", response);
 
-        res.status(200).json({ message: 'Message sent successfully!' });
-
-    } catch (error) {
-        console.error('Error sending contact email:', error);
-        res.status(500).json({ message: 'Failed to send message.', error: error.message });
-    }
+    res.status(200).json({ message: "Message sent successfully!" });
+  } catch (error) {
+    console.error("Error sending contact email:", error);
+    res.status(500).json({ message: "Failed to send message.", error: error.message });
+  }
 };
 
-module.exports = {
-    sendContactEmail
-};
+module.exports = { sendContactEmail };
