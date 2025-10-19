@@ -25,14 +25,13 @@ const AdminDashboard = ({ activeSection }) => {
         password: "",
         confirm_password: ""
     });
-    const [addUserMsg, setAddUserMsg] = useState("");
+    const [addUserMessage, setAddUserMessage] = useState("");
     const [addUserError, setAddUserError] = useState("");
 
     const [userSearch, setUserSearch] = useState("");
     const [editUserId, setEditUserId] = useState(null); 
     const [editForm, setEditForm] = useState({ full_name: "", email: "", role: "", password: "" }); 
     const [message, setMessage] = useState(""); 
-    const [msg, setMsg] = useState(""); 
     const [error, setError] = useState(""); 
     
     // 💡 NEW STATE FOR PAGINATION
@@ -48,7 +47,7 @@ const AdminDashboard = ({ activeSection }) => {
 
     const handleAddUserSubmit = async (e) => {
         e.preventDefault();
-        setAddUserMsg(""); setAddUserError("");
+        setAddUserMessage(""); setAddUserError("");
         try {
             if (addUserForm.password !== addUserForm.confirm_password) {
                 setAddUserError("Passwords do not match.");
@@ -70,7 +69,7 @@ const AdminDashboard = ({ activeSection }) => {
             }
 
             const response = await axios.post("/users/add", payload);
-            setAddUserMsg(`User added successfully. Temporary Password: ${response.data.tempPassword || 'N/A'}`); // Assuming your server now returns tempPassword
+            setAddUserMessage(`User added successfully. Temporary Password: ${response.data.tempPassword || 'N/A'}`); // Assuming your server now returns tempPassword
             setAddUserForm({
                 username: "",
                 full_name: "",
@@ -124,32 +123,45 @@ const AdminDashboard = ({ activeSection }) => {
     const handleUserSubmit = async (e) => {
         e.preventDefault();
         setMessage("");
+        setError("");
         try {
-            await axios.put(`/users/update/${editUserId}`, { 
-                name: editForm.full_name,
+            const updatePayload = { 
+                full_name: editForm.full_name,
                 email: editForm.email, 
                 role: editForm.role 
-            });
-            setMessage("User updated!");
+            };
+
+            // Only send password if it's not empty, which will trigger a password change on the backend
+            if (editForm.password) {
+                 updatePayload.password = editForm.password;
+            }
+
+            await axios.put(`/users/update/${editUserId}`, updatePayload);
+            setMessage("User updated successfully!");
             setEditUserId(null);
             fetchUsers();
         } catch (err) {
-            setMessage(err.response?.data?.message || "Error updating user.");
+            setError(err.response?.data?.message || "Error updating user.");
         }
     };
 
-    const handleDeleteUser = async (id) => {
+const handleDeleteUser = async (id) => {
         if (!window.confirm("Are you sure you want to delete this user?")) return;
+        setMessage(""); // Use Message state for success/error of edit/delete actions
+        setError("");
         try {
             await axios.delete(`/users/delete/${id}`);
-            setMessage("User deleted!");
-            setUsers(users.filter(u => u.id !== id));
+            // Use setMessage for success
+            setMessage("User deleted successfully!"); 
+            fetchUsers(); // Refresh users list
+            
             // Recalculate page to prevent empty last page
             if (filteredUsersOnPage.length === 1 && currentPage > 1) {
                 setCurrentPage(prev => prev - 1);
             }
         } catch (err) {
-            setMessage(err.response?.data?.message || "Error deleting user.");
+            // Use setError for error, which will be styled red
+            setError(err.response?.data?.message || "Error deleting user."); 
         }
     };
 
@@ -308,7 +320,7 @@ const AdminDashboard = ({ activeSection }) => {
 
                             <button type="submit" className="admin-btn">Add User</button>
                             {/* Display message with password */}
-                            {addUserMsg && <div className="admin-message" style={{ color: "green", whiteSpace: "pre-wrap" }}>{addUserMsg}</div>}
+                            {addUserMessage && <div className="admin-message" style={{ color: "green", whiteSpace: "pre-wrap" }}>{addUserMessage}</div>}
                             {addUserError && <div className="admin-message" style={{ color: "red" }}>{addUserError}</div>}
                         </form>
                     </section>
@@ -330,7 +342,7 @@ const AdminDashboard = ({ activeSection }) => {
                                     <option value="guest">Guest</option>
                                 </select>
                                 <button type="submit" className="admin-btn edit-btn">Save Changes</button>
-                                <button type="button" onClick={() => setEditUserId(null)} className="admin-btn delete-btn">Cancel</button>
+                                <button type="button" onClick={() => setEditUserId(null)} className="admin-btn cancel-btn">Cancel</button>
                             </form>
                         </div>
                     )}
@@ -339,14 +351,14 @@ const AdminDashboard = ({ activeSection }) => {
                         <div className="admin-search-bar">
                             <input
                                 type="text"
-                                placeholder="Search users by Name, Email, Role, or Join Date..."
+                                placeholder="Search users..."
                                 value={userSearch}
                                 onChange={handleSearchChange}
                                 className="admin-search-input"
                             />
                             {/* Search is handled dynamically by onChange, but keeping a button for consistency/future features */}
                             <button className="admin-btn">
-                                Search 🔍
+                                Search
                             </button>
                         </div>
 
@@ -390,7 +402,7 @@ const AdminDashboard = ({ activeSection }) => {
                                 onClick={() => paginate(currentPage - 1)} 
                                 disabled={currentPage === 1}
                                 className="admin-btn"
-                                style={{ background: '#555' }}
+                                style={{ background: '#6b7280' }}
                             >
                                 Previous
                             </button>

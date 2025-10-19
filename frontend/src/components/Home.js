@@ -108,7 +108,7 @@ const Home = () => {
       </section>
 
       {/* Contact Section */}
-      <section className="contact" id="contact">
+      {/* <section className="contact" id="contact">
         <h2>Contact Us</h2>
         <div className="contact-bar"></div>
 
@@ -160,7 +160,7 @@ const Home = () => {
             )}
           </form>
         </div>
-      </section>
+      </section> */}
 
       {/* Footer */}
       <footer className="footer">
@@ -168,12 +168,11 @@ const Home = () => {
           <div>
             <b>Quick Links</b>
             <ul>
-              <li><Link to="/">Home</Link></li>
               <li><Link to="/login">Login</Link></li>
               <li><Link to="/role-selection">Signup</Link></li>
             </ul>
           </div>
-          <div>
+          {/* <div>
             <b>Contact</b>
             <ul>
               <li>researchhub@email.com</li>
@@ -186,7 +185,7 @@ const Home = () => {
               <li><a href="https://facebook.com" target="_blank" rel="noopener noreferrer">Facebook</a></li>
               <li><a href="https://twitter.com" target="_blank" rel="noopener noreferrer">Twitter</a></li>
             </ul>
-          </div>
+          </div> */}
         </div>
         <div className="footer-copy">
           Copyright © {new Date().getFullYear()} ResearchHub. All rights reserved.

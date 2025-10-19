@@ -184,7 +184,7 @@ const StudentDashboard = () => {
                                 style={{
                                     padding: "0.7rem 1.5rem",
                                     marginRight: "1rem",
-                                    background: "#2563eb",
+                                    background: "#3a3e92",
                                     color: "#fff",
                                     border: "none",
                                     borderRadius: "8px",
@@ -206,7 +206,7 @@ const StudentDashboard = () => {
                                 style={{
                                     padding: "0.7rem 1.5rem",
                                     marginLeft: "1rem",
-                                    background: "#2563eb",
+                                    background: "#3a3e92",
                                     color: "#fff",
                                     border: "none",
                                     borderRadius: "8px",

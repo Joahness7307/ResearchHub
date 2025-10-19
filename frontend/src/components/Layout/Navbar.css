@@ -1,7 +1,6 @@
 :root {
-  /* Colors */
-  --primary-color: #3a3e92; /* Main navbar background color */
-  --secondary-color: #2563eb; /* Primary button/link color */
+  --primary-color: #3a3e92;
+  --secondary-color: #2563eb;
   --text-light: #fff;
   --text-dark: #222;
   --text-muted: #888;
@@ -25,39 +24,52 @@
   background: var(--primary-color);
   padding: 1.5rem 2rem;
   color: var(--text-light);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
 }
 
 .navbar-left,
-.navbar-center,
 .navbar-right {
   display: flex;
   align-items: center;
 }
 
-.navbar-center {
-  flex: 1;
-  justify-content: center;
-  gap: 3rem; /* Increased space between unauthenticated links */
+/* New container for unauthenticated links and buttons */
+.navbar-right-unauth {
+  display: flex;
+  align-items: center;
+  /* Allows space between logo and right side to push the logo to the far left */
+  margin-left: auto; 
+}
+
+/* Container for About/Features links */
+.navbar-unauth-links {
+  display: flex;
+  align-items: center;
+  gap: 2rem; /* Spacing between 'About' and 'Features' */
 }
 
 /* General Link/Button Styles */
 .nav-link,
 .logout-btn,
-.navbar-center a {
+.navbar-unauth-links a {
   color: var(--text-light);
   text-decoration: none;
   background: none;
   border: none;
   font-size: 1.1rem;
+  margin-left: 10px;
   cursor: pointer;
   transition: color 0.2s, background-color 0.2s;
-  margin-left: 4rem; /* Default spacing for links on the right */
+}
+
+/* Remove default margin-left from nav-link on right side. Will apply custom margin below */
+.nav-link {
+    margin-left: 0;
 }
 
 .nav-link:hover,
 .logout-btn:hover,
-.navbar-center a:hover {
+.navbar-unauth-links a:hover {
   color: var(--hover-color);
 }
 
@@ -66,13 +78,30 @@
   height: auto;
 }
 
+/* Custom Spacing for Unauthenticated Links */
+.navbar-right {
+    display: flex;
+    align-items: center;
+}
+
+.login-btn {
+    /* Apply 64px margin-left to the Login button, as requested, to move it away from Features/About */
+    margin-left: 80px; 
+}
+
+/* Standard spacing for other nav items that need left margin */
+.navbar-right .nav-link:not(.login-btn), 
+.notification-icon {
+    margin-left: 40px;
+}
+
+
 /* --- Notification Dropdown (Student/Guest) --- */
 .notification-icon {
-  margin-left: 40px;
   width: 26px;
   height: 26px;
   cursor: pointer;
-  filter: invert(1); /* Makes the icon white */
+  filter: invert(1);
   transition: opacity 0.2s;
 }
 
@@ -95,20 +124,20 @@
 
 .projects-dropdown {
   position: absolute;
-  top: 40px; /* Slightly lower than before */
+  top: 40px;
   right: 0;
   background: var(--dropdown-bg);
   color: var(--text-dark);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   border-radius: 10px;
-  min-width: 380px; /* Slightly wider */
+  min-width: 380px;
   max-width: 90vw;
   z-index: 2000;
   padding: 0.5rem 0;
   display: flex;
   flex-direction: column;
   height: 500px;
-  overflow-y: hidden; /* Manage overflow only on the list */
+  overflow-y: hidden;
 }
 
 .projects-dropdown-list {
@@ -144,7 +173,7 @@
 .projects-dropdown-item.unread {
   color: var(--text-dark);
   font-weight: 700;
-  background: #f8f8ff; /* Light background for unread */
+  background: #f8f8ff;
 }
 
 .projects-dropdown-item.read {
@@ -184,7 +213,8 @@
 
 /* Hide desktop navigation elements by default on smaller screens */
 @media (max-width: 1024px) {
-  .desktop-nav {
+  .desktop-nav,
+  .navbar-right-unauth { /* Hide the entire unauth right side content */
     display: none !important;
   }
   .navbar-left {
@@ -194,22 +224,17 @@
 
 /* Mobile Hamburger Icon */
 .navbar-hamburger {
-  display: none; /* Hidden on desktop */
+  display: none;
   cursor: pointer;
   font-size: 2.2rem;
   color: var(--text-light);
   margin-left: 2rem;
   z-index: 1300;
-  /* Adjust for admin/adviser role if using external sidebar */
-  &.is-open {
-      color: var(--hover-color);
-  }
 }
 @media (max-width: 1024px) {
   .navbar-hamburger {
-    display: block; /* Show on tablet/mobile */
+    display: block;
   }
-  /* Hide My Account link for Admin/Adviser on mobile */
   .my-account-link {
     display: none !important;
   }
@@ -222,7 +247,7 @@
   position: fixed;
   top: 0;
   right: 0;
-  width: 280px; /* Wider sidebar for better content space */
+  width: 280px;
   height: 100vh;
   background: var(--sidebar-bg);
   box-shadow: -4px 0 15px rgba(0, 0, 0, 0.2);
@@ -230,7 +255,7 @@
   padding: 5rem 2rem 2rem 2rem;
   gap: 1.5rem;
   transition: transform 0.3s ease-out;
-  transform: translateX(100%); /* Start off-screen */
+  transform: translateX(100%);
 }
 
 .navbar-sidebar.open {
