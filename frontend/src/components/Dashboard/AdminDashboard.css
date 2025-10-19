@@ -5,7 +5,7 @@
   --success-color: #10b981;
   --warning-color: #f59e0b;
   --danger-color: #ef4444;
-  --bg-light: #f9f9ff;
+  --bg-light: #ececff;
   --border-color: #e5e7eb;
 }
 
@@ -62,7 +62,7 @@
 }
 
 .status-card {
-  background: #fff;
+  background: #f8f8ff;
   padding: 1rem;
   border-radius: 8px;
   border-left: 5px solid;
@@ -122,6 +122,17 @@
   color: var(--primary-color);
   text-decoration: none;
   font-weight: 500;
+}
+
+.chart-container-wrapper {
+    /* Set a max-width for the chart area and center it */
+    max-width: 450px;
+    width: 100%; 
+    margin: 2rem auto 4rem auto;
+    padding: 1.5rem;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
 }
 
 /* --- USER MANAGEMENT SECTION STYLES --- */
@@ -353,6 +364,7 @@
 .role-admin { background-color: #fed6c7; color: #b42b09; }
 .role-head_admin { background-color: #fef3c7; color: #b45309; }
 .role-research_adviser { background-color: #d1fae5; color: #065f46; }
+.role-guest { background-color: #a78bfa; color: #381b91; }
 
 /* Action Buttons */
 .admin-table td button {
@@ -406,7 +418,25 @@
   }
 }
 
+@media (max-width: 600px) {
+    .chart-container-wrapper {
+        /* Increase max-width to fill more of the small screen */
+        max-width: 95%; 
+        padding: 1rem; /* Smaller padding on small screens */
+        margin: 1.5rem auto 3rem auto;
+    }
+}
+
 @media (max-width: 480px) {
+  .dashboard-summary-cards {
+    display: block;
+    row-gap: 1rem;
+    margin-top: 5rem;
+    margin-bottom: 2rem;
+  }
+  .summary-card, .total-projects {
+    margin-bottom: 1rem;
+  }
   .admin-search-bar {
     gap: 8px;
     padding: 8px 0;
@@ -421,4 +451,10 @@
     padding: 0.6rem;
     font-size: 0.92rem;
   }
+  /* Even tighter scaling for the smallest mobile screens */
+    .chart-container-wrapper {
+        max-width: 95%; 
+        padding: 0.75rem; /* Reduce padding slightly */
+        margin: 1rem auto 2rem auto;
+    }
 }

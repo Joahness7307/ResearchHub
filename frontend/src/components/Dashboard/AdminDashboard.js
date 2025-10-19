@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "../../api/axios";
 import "./AdminDashboard.css"
+import UserRolePieChart from "../UserRolePieChart";
 
 const AdminDashboard = ({ activeSection }) => {
     const [projects, setProjects] = useState([]);
@@ -102,6 +103,9 @@ const AdminDashboard = ({ activeSection }) => {
             axios.get("/projects/counts")
                 .then(res => setCounts(prev => ({ ...prev, ...res.data })))
                 .catch(err => console.error("Failed to fetch project counts:", err));
+
+            // 💡 NEW: Fetch all users for the chart
+            fetchUsers();
         }
     }, [activeSection]);
 
@@ -251,24 +255,12 @@ const handleDeleteUser = async (id) => {
                         </div>
                     </div>
 
-                    <h2 style={{ marginTop: '5rem' }}>Pending Project List</h2>
-                    <div className="dashboard-cards-row">
-                        <div className="dashboard-card project-list-card">
-                            <h3>Pending Projects ({pendingProjects.length})</h3>
-                            {pendingProjects.length === 0 ? (
-                                <div>No pending projects.</div>
-                            ) : (
-                                pendingProjects.map(p => (
-                                    <div key={p.id} className="dashboard-card-item">
-                                        <b>{p.title}</b>
-                                        <div>{p.category}</div>
-                                        <div>By: {p.authors}</div>
-                                        <a href={`/projects/${p.id}`}>View Details</a>
-                                    </div>
-                                ))
-                            )}
-                        </div>
-                    </div>
+                    {/* 💡 NEW: User Role Distribution Chart */}
+                    <h2 style={{ fontSize: '1.8rem', color: '#3a3e92' }}>User Role Distribution</h2>
+                    <div className="chart-container-wrapper">
+                        <UserRolePieChart users={users} />
+                    </div>
+
                 </>
             )}
 
