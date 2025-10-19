@@ -106,7 +106,10 @@ const MyAccount = () => {
       axios
         .get("/users/my-projects")
         .then((res) => setProjects(res.data.projects || []))
-        .catch(() => setProjects([]));
+        .catch((err) => {
+         console.error("GET /users/my-projects failed:", err?.response || err);
+         setProjects([]);
+         });
     }
   }, [user]);
 
@@ -117,8 +120,16 @@ const MyAccount = () => {
     need_revision: [],
     approved: [],
   };
+  
   projects.forEach((project) => {
-    if (grouped[project.status]) grouped[project.status].push(project);
+    let status = project.status;
+    // Map admin_revision to need_revision for student view
+    if (status === "admin_revision") status = "need_revision";
+    if (grouped[status]) grouped[status].push(project);
+    else {
+      // optional: log or keep unknown statuses in pending bucket
+      console.warn("Unknown project status for grouping:", status, "project id:", project.id);
+    }
   });
   // Do NOT show admin_revision to students
 
@@ -330,10 +341,12 @@ const MyAccount = () => {
         <div className="account-papers-col">
           <div className="account-papers-section">
             <h3>My Submitted Projects</h3>
-            {grouped.pending.length > 0 || openGroups.pending ? renderGroup("Pending", "pending") : null}
-            {grouped.endorsed.length > 0 || openGroups.endorsed ? renderGroup("Endorsed", "endorsed") : null}
-            {grouped.need_revision.length > 0 || openGroups.need_revision ? renderGroup("Need Revision", "need_revision") : null}
-            {grouped.approved.length > 0 || openGroups.approved ? renderGroup("Approved", "approved") : null}
+           
+            {/* Always render headers (show counts). The list body only appears when openGroups[statusKey] is true */}
+            {renderGroup("Pending", "pending")}
+            {renderGroup("Endorsed", "endorsed")}
+            {renderGroup("Need Revision", "need_revision")}
+            {renderGroup("Approved", "approved")}
             
             {/* Fallback if no projects exist, and all groups are closed (which shouldn't happen with default `pending: true`) */}
             {projects.length === 0 && (

@@ -7,8 +7,8 @@ exports.submitProject = async (req, res) => {
   try {
     const user = req.user;
       if (
-        (user.yearLevel && !["3rd", "4th"].includes(user.yearLevel)) ||
-        (user.gradeLevel && user.gradeLevel !== "12")
+        (user.year_level && !["3rd", "4th"].includes(user.year_level)) ||
+        (user.grade_level && user.grade_level !== "12")
       ) {
         return res.status(403).json({ message: "You are not eligible to submit a research project." });
       }
@@ -31,7 +31,8 @@ exports.submitProject = async (req, res) => {
       return res.status(400).json({ message: "Project PDF is required." });
     }
     
-    const authors = user.name;
+    // Use full_name for authors
+    const authors = user.full_name || user.username || "Unknown";
 
      // Find adviser
     let adviser;

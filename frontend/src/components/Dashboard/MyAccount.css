@@ -86,7 +86,7 @@
 .account-papers-section h3 {
   color: #374151;
   margin-bottom: 3rem;
-  font-size: 1.8rem; /* Increased size for visual impact */
+  font-size: 1.5rem; /* Increased size for visual impact */
   font-weight: 700;
 }
 
@@ -132,7 +132,7 @@
 .status-group-header .group-title {
   color: #2563eb;
   margin: 0;
-  font-size: 1.4rem; /* Slightly larger title */
+  font-size: 1.2rem; /* Slightly larger title */
 }
 
 .status-group-header .group-count {

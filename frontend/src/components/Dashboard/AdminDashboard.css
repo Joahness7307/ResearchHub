@@ -445,6 +445,7 @@
   .admin-search-input {
     font-size: 0.95rem;
     padding: 0.6rem;
+    width: 100%;
   }
 
   .admin-search-bar .admin-btn {

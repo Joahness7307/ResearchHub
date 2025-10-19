@@ -466,10 +466,29 @@ exports.deleteUser = async (req, res) => {
 exports.getUserProfile = async (req, res) => {
   if (!req.user || !req.user.id) return res.status(401).json({ message: "Unauthorized" });
   try {
-    const user = await User.findByPk(req.user.id);
+    // Don't request "type" attribute if DB doesn't have that column
+    const user = await User.findByPk(req.user.id, {
+      attributes: [
+        "id",
+        "full_name",
+        "username",
+        "email",
+        "role",
+        "department",
+        "year_level",
+        "block",
+        "major",
+        "strand",
+        "grade_level",
+        "force_password_change",
+        "profile_pic_url",
+        "created_at",
+        "updated_at"
+      ]
+    });
     if (!user) return res.status(404).json({ message: "User not found" });
 
-    // Return a safe user object (make sure profile_pic_url is included)
+    // Build safeUser response (omit type)
     const safeUser = {
       id: user.id,
       full_name: user.full_name,
@@ -482,7 +501,6 @@ exports.getUserProfile = async (req, res) => {
       major: user.major,
       strand: user.strand,
       grade_level: user.grade_level,
-      type: user.type,
       force_password_change: !!user.force_password_change,
       profile_pic_url: user.profile_pic_url || null,
       created_at: user.created_at,
@@ -501,6 +519,8 @@ exports.getUserProjects = async (req, res) => {
   try {
     if (!req.user || !req.user.id) return res.status(401).json({ message: "Unauthorized" });
 
+    console.log(`getUserProjects called for user id=${req.user.id}`);
+
     const projects = await Project.findAll({
       where: { submitted_by: req.user.id },
       order: [["created_at", "DESC"]],
@@ -508,6 +528,8 @@ exports.getUserProjects = async (req, res) => {
         { model: User, as: "submitter", attributes: ["id", "full_name", "email", "department", "year_level", "grade_level"] }
       ]
     });
+
+    console.log(`getUserProjects: found ${projects.length} projects for user ${req.user.id}`);
 
     return res.json({ projects });
   } catch (error) {
