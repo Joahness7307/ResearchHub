@@ -111,9 +111,9 @@ const Navbar = ({
 
   // Unauthenticated navbar links
   const unauthLinks = [
-    { label: "About", id: "about" },
+    { label: "About Us", id: "about" },
     { label: "Features", id: "features" },
-    { label: "Contact Us", id: "contact" }
+    // { label: "Contact Us", id: "contact" }
   ];
 
   const handleNavClick = (e, id) => {
@@ -144,22 +144,27 @@ const Navbar = ({
       {/* --- Unauthenticated Navbar --- */}
       {isUnauthenticated && (
         <>
-          <div className="navbar-center desktop-nav">
-            {unauthLinks.map(link => (
-              <a
-                key={link.label}
-                href={`#${link.id}`}
-                onClick={e => handleNavClick(e, link.id)}
-                className="nav-link"
-              >
-                {link.label}
-              </a>
-            ))}
+          {/* New container for unauthenticated links - placed on the right */}
+          <div className="navbar-right-unauth"> 
+             <div className="navbar-unauth-links desktop-nav">
+                {unauthLinks.map(link => (
+                  <a
+                    key={link.label}
+                    href={`#${link.id}`}
+                    onClick={e => handleNavClick(e, link.id)}
+                    className="nav-link unauth-link"
+                  >
+                    {link.label}
+                  </a>
+                ))}
+              </div>
+              <div className="navbar-right desktop-nav">
+                {/* Added special class to Login for styling */}
+                <Link to="/login" className="nav-link nav-btn login-btn">Login</Link> 
+                <Link to="/role-selection" className="nav-link nav-btn">Signup</Link>
+              </div>
           </div>
-          <div className="navbar-right desktop-nav">
-            <Link to="/login" className="nav-link nav-btn">Login</Link>
-            <Link to="/role-selection" className="nav-link nav-btn">Signup</Link>
-          </div>
+
 
           {/* Mobile Hamburger (Unauth) */}
           <div className="navbar-hamburger" onClick={() => toggleSidebar(!isSidebarOpen)}>
@@ -281,7 +286,6 @@ const Navbar = ({
               className={`navbar-hamburger admin-hamburger ${isHamburgerOpen ? "is-open" : ""}`} 
               onClick={onHamburgerClick}
           >
-            {/* FIX: Ensure the correct HTML symbols and class names are used here */}
             {isHamburgerOpen ? (
               <span className="hamburger-close">&#10005;</span> // <-- The Close Icon
             ) : (

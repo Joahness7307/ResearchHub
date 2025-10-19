@@ -179,7 +179,7 @@ const ProjectDetails = () => {
     const fullDocumentPath = project.documentPath;
 
     return (
-        <div className="project-details-page">
+        <div className="project-details-page" style={{ padding: 10 }}>
             <div className="research-details-container">
                 <h2>{project.title}</h2>
                 <span

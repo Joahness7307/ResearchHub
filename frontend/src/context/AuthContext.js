@@ -10,32 +10,26 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     const loadUser = async () => {
-      const token = localStorage.getItem("token"); // Get the token, not the user object
+      const token = localStorage.getItem("token");
       if (token) {
         try {
-          const profileUrl = `${process.env.REACT_APP_BACKEND_URL}/api/users/profile`;
-                const res = await axios.get(profileUrl, {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                    },
-                });
-
-          // Assuming your backend /users/profile returns { user: { id, email, role, ... } }
+          // Use relative path so axios baseURL is used
+          const res = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/users/profile`, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
           setUser(res.data.user);
-          // Also update the token in case it was refreshed by the backend
-          // (though your current backend doesn't refresh it, this is good practice)
-          // localStorage.setItem("token", res.data.newToken || token);
+          localStorage.setItem("user", JSON.stringify(res.data.user));
         } catch (error) {
           console.error("Failed to re-authenticate user:", error);
-          localStorage.removeItem("token"); // Remove invalid/expired token
-          localStorage.removeItem("user"); // Clear stale user data
+          localStorage.removeItem("token");
+          localStorage.removeItem("user");
           setUser(null);
         }
       }
-      setLoading(false); // Authentication check is complete
+      setLoading(false);
     };
     loadUser();
-  }, []); // Empty dependency array means this runs once on component mount
+  }, []);
 
   const login = (userData, token) => {
     setUser(userData);

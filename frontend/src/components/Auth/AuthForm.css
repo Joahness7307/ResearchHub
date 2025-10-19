@@ -238,27 +238,33 @@
     padding: 1rem;
     margin: 10px auto;
     /* Optional: Remove box shadow and border radius for a full-screen mobile look */
-    border-radius: 0;
+    border-radius: 8px;
     box-shadow: none;
   }
-  
-  /* Force a single column for Senior High fields on small screens */
-  .auth-signup-form .auth-row > .auth-col:nth-child(3) {
-      display: none; 
+
+  /* Stack columns vertically so no field is hidden (keeps email visible) */
+  .auth-signup-form .auth-row,
+  .auth-login-form .auth-row {
+    flex-direction: column;
+    gap: 0.6rem;
   }
-  .auth-signup-form .auth-row > .auth-col {
-      flex-basis: 100%;
+
+  .auth-signup-form .auth-row > .auth-col,
+  .auth-login-form .auth-row > .auth-col {
+    flex-basis: 100%;
+    width: 100%;
+    display: block;
   }
 
   .auth-signup-form h2, .auth-login-form h2 {
     font-size: 1.4rem;
   }
-  
+
   .role-btn {
       padding: 0.6rem;
       font-size: 0.95rem;
   }
-  
+
   .auth-switch, .forgot-password-link {
       font-size: 0.9rem;
   }

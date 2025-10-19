@@ -72,11 +72,11 @@ const Login = () => {
           required
           className="auth-input"
         />
-        <div style={{ textAlign: "right", marginBottom: "0.5rem" }}>
+        {/* <div style={{ textAlign: "right", marginBottom: "0.5rem" }}>
           <Link to="/forgot-password" className="forgot-password-link">
             Forgot Password?
           </Link>
-        </div>
+        </div> */}
         <button type="submit">Login</button>
         <div className="auth-switch">
           Don't have an account? <Link to="/role-selection">Signup</Link>

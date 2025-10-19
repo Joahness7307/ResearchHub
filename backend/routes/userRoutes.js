@@ -2,6 +2,7 @@
 const express = require("express");
 const { register, login, forgotPassword, resetPassword, inviteUser, getInvitationInfo, setupAccount, getAllUsers, getUserCount, addUser, updateOwnProfile, updateUser, deleteUser, getUserProfile, getUserProjects, forceChangePassword } = require("../controllers/userController");
 const authMiddleware = require("../middlewares/authMiddleware");
+const uploadProfilePic = require("../config/multer-profile");
 
 const router = express.Router();
 
@@ -28,7 +29,14 @@ router.delete("/delete/:id", authMiddleware(["admin"]), deleteUser);
 
 // Protected route to get user profile
 router.get("/profile", authMiddleware(), getUserProfile); 
-router.put("/profile/update", authMiddleware(["student", "admin", "research_adviser", "head_admin", "guest"]), updateOwnProfile);
+// Update profile: auth runs first so req.user is available to multer-profile params
+router.put(
+  "/profile/update",
+  authMiddleware(["student", "admin", "research_adviser", "head_admin", "guest"]),
+  uploadProfilePic.single("profile_pic"),
+  updateOwnProfile
+);
+
 // Get all research projects submitted by the logged-in user
 router.get("/my-projects", authMiddleware(["student", "admin", "research_adviser", "head_admin"]), getUserProjects);
 

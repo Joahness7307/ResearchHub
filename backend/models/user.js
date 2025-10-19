@@ -14,6 +14,7 @@ module.exports = (sequelize, DataTypes) => {
     grade_level: { type: DataTypes.ENUM("11", "12"), allowNull: true },
     role: { type: DataTypes.ENUM("admin", "head_admin", "research_adviser", "student", "guest"), allowNull: false, defaultValue: "guest" },
     force_password_change: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
+    profile_pic_url: { type: DataTypes.STRING, allowNull: true },
     created_at: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW },
     updated_at: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW },
     resetToken: { type: DataTypes.STRING, allowNull: true },

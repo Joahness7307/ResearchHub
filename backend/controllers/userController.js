@@ -1,6 +1,6 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const { User } = require("../models");
+const { User, Project } = require("../models");
 const { Invitation } = require("../models");
 const crypto = require("crypto");
 const { Op } = require("sequelize");
@@ -353,11 +353,64 @@ exports.addUser = async (req, res) => {
 // Update own profile
 exports.updateOwnProfile = async (req, res) => {
   try {
-    const { name, email } = req.body;
-    await User.update({ full_name: name, email }, { where: { id: req.user.id } });
-    res.status(200).json({ message: "Profile updated successfully" });
+    const userId = req.user.id;
+    const { full_name, username, email } = req.body;
+
+    // Basic validation
+    if (!full_name || !username || !email) {
+      return res.status(400).json({ message: "full_name, username and email are required." });
+    }
+
+    // Check for existing username/email used by other users
+    const existing = await User.findOne({
+      where: {
+        [Op.or]: [{ username }, { email }],
+        id: { [Op.ne]: userId }
+      }
+    });
+    if (existing) {
+      if (existing.username === username) return res.status(409).json({ message: "Username already taken." });
+      if (existing.email === email) return res.status(409).json({ message: "Email already in use." });
+      return res.status(409).json({ message: "Username or email already in use." });
+    }
+
+    // Determine uploaded profile picture url (Cloudinary)
+    const profilePicUrl = req.file?.path || req.file?.secure_url || null;
+
+    const user = await User.findByPk(userId);
+    if (!user) return res.status(404).json({ message: "User not found." });
+
+    // Apply changes
+    user.full_name = full_name;
+    user.username = username;
+    user.email = email;
+    if (profilePicUrl) user.profile_pic_url = profilePicUrl;
+    await user.save();
+
+    // Return updated user (omit sensitive fields)
+    const safeUser = {
+      id: user.id,
+      full_name: user.full_name,
+      username: user.username,
+      email: user.email,
+      role: user.role,
+      department: user.department,
+      year_level: user.year_level,
+      block: user.block,
+      major: user.major,
+      strand: user.strand,
+      grade_level: user.grade_level,
+      type: user.type,
+      force_password_change: !!user.force_password_change,
+      profile_pic_url: user.profile_pic_url,
+      created_at: user.created_at,
+      updated_at: user.updated_at
+    };
+
+    return res.json({ message: "Profile updated", user: safeUser });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error("updateOwnProfile error:", error);
+    return res.status(500).json({ message: "Failed to update profile.", error: error.message });
   }
 };
 
@@ -368,11 +421,30 @@ exports.updateUser = async (req, res) => {
     const userToUpdate = await User.findByPk(req.params.id);
     if (!userToUpdate) return res.status(404).json({ message: "User not found" });
     if (req.user.id === userToUpdate.id) return res.status(400).json({ message: "Cannot edit own account here." });
-    const { name, email, role } = req.body;
-    await userToUpdate.update({ full_name: name, email, role });
+
+    // Accept either 'name' (older API) or 'full_name' (frontend)
+    const { name, full_name, email, role, password } = req.body;
+    const updatedFullName = full_name || name || userToUpdate.full_name;
+
+    const updatePayload = {
+      full_name: updatedFullName,
+      email: email || userToUpdate.email,
+      role: role || userToUpdate.role
+    };
+
+    // If admin provided a new password, hash it and include
+    if (password) {
+      const hashed = await bcrypt.hash(password, 10);
+      updatePayload.password = hashed;
+      // When admin sets password manually, keep force_password_change = true
+      updatePayload.force_password_change = true;
+    }
+
+    await userToUpdate.update(updatePayload);
     res.status(200).json({ message: "User updated successfully" });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error("Update user error:", error);
+    res.status(500).json({ error: error.message, message: "Failed to update user." });
   }
 };
 
@@ -394,25 +466,52 @@ exports.deleteUser = async (req, res) => {
 exports.getUserProfile = async (req, res) => {
   if (!req.user || !req.user.id) return res.status(401).json({ message: "Unauthorized" });
   try {
-    const user = await User.findByPk(req.user.id, {
-      attributes: [
-        "id", "full_name", "username", "email", "role", "department", "year_level",
-        "block", "major", "strand", "grade_level", "created_at", "updated_at", "force_password_change"
-      ]
-    });
+    const user = await User.findByPk(req.user.id);
     if (!user) return res.status(404).json({ message: "User not found" });
-    res.json({ user });
+
+    // Return a safe user object (make sure profile_pic_url is included)
+    const safeUser = {
+      id: user.id,
+      full_name: user.full_name,
+      username: user.username,
+      email: user.email,
+      role: user.role,
+      department: user.department,
+      year_level: user.year_level,
+      block: user.block,
+      major: user.major,
+      strand: user.strand,
+      grade_level: user.grade_level,
+      type: user.type,
+      force_password_change: !!user.force_password_change,
+      profile_pic_url: user.profile_pic_url || null,
+      created_at: user.created_at,
+      updated_at: user.updated_at
+    };
+
+    return res.json({ user: safeUser });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error("getUserProfile error:", error);
+    return res.status(500).json({ message: "Failed to fetch profile.", error: error.message });
   }
 };
 
-// getUserProjects stub (keep existing logic in your file if more complex)
+// getUserProjects
 exports.getUserProjects = async (req, res) => {
   try {
-    // implement as needed
-    res.json({ projects: [] });
+    if (!req.user || !req.user.id) return res.status(401).json({ message: "Unauthorized" });
+
+    const projects = await Project.findAll({
+      where: { submitted_by: req.user.id },
+      order: [["created_at", "DESC"]],
+      include: [
+        { model: User, as: "submitter", attributes: ["id", "full_name", "email", "department", "year_level", "grade_level"] }
+      ]
+    });
+
+    return res.json({ projects });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error("getUserProjects error:", error);
+    return res.status(500).json({ message: "Failed to fetch projects", error: error.message });
   }
 };

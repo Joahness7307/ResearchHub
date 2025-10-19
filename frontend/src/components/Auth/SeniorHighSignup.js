@@ -216,8 +216,6 @@ const SeniorHighSignup = () => {
 
           Already have an account? <Link to="/login">Login</Link>
 
-          <Link to="/register-user" className="switch-link">Sign up as Guest instead</Link>
-
         </div>
 
       </form>

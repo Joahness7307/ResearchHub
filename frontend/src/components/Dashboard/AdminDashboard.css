@@ -1,7 +1,7 @@
 /* Global Variables (Suggested) */
 :root {
-  --primary-color: #2563eb;     /* Blue */
-  --secondary-color: #3a3e92;   /* Deep Purple */
+  --primary-color: #2563eb;     
+  --secondary-color: #3a3e92;   
   --success-color: #10b981;
   --warning-color: #f59e0b;
   --danger-color: #ef4444;
@@ -126,10 +126,9 @@
 
 /* --- USER MANAGEMENT SECTION STYLES --- */
 .admin-section {
-  background: #fff; /* Use white background for the main content area */
+  background: transparent; /* Use white background for the main content area */
   border-radius: 12px;
   padding: 2rem 1.5rem;
-  box-shadow: 0 1px 10px rgba(0,0,0,0.05);
 }
 
 .admin-section h3 {
@@ -139,7 +138,7 @@
 .admin-message {
   padding: 0.75rem 1rem;
   border-radius: 6px;
-  margin-top: 1rem;
+  margin-bottom: 1rem;
   font-weight: 500;
   background-color: #d1fae5;
   color: #065f46;
@@ -160,17 +159,18 @@
   padding: 1.5rem;
   background: var(--bg-light);
   border-radius: 8px;
-  margin-bottom: 2rem;
+  margin-bottom: 3rem;
   box-shadow: 0 1px 4px rgba(0,0,0,0.04);
 }
 
 .admin-form input,
 .admin-form select {
   flex: 1;
-  padding: 0.75rem;
+  font-size: 15px;
+  padding: 0.90rem;
   border: 1px solid var(--border-color);
   border-radius: 6px;
-  min-width: 180px;
+  min-width: 200px;
   transition: border-color 0.2s, box-shadow 0.2s;
 }
 
@@ -200,10 +200,8 @@
 .admin-search-bar {
     display: flex;
     gap: 10px;
-    padding: 15px 15px 15px 0; /* padding above table, not inside wrapper */
     background: #fff; /* Match list wrapper background */
-    border-bottom: 1px solid var(--border-color);
-    margin-bottom: 10px; /* Space between search bar and table */
+    margin-bottom: 30px; /* Space between search bar and table */
 }
 
 .admin-list-wrapper {
@@ -218,7 +216,7 @@
 
 .admin-search-input {
     flex-grow: 1;
-    padding: 0.75rem;
+    padding: 1rem;
     border: 1px solid var(--border-color);
     border-radius: 6px;
     min-width: 250px;
@@ -274,6 +272,66 @@
   background-color: #f0f4ff;
 }
 
+.admin-edit-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.6); /* Semi-transparent black overlay */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000; /* Ensure it's on top of everything */
+}
+
+.admin-edit-form {
+    background: #fff;
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    width: 90%;
+    max-width: 450px;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+.admin-edit-form h4 {
+    color: var(--secondary-color);
+    margin-top: 0;
+    margin-bottom: 0.5rem;
+    font-size: 1.5rem;
+    border-bottom: 2px solid var(--border-color);
+    padding-bottom: 10px;
+}
+
+.admin-edit-form input,
+.admin-edit-form select {
+    padding: 0.75rem;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    font-size: 1rem;
+    transition: border-color 0.2s;
+}
+
+.admin-edit-form input:focus,
+.admin-edit-form select:focus {
+    border-color: var(--primary-color);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
+}
+
+.admin-edit-form .admin-btn {
+    margin-top: 0.5rem;
+}
+
 /* Role Badges */
 .role-badge {
   display: inline-block;
@@ -284,150 +342,83 @@
   text-transform: capitalize;
 }
 
+.admin-edit-form .cancel-btn {
+    background-color: #6b7280; /* Gray/Secondary color for Cancel */
+}
+.admin-edit-form .cancel-btn:hover {
+    background-color: #4b5563;
+}
+
 .role-student { background-color: #dbeafe; color: #1e40af; }
-.role-admin, .role-head_admin { background-color: #fef3c7; color: #b45309; }
+.role-admin { background-color: #fed6c7; color: #b42b09; }
+.role-head_admin { background-color: #fef3c7; color: #b45309; }
 .role-research_adviser { background-color: #d1fae5; color: #065f46; }
 
 /* Action Buttons */
 .admin-table td button {
-  margin-right: 0.5rem;
-  padding: 0.5rem 0.8rem;
-  font-size: 0.85rem;
+    margin-right: 0.5rem;
+    padding: 0.8rem 1rem;
+    font-size: 0.85rem;
 }
 
-.edit-btn {
-  background-color: #f59e0b;
-}
-.edit-btn:hover {
-  background-color: #d97706;
-}
-.delete-btn {
-  background-color: var(--danger-color);
+/* Explicitly reinforcing the red style for the Delete button in the table */
+.admin-table .delete-btn {
+    background-color: #6b7280; 
+    color: white;
 }
 .delete-btn:hover {
-  background-color: #b91c1c;
+    background-color: #4b5563;
 }
 
 /* --- RESPONSIVENESS --- */
+/* Responsive adjustments for the admin search bar & button */
 @media (max-width: 1100px) {
-
-  .dashboard-cards-row {
-
-    flex-direction: column;
-
-    gap: 1.5rem;
-
+  .admin-search-bar {
+    gap: 8px;
+    padding: 12px 0;
+    align-items: center;
   }
 
-  .dashboard-summary-cards {
-
-    flex-direction: column;
-
-    gap: 1.5rem;
-
+  .admin-search-bar .admin-btn {
+    /* allow button to shrink on medium screens while staying readable */
+    flex: 0 0 auto;
   }
-
-  /* Remove admin-management-header as that class wasn't used */
-
-  .dashboard-status-cards {
-
-    grid-template-columns: repeat(2, 1fr);
-
-  }
-
-  .admin-form {
-
-    flex-direction: column; /* Stack form inputs vertically */
-
-    padding: 1rem;
-
-  }
-
-  .admin-form input,
-
-  .admin-form select,
-
-  .admin-btn {
-
-    min-width: 100%;
-
-  }
-
 }
-
-
 
 @media (max-width: 768px) {
-
-  .admin-dashboard-outer {
-
-    padding: 1.5rem 1rem;
-
-    margin-top: 100px;
-
-  }
-
-  .admin-table th,
-
-  .admin-table td {
-
-    padding: 0.8rem 1rem;
-
-  }
-
-  .admin-table td button {
-
-    padding: 0.4rem 0.6rem;
-
-    font-size: 0.75rem;
-
-  }
-
-  .role-badge {
-
-    font-size: 0.7rem;
-
-  }
-
   .admin-search-bar {
-        flex-direction: column;
-        padding: 15px 0 15px 0;
-    }
+    display: flex;
+    flex-direction: column;
+    align-items: stretch; /* make children full width */
+    gap: 10px;
+    padding: 12px 0;
+  }
 
-    .admin-search-input {
-        min-width: 100%;
-    }
+  .admin-search-bar .admin-search-input {
+    width: 100%;
+    box-sizing: border-box;
+  }
 
+  .admin-search-bar .admin-btn {
+    width: 100%;
+    padding: 0.7rem;
+    font-size: 0.95rem;
+  }
 }
 
-
-
-@media (max-width: 600px) {
-
-  .dashboard-status-cards {
-
-    grid-template-columns: 1fr;
-
+@media (max-width: 480px) {
+  .admin-search-bar {
+    gap: 8px;
+    padding: 8px 0;
   }
 
-  .summary-card, .status-card {
-
-    min-width: unset;
-
+  .admin-search-input {
+    font-size: 0.95rem;
+    padding: 0.6rem;
   }
 
-  .summary-card .count-number {
-
-    font-size: 2rem;
-
+  .admin-search-bar .admin-btn {
+    padding: 0.6rem;
+    font-size: 0.92rem;
   }
-
-  .admin-form input,
-
-  .admin-form select {
-
-    font-size: 1rem; /* Adjust font size on small screens */
-
-  }
-
 }
