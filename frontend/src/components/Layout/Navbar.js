@@ -132,7 +132,12 @@ const Navbar = ({
       <div className="navbar-left">
         {user ? (
           <Link to={logoLink}>
-            <img src={appLogo} alt="Research Hub Logo" className="app-logo" />
+            <img
+              src={appLogo || "/appLogo.png"}
+              alt="Research Hub Logo"
+              className="app-logo"
+              onError={(e) => { e.target.onerror = null; e.target.src = "/logo192.png"; }}
+            />
           </Link>
         ) : (
           <a href="#hero" onClick={e => handleNavClick(e, "hero")}>
