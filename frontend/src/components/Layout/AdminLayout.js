@@ -1,84 +1,66 @@
-// AdminLayout.js
-import React, { useState, useContext } from "react";
+import React from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { AuthContext } from "../../context/AuthContext";
 import AdminSideNavbar from "./AdminSideNavbar";
-import Navbar from "./Navbar";
 import "./DashboardLayout.css";
-
-const adminLinks = [
-  { label: "Dashboard", to: "/admin" },
-  { label: "Manage Users", to: "/admin/manage-users" },
-  { label: "Notifications", to: "/admin/notifications" },
-  { label: "My Account", to: "/my-account" },
-];
+import { useSidebar } from "../../context/SidebarContext"; // added
 
 const AdminLayout = ({ children }) => {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const navigate = useNavigate();
-  const location = useLocation();
-  const { logout } = useContext(AuthContext);
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { logout } = React.useContext(AuthContext);
 
-  // Function to be passed to the sidebar to close itself (also used by overlay/close btn)
-  const handleCloseSidebar = () => setSidebarOpen(false);
+  // Use shared sidebar state for "admin"
+  const { isOpen: sidebarOpen, setOpen } = useSidebar("admin");
 
-  // --- Toggle function for Navbar ---
-  const handleToggleSidebar = () => setSidebarOpen(prev => !prev);
+  const handleCloseSidebar = () => setOpen(false);
+  const handleToggleSidebar = () => setOpen(!sidebarOpen);
 
-  const handleLogout = () => {
-    logout();
-    navigate("/login");
-    setSidebarOpen(false);
-  };
+  const handleLogout = () => {
+    logout();
+    navigate("/login");
+    setOpen(false);
+  };
 
-  const handleNav = (path) => {
-    navigate(path);
-    setSidebarOpen(false);
-  };
+  const handleNav = (path) => {
+    navigate(path);
+    setOpen(false);
+  };
 
-  return (
-    <div className="dashboard-layout">
-      <Navbar
-        // CORRECTED: Pass the toggle function and the current state
-        onHamburgerClick={handleToggleSidebar}
-        isHamburgerOpen={sidebarOpen}
-      />
+  return (
+    <div className="dashboard-layout">
+      {/* desktop sidebar */}
+      <div className="desktop-sidebar">
+        <AdminSideNavbar />
+      </div>
 
-      {/* Desktop Sidebar */}
-      <div className="desktop-sidebar">
-        <AdminSideNavbar />
-      </div>
+      {/* main content */}
+      <main className="dashboard-content">
+        {children}
+      </main>
 
-      {/* Main Content */}
-      <main className="dashboard-content">
-        {children}
-      </main>
+      {sidebarOpen && (
+        <div className="mobile-sidebar-overlay" onClick={handleCloseSidebar}></div>
+      )}
 
-      {/* Mobile Sidebar & Overlay */}
-      {sidebarOpen && (
-        <div className="mobile-sidebar-overlay" onClick={handleCloseSidebar}></div>
-      )}
-      <aside className={`mobile-sidebar ${sidebarOpen ? "open" : ""}`}>
-        {/* NEW: Close button at the top right of the sidebar */}
-        <button className="mobile-sidebar-close-btn" onClick={handleCloseSidebar}>
-            &#10005;
-        </button>
-
-        {adminLinks.map((link) => (
-          <button
-            key={link.label}
-            className={`mobile-sidebar-link${location.pathname === link.to ? " active" : ""}`}
-            onClick={() => handleNav(link.to)}
-          >
-            {link.label}
-          </button>
-        ))}
-        <button className="mobile-sidebar-link" onClick={handleLogout}>
-          Logout
-        </button>
-      </aside>
-    </div>
-  );
+      <aside className={`mobile-sidebar ${sidebarOpen ? "open" : ""}`}>
+        <button className="mobile-sidebar-close-btn" onClick={handleCloseSidebar}>
+          &#10005;
+        </button>
+        {/* mobile links */}
+        {[
+          { label: "Dashboard", to: "/admin" },
+          { label: "Notifications", to: "/admin/notifications" },
+          { label: "Manage Users", to: "/admin/manage-users" },
+        ].map(link => (
+          <button key={link.label} className={`mobile-sidebar-link${location.pathname === link.to ? " active" : ""}`} onClick={() => handleNav(link.to)}>
+            {link.label}
+          </button>
+        ))}
+        <button className="mobile-sidebar-link" onClick={handleLogout}>Logout</button>
+      </aside>
+    </div>
+  );
 };
 
 export default AdminLayout;
