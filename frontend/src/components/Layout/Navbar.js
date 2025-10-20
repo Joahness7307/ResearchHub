@@ -29,13 +29,14 @@ const Navbar = ({
   const socketRef = useRef(null);
 
   // Sidebar context hook for admin/adviser/head_admin roles.
-  const roleName = user?.role;
-  const { isOpen: adminIsOpen, toggle: adminToggle, setOpen: adminSetOpen } = useSidebar(roleName || "");
+  // Sidebar context hook for admin/adviser/head_admin roles.
+  const roleName = user?.role || "";
+  const { isOpen: adminIsOpen, toggle: adminToggle, setOpen: adminSetOpen } = useSidebar(roleName);
 
-  // User role checks
+  // User role checks (always boolean)
   const isUnauthenticated = !user;
-  const isStudentOrGuest = user && (user.role === "student" || user.role === "guest");
-  const isAdminRole = user && (user.role === "admin" || user.role === "head_admin" || user.role === "research_adviser");
+  const isStudentOrGuest = !!user && (user.role === "student" || user.role === "guest");
+  const isAdminRole = !!user && (user.role === "admin" || user.role === "head_admin" || user.role === "research_adviser");
 
   // Notification fetch for student
   const fetchStudentNotifications = async () => {
@@ -93,17 +94,25 @@ const Navbar = ({
 
   // Unified sidebar toggle used by Navbar:
   const toggleSidebar = (openState) => {
-    // student/guest: control Navbar-local sidebar
+    console.log("Navbar.toggleSidebar", { roleName, isStudentOrGuest, isAdminRole, isUnauthenticated, openState, adminIsOpen });
+    // Public (unauthenticated) pages: use Navbar's own sidebar
+    if (isUnauthenticated) {
+      setIsSidebarOpen(openState);
+      return;
+    }
+    // Student/Guest authenticated: also use Navbar's own sidebar
     if (isStudentOrGuest) {
       setIsSidebarOpen(openState);
       return;
     }
-    // admin/adviser/head_admin: use SidebarContext to toggle their layout sidebar
+    // Admin/Adviser/Head Admin: toggle layout sidebar via SidebarContext
     if (isAdminRole && roleName) {
-        adminToggle();
-        return;
-      }
-    };
+      adminToggle();
+      return;
+    }
+    // fallback: toggle local sidebar
+    setIsSidebarOpen(openState);
+  };
 
 
     // Determine which icon to show for admin role
