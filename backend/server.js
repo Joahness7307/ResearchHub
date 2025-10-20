@@ -10,7 +10,7 @@ const { Server } = require("socket.io");
 // Import routes
 const userRoutes = require("./routes/userRoutes");
 const projectRoutes = require("./routes/projectRoutes");
-const reviewRoutes = require("./routes/reviewRoutes");
+// const reviewRoutes = require("./routes/reviewRoutes");
 const commentRoutes = require("./routes/commentRoutes");
 const notificationRoutes = require("./routes/notificationRoutes");
 const contactRoutes = require('./routes/contactRoutes');
@@ -42,7 +42,7 @@ app.get("/health", (req, res) => {
 // Routes
 app.use("/api/users", userRoutes);
 app.use("/api/projects", projectRoutes);
-app.use("/api/reviews", reviewRoutes);
+// app.use("/api/reviews", reviewRoutes);
 app.use("/api/comments", commentRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use('/api/contact', contactRoutes);
