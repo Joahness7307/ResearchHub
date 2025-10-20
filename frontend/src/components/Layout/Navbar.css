@@ -17,7 +17,7 @@
   top: 0;
   left: 0;
   width: 100%;
-  z-index: 1000;
+  z-index: 3000;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -229,7 +229,7 @@
   font-size: 2.2rem;
   color: var(--text-light);
   margin-left: 2rem;
-  z-index: 1300;
+  z-index: 3100;
 }
 @media (max-width: 1024px) {
   .navbar-hamburger {
@@ -251,7 +251,7 @@
   height: 100vh;
   background: var(--sidebar-bg);
   box-shadow: -4px 0 15px rgba(0, 0, 0, 0.2);
-  z-index: 1200;
+  z-index: 3200;
   padding: 5rem 2rem 2rem 2rem;
   gap: 1.5rem;
   transition: transform 0.3s ease-out;
@@ -297,7 +297,7 @@
   width: 100vw;
   height: 100vh;
   background: rgba(0, 0, 0, 0.4);
-  z-index: 1199;
+  z-index: 3199;
 }
 
 /* Tablet & Smaller Mobile Adjustments */
