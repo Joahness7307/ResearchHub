@@ -1,81 +1,63 @@
-// HeadAdminLayout.js - This file is already correct
-import React, { useState, useContext } from "react";
+import React from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { AuthContext } from "../../context/AuthContext";
 import HeadAdminSideNavbar from "./HeadAdminSideNavbar";
-import Navbar from "./Navbar";
-import "./DashboardLayout.css"; // <-- Use the new shared CSS
-
-const headAdminLinks = [
-    { label: "Dashboard", to: "/head-admin" },
-    { label: "Pending Projects", to: "/head-admin/pending-projects" },
-    { label: "Approved Projects", to: "/head-admin/approved-projects" },
-    { label: "Request for Revision", to: "/head-admin/request-for-revision" },
-    { label: "Project Repository", to: "/head-admin/repository" },
-    { label: "Notifications", to: "/head-admin/notifications" },
-    { label: "My Account", to: "/my-account" },
-];
+import "./DashboardLayout.css";
+import { useSidebar } from "../../context/SidebarContext"; // added
 
 const HeadAdminLayout = ({ children }) => {
-    const [sidebarOpen, setSidebarOpen] = useState(false);
-    const navigate = useNavigate();
-    const location = useLocation();
-    const { logout } = useContext(AuthContext);
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { logout } = React.useContext(AuthContext);
 
-    const handleLogout = () => {
-        logout();
-        navigate("/login");
-        setSidebarOpen(false);
-    };
+  const { isOpen: sidebarOpen, setOpen } = useSidebar("head_admin");
 
-    const handleNav = (path) => {
-        navigate(path);
-        setSidebarOpen(false);
-    };
+  const handleLogout = () => {
+    logout();
+    navigate("/login");
+    setOpen(false);
+  };
 
-    return (
-        <div className="dashboard-layout">
-            <Navbar
-                // CORRECT: Passes the toggle function and state
-                onHamburgerClick={() => setSidebarOpen(!sidebarOpen)}
-                isHamburgerOpen={sidebarOpen}
-              />
+  const handleNav = (path) => {
+    navigate(path);
+    setOpen(false);
+  };
 
-            {/* Desktop Sidebar */}
-            <div className="desktop-sidebar">
-                <HeadAdminSideNavbar />
-            </div>
+  return (
+    <div className="dashboard-layout">
+      <div className="desktop-sidebar">
+        <HeadAdminSideNavbar />
+      </div>
 
-            {/* Main Content */}
-            <main className="dashboard-content">
-                {children}
-            </main>
+      <main className="dashboard-content">
+        {children}
+      </main>
 
-            {/* Mobile Sidebar & Overlay */}
-            {sidebarOpen && (
-                <div className="mobile-sidebar-overlay" onClick={() => setSidebarOpen(false)}></div>
-            )}
-            <aside className={`mobile-sidebar ${sidebarOpen ? "open" : ""}`}>
-                 {/* ADDED: Close button for consistency with AdminLayout */}
-                 <button className="mobile-sidebar-close-btn" onClick={() => setSidebarOpen(false)}>
-                    &#10005;
-                </button>
-                 
-                {headAdminLinks.map((link) => (
-                    <button
-                        key={link.label}
-                        className={`mobile-sidebar-link${location.pathname === link.to ? " active" : ""}`}
-                        onClick={() => handleNav(link.to)}
-                    >
-                        {link.label}
-                    </button>
-                ))}
-                <button className="mobile-sidebar-link" onClick={handleLogout}>
-                    Logout
-                </button>
-            </aside>
-        </div>
-    );
+      {sidebarOpen && (
+        <div className="mobile-sidebar-overlay" onClick={() => setOpen(false)}></div>
+      )}
+
+      <aside className={`mobile-sidebar ${sidebarOpen ? "open" : ""}`}>
+        <button className="mobile-sidebar-close-btn" onClick={() => setOpen(false)}>
+          &#10005;
+        </button>
+        {[
+          { label: "Dashboard", to: "/head-admin" },
+          { label: "Pending Projects", to: "/head-admin/pending-projects" },
+          { label: "Approved Projects", to: "/head-admin/approved-projects" },
+          { label: "Request for Revision", to: "/head-admin/request-for-revision" },
+          { label: "Project Repository", to: "/head-admin/repository" },
+          { label: "Notifications", to: "/head-admin/notifications" },
+          { label: "My Account", to: "/my-account" },
+        ].map(link => (
+          <button key={link.label} className={`mobile-sidebar-link${location.pathname === link.to ? " active" : ""}`} onClick={() => handleNav(link.to)}>
+            {link.label}
+          </button>
+        ))}
+        <button className="mobile-sidebar-link" onClick={handleLogout}>Logout</button>
+      </aside>
+    </div>
+  );
 };
 
 export default HeadAdminLayout;

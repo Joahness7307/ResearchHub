@@ -1,6 +1,7 @@
 import React, { useRef, useEffect, useState, useContext } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { AuthContext } from "../../context/AuthContext";
+import { useSidebar } from "../../context/SidebarContext";
 import appLogo from '../../assets/appLogo.png';
 import notifIcon from "../../assets/notification.png";
 import axios from "../../api/axios";
@@ -21,6 +22,10 @@ const Navbar = ({
   const navigate = useNavigate();
   const location = useLocation();
   const socketRef = useRef(null);
+
+  // Sidebar context hook for admin/adviser/head_admin roles.
+  const roleName = user?.role;
+  const { isOpen: adminIsOpen, toggle: adminToggle, setOpen: adminSetOpen } = useSidebar(roleName || "");
 
   // User role checks
   const isUnauthenticated = !user;
@@ -81,14 +86,23 @@ const Navbar = ({
     navigate("/login");
   };
 
-  // Helper function to toggle unified sidebar state
+  // Unified sidebar toggle used by Navbar:
   const toggleSidebar = (openState) => {
-    setIsSidebarOpen(openState);
-    if (isAdminRole) {
-      // Allow Admin/Adviser hamburger to use its external prop/function
-      onHamburgerClick(); 
+    // student/guest: control Navbar-local sidebar
+    if (isStudentOrGuest) {
+      setIsSidebarOpen(openState);
+      return;
     }
-  }
+    // admin/adviser/head_admin: use SidebarContext to toggle their layout sidebar
+    if (isAdminRole && roleName) {
+        adminToggle();
+        return;
+      }
+    };
+
+
+    // Determine which icon to show for admin role
+  const adminHamburgerOpen = isAdminRole && adminIsOpen;
 
   // Hamburger sidebar links for student/guest
   const sidebarLinks = [
@@ -288,10 +302,10 @@ const Navbar = ({
 
           {/* Hamburger controlled by external prop */}
           <div 
-              className={`navbar-hamburger admin-hamburger ${isHamburgerOpen ? "is-open" : ""}`} 
-              onClick={onHamburgerClick}
+              className={`navbar-hamburger admin-hamburger ${adminHamburgerOpen ? "is-open" : ""}`} 
+              onClick={() => toggleSidebar(!adminHamburgerOpen)}
           >
-            {isHamburgerOpen ? (
+            {adminHamburgerOpen ? (
               <span className="hamburger-close">&#10005;</span> // <-- The Close Icon
             ) : (
               <span className="hamburger-icon">&#9776;</span> // <-- The Hamburger Icon
