@@ -3,6 +3,7 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import { AuthContext } from "../../context/AuthContext";
 import { useSidebar } from "../../context/SidebarContext";
 import appLogo from '../../assets/appLogo.png';
+import fallbackLogo from '../../assets/logo192.png';
 import notifIcon from "../../assets/notification.png";
 import axios from "../../api/axios";
 import { io } from "socket.io-client";
@@ -12,6 +13,10 @@ const Navbar = ({
   onHamburgerClick = () => {},
   isHamburgerOpen = false
 }) => {
+  // Normalize imported appLogo to an absolute path so it doesn't break on nested routes
+  const logoSrc = (typeof appLogo === "string" && appLogo.startsWith("./"))
+    ? appLogo.replace(/^\./, "") // "./static/..." => "/static/..."  
+    : appLogo;
   const { user, logout } = useContext(AuthContext);
   const [studentNotifCount, setStudentNotifCount] = useState(0);
   const [showStudentDropdown, setShowStudentDropdown] = useState(false);
@@ -147,15 +152,15 @@ const Navbar = ({
         {user ? (
           <Link to={logoLink}>
             <img
-              src={appLogo || "/appLogo.png"}
+              src={logoSrc || fallbackLogo}
               alt="Research Hub Logo"
               className="app-logo"
-              onError={(e) => { e.target.onerror = null; e.target.src = "/logo192.png"; }}
+              onError={(e) => { e.target.onerror = null; e.target.src = fallbackLogo; }}
             />
           </Link>
         ) : (
           <a href="#hero" onClick={e => handleNavClick(e, "hero")}>
-            <img src={appLogo} alt="Research Hub Logo" className="app-logo" />
+            <img src={logoSrc || fallbackLogo} alt="Research Hub Logo" className="app-logo" onError={(e) => { e.target.onerror = null; e.target.src = fallbackLogo; }} />
           </a>
         )}
       </div>
