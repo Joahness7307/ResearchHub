@@ -1,16 +1,31 @@
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import HeadAdminSideNavbar from "../Layout/HeadAdminSideNavbar"; // Assumed component
-import NotificationPage from "./NotificationPage"; // Assumed component
+import HeadAdminSideNavbar from "../Layout/HeadAdminSideNavbar";
+import NotificationPage from "./NotificationPage";
 import axios from "../../api/axios";
-import "./AdminDashboard.css"; // Assumed CSS file
+import "./AdminDashboard.css";
 import categoryColors from "../../constants/categoryColors";
-import "../Dashboard/StudentDashboard.css"; // Reused student styles for project cards (assumed)
-import HeadAdminLayout from "../Layout/HeadAdminLayout"; // Assumed Layout
+import "../Dashboard/StudentDashboard.css";
+import HeadAdminLayout from "../Layout/HeadAdminLayout";
 
 const projectsPerPage = 10;
 
-// Reusable Project List Component for cleanliness and DRY principle
+// ✅ FIXED: SearchBar MOVED OUTSIDE - NO ERRORS
+const SearchBar = ({ searchTerm, onSearchChange }) => (
+    <div className="search-wrapper" style={{ display: "flex", alignItems: "center", marginBottom: "2rem", marginTop: "1.5rem" }}>
+        <input
+            type="text"
+            placeholder="Search projects by title, category, author, or abstract..."
+            value={searchTerm}
+            onChange={onSearchChange}
+            className="admin-search-input"
+            style={{ marginRight: "1rem", flex: 1, padding: "1rem 1.3rem" }}
+        />
+        <button className="admin-btn search-button" style={{ padding: "1rem 1.3rem" }}>Search</button>
+    </div>
+);
+
+// Reusable Project List Component
 const ProjectList = ({ projects, navigate }) => (
     <ul className="repository-list">
         {projects.length === 0 ? (
@@ -52,19 +67,29 @@ const HeadAdminDashboard = ({ section }) => {
     const [currentPage, setCurrentPage] = useState(1);
     const location = useLocation();
 
+    // ✅ FIXED: Define handleSearchChange HERE
+    const handleSearchChange = useCallback((e) => {
+        setSearchTerm(e.target.value);
+    }, []);
+
+    // ✅ FIXED: Define handleSearchClick HERE (for button if needed)
+    const handleSearchClick = useCallback(() => {
+        setCurrentPage(1);
+    }, []);
+
     // Reset pagination when switching views
     useEffect(() => {
         setCurrentPage(1);
     }, [selectedCard]);
 
-    // Fetch all projects on initial load and path change
+    // Fetch all projects
     useEffect(() => {
         axios.get("/projects/admin/all")
             .then(res => setProjects(res.data))
             .catch(() => setProjects([]));
     }, [location.pathname]);
 
-    // Use useMemo to filter projects based on status and search term
+    // Filter and pagination logic (unchanged)
     const {
         pendingProjects,
         approvedProjects,
@@ -73,17 +98,13 @@ const HeadAdminDashboard = ({ section }) => {
         totalPages,
         paginatedProjects
     } = useMemo(() => {
-        // 1. Status groups
-        const all = projects;
         const pending = projects.filter(p => p.status === "endorsed");
         const approved = projects.filter(p => p.status === "approved");
         const revision = projects.filter(
             p => p.status === "admin_revision" && p.last_updated_by_role === "head_admin"
         );
-        // Repository projects are the same as approved projects
         const repository = approved;
 
-        // 2. Determine which group to display
         let dispProjects = [];
         if (selectedCard === "dashboard" || selectedCard === "pending") {
             dispProjects = pending;
@@ -94,38 +115,23 @@ const HeadAdminDashboard = ({ section }) => {
         } else if (selectedCard === "repository") {
             dispProjects = repository;
         } else {
-            dispProjects = all; // Fallback, but all list sections are covered
+            dispProjects = projects;
         }
 
-        // 3. Filter projects for search
         const filtered = dispProjects.filter(project => {
             const term = searchTerm.toLowerCase();
-            
             const titleMatch = project.title && project.title.toLowerCase().includes(term);
             const categoryMatch = project.category && project.category.toLowerCase().includes(term);
             const authorMatch = project.authors && project.authors.toLowerCase().includes(term);
-            // ✨ FIX: Add abstract to search fields
-            const abstractMatch = project.abstract && project.abstract.toLowerCase().includes(term); 
-            
-            // ✨ FIX: Include abstractMatch in the return condition
+            const abstractMatch = project.abstract && project.abstract.toLowerCase().includes(term);
             return titleMatch || categoryMatch || authorMatch || abstractMatch;
         });
 
-        // 4. Pagination
         const total = filtered.length;
         const totalPagesCount = Math.ceil(total / projectsPerPage);
         const startIndex = (currentPage - 1) * projectsPerPage;
         const endIndex = startIndex + projectsPerPage;
         const paginated = filtered.slice(startIndex, endIndex);
-
-        // Ensure currentPage doesn't exceed new totalPages after filtering/search
-        if (currentPage > totalPagesCount && totalPagesCount > 0) {
-            // This is generally safe inside useMemo only if it's based on other memo dependencies
-            setCurrentPage(totalPagesCount); 
-        } else if (currentPage > 1 && totalPagesCount === 0) {
-            // This is generally safe inside useMemo only if it's based on other memo dependencies
-            setCurrentPage(1); // Reset page if search yields no results
-        }
 
         return {
             pendingProjects: pending,
@@ -135,12 +141,20 @@ const HeadAdminDashboard = ({ section }) => {
             totalPages: totalPagesCount,
             paginatedProjects: paginated,
         };
-    }, [projects, selectedCard, searchTerm, currentPage]); // Re-calculate when these change
+    }, [projects, selectedCard, searchTerm, currentPage]);
 
-    // Latest 3 pending projects for the dashboard view
-    const latestPending = pendingProjects.slice(0, 3);
+    // Reset pagination when search changes
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchTerm]);
 
-    // Handlers for pagination
+    // Clamp currentPage
+    useEffect(() => {
+        if (totalPages > 0 && currentPage > totalPages) setCurrentPage(totalPages);
+        if (totalPages === 0 && currentPage > 1) setCurrentPage(1);
+    }, [currentPage, totalPages]);
+
+    // Pagination handlers
     const handleNextPage = () => {
         if (currentPage < totalPages) {
             setCurrentPage(currentPage + 1);
@@ -153,38 +167,9 @@ const HeadAdminDashboard = ({ section }) => {
         }
     };
 
-    // This function is for the search button
-    const handleSearchClick = () => {
-        // Re-evaluates filteredProjects via useMemo
-        setCurrentPage(1); // Reset to page 1 on new search
-    };
-
-
-    // Helper component for the search bar (to reduce duplication)
-    const SearchBar = () => (
-        <div className="search-wrapper" style={{ display: "flex", alignItems: "center", marginBottom: "2rem", marginTop: "1.5rem" }}>
-            <input
-                type="text"
-                placeholder="Search projects by title, category, author, or abstract..."
-                value={searchTerm}
-                onChange={e => {
-                    // ✨ FIX: Only set the search term here.
-                    // The useEffect below handles the page reset (or the logic inside useMemo).
-                    setSearchTerm(e.target.value); 
-                }}
-                className="admin-search-input"
-                style={{ marginRight: "1rem", flex: 1, padding: "1rem 1.3rem" }}
-            />
-            {/* The search button still forces a page reset just in case, but it's redundant now */}
-            <button className="admin-btn search-button" onClick={handleSearchClick} style={{ padding: "1rem 1.3rem" }}>Search</button>
-        </div>
-    );
-
-    // Helper component for pagination controls
+    // Pagination Controls Component
     const PaginationControls = () => {
-        // Only show if there's more than one page of filtered results
         if (totalPages <= 1) return null;
-
         return (
             <div className="pagination-controls" style={{ display: "flex", justifyContent: "center", gap: "1rem", marginTop: "2rem" }}>
                 <button
@@ -210,16 +195,18 @@ const HeadAdminDashboard = ({ section }) => {
         );
     };
 
+    const latestPending = pendingProjects.slice(0, 3);
+
     return (
         <div className="head-admin-dashboard-wrapper">
             <div style={{
-                maxWidth: "1200px", // Keep max-width to constrain content on large screens
-                margin: "0 auto", // THIS CENTERS the content within the available space
+                maxWidth: "1200px",
+                margin: "0 auto",
                 minHeight: "100vh",
                 padding: "2.5rem 2.5rem",
                 background: "#f9f9ff17"
             }}>
-                {/* Dashboard Cards and Latest Pending Projects */}
+                {/* Dashboard */}
                 {selectedCard === "dashboard" && (
                     <>
                         <h2 style={{ marginTop: "5rem", marginBottom: "2rem" }}>Head Admin Dashboard</h2>
@@ -242,24 +229,29 @@ const HeadAdminDashboard = ({ section }) => {
                             </div>
                         </div>
 
-                        {/* Latest Pending Projects */}
-                        <h3 style={{ marginBottom: "1.2rem", marginTop: "3rem", color: "#2563eb" }}>Latest Pending Projects</h3>
-                        <ProjectList projects={latestPending} navigate={navigate} />
-
-                        {/* See All Pending Projects Button */}
+                       {/* ✅ FIXED: SearchBar + FILTERED Latest Pending */}
+                        <SearchBar searchTerm={searchTerm} onSearchChange={handleSearchChange} />
+                        <h3 style={{ marginBottom: "1.2rem", marginTop: "3rem", color: "#2563eb" }}>
+                            Latest Pending Projects
+                        </h3>
+                        
+                        {/* ✅ FIXED: Filter latestPending by searchTerm */}
+                        <ProjectList 
+                            projects={latestPending.filter(project => {
+                                const term = searchTerm.toLowerCase();
+                                const titleMatch = project.title?.toLowerCase().includes(term);
+                                const categoryMatch = project.category?.toLowerCase().includes(term);
+                                const authorMatch = project.authors?.toLowerCase().includes(term);
+                                const abstractMatch = project.abstract?.toLowerCase().includes(term);
+                                return !searchTerm || titleMatch || categoryMatch || authorMatch || abstractMatch;
+                            })} 
+                            navigate={navigate} 
+                        />
+                        
                         <div style={{ textAlign: "center", marginTop: "2rem" }}>
                             <button
                                 className="admin-btn"
-                                style={{
-                                    padding: "1rem 2rem",
-                                    background: "#3a3e92",
-                                    color: "#fff",
-                                    border: "none",
-                                    borderRadius: "8px",
-                                    fontWeight: 600,
-                                    fontSize: "1.1rem",
-                                    cursor: "pointer"
-                                }}
+                                style={{ padding: "1rem 2rem", background: "#3a3e92", color: "#fff", border: "none", borderRadius: "8px", fontWeight: 600, fontSize: "1.1rem", cursor: "pointer" }}
                                 onClick={() => navigate("/head-admin/pending-projects")}
                             >
                                 See All Pending Projects
@@ -268,50 +260,45 @@ const HeadAdminDashboard = ({ section }) => {
                     </>
                 )}
 
-                {/* Pending Projects */}
+                {/* All Other Sections - SAME STRUCTURE */}
                 {selectedCard === "pending" && (
                     <>
                         <h2 style={{ marginTop: "5rem", marginBottom: "2rem" }}>Pending Projects ({pendingProjects.length})</h2>
-                        <SearchBar />
+                        {/* ✅ FIXED: Pass props correctly */}
+                        <SearchBar searchTerm={searchTerm} onSearchChange={handleSearchChange} />
                         <ProjectList projects={paginatedProjects} navigate={navigate} />
                         <PaginationControls />
                     </>
                 )}
 
-                {/* Approved Projects */}
                 {selectedCard === "approved" && (
                     <>
                         <h2 style={{ marginTop: "5rem", marginBottom: "2rem" }}>Approved Projects ({approvedProjects.length})</h2>
-                        <SearchBar />
+                        <SearchBar searchTerm={searchTerm} onSearchChange={handleSearchChange} />
                         <ProjectList projects={paginatedProjects} navigate={navigate} />
                         <PaginationControls />
                     </>
                 )}
 
-                {/* Request for Revision */}
                 {selectedCard === "revision" && (
                     <>
                         <h2 style={{ marginTop: "5rem", marginBottom: "2rem" }}>Request for Revision ({revisionProjects.length})</h2>
-                        <SearchBar />
+                        <SearchBar searchTerm={searchTerm} onSearchChange={handleSearchChange} />
                         <ProjectList projects={paginatedProjects} navigate={navigate} />
                         <PaginationControls />
                     </>
                 )}
 
-                {/* Project Repository */}
                 {selectedCard === "repository" && (
                     <>
                         <h2 style={{ marginTop: "5rem", marginBottom: "2rem" }}>Project Repository ({repositoryProjects.length})</h2>
-                        <SearchBar />
+                        <SearchBar searchTerm={searchTerm} onSearchChange={handleSearchChange} />
                         <ProjectList projects={paginatedProjects} navigate={navigate} />
                         <PaginationControls />
                     </>
                 )}
 
-                {/* Notifications */}
-                {selectedCard === "notifications" && (
-                    <NotificationPage />
-                )}
+                {selectedCard === "notifications" && <NotificationPage />}
             </div>
         </div>
     );
