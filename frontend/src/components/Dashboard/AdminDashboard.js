@@ -1,12 +1,15 @@
-import React, { useEffect, useState, useMemo, useCallback } from "react";
+import React, { useEffect, useState, useMemo, useCallback, useContext } from "react";
+import { useNavigate } from "react-router-dom";
 import axios from "../../api/axios";
 import "./AdminDashboard.css"
 import UserRolePieChart from "../UserRolePieChart";
+import { AuthContext } from "../../context/AuthContext";
 
 const USERS_PER_PAGE = 10;
 const PROJECTS_PER_PAGE = 10;
 
 const AdminDashboard = ({ activeSection }) => {
+    const { user } = useContext(AuthContext);
     const [projects, setProjects] = useState([]);
     const [users, setUsers] = useState([]);
     const [counts, setCounts] = useState({ 
@@ -99,18 +102,19 @@ const AdminDashboard = ({ activeSection }) => {
     
     // ✅ NEW: FETCH PROJECTS FUNCTION (ADDED)
     const fetchProjects = useCallback(async () => {
-        setLoadingProjects(true);
-        setProjectsError("");
-        try {
-            const res = await axios.get("/projects/admin/all");
-            setProjects(Array.isArray(res.data) ? res.data : []);
-        } catch (err) {
-            console.error("fetchProjects error", err);
-            setProjects([]);
-            setProjectsError("Failed to load projects.");
-        } finally {
-            setLoadingProjects(false);
-        }
+    setLoadingProjects(true);
+    setProjectsError("");
+    try {
+        const res = await axios.get("/projects/admin/all");
+        // backend returns an array; handle both shapes just in case
+        setProjects(Array.isArray(res.data) ? res.data : res.data.projects || []);
+    } catch (err) {
+        console.error("fetchProjects failed:", err);
+        setProjectsError("Failed to load projects.");
+        setProjects([]);
+    } finally {
+        setLoadingProjects(false);
+    }
     }, []);
 
     // ✅ NEW: DELETE PROJECT FUNCTION (ADDED)
@@ -518,7 +522,7 @@ const AdminDashboard = ({ activeSection }) => {
                                                     <td>
                                                         <button 
                                                             className="admin-btn" 
-                                                            onClick={() => window.open(`/projects/${p.id}`, "_blank")}
+                                                            onClick={() => window.open(`/admin/projects/${p.id}`)}
                                                         >
                                                             View
                                                         </button>
