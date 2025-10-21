@@ -368,7 +368,10 @@ exports.approveProject = async (req, res) => {
 exports.getAllProjectsAdmin = async (req, res) => {
   try {
     const projects = await Project.findAll({
-      order: [["created_at", "DESC"]]
+      order: [["created_at", "DESC"]],
+      include: [
+        { model: User, as: "submitter", attributes: ["id", "full_name", "username", "email", "department", "year_level", "strand", "grade_level"] }
+      ]
     });
     res.json(projects);
   } catch (error) {

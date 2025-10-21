@@ -1,43 +1,53 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "../../api/axios";
-import HeadAdminLayout from "../Layout/HeadAdminLayout";
 import categoryColors from "../../constants/categoryColors";
 import "../../components/Research/ProjectDetails.css";
 
-const HeadAdminProjectDetails = () => {
+const AdminProjectDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [project, setProject] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    axios.get(`/projects/${id}`, {
-      headers: { Authorization: `Bearer ${token}` }
-    })
-      .then(res => {
+    // axios instance already attaches token
+    axios
+      .get(`/projects/${id}`)
+      .then((res) => {
         setProject(res.data);
-        setLoading(false);
       })
-      .catch(() => setLoading(false));
+      .catch((err) => {
+        console.error("Failed to load project:", err);
+      })
+      .finally(() => setLoading(false));
   }, [id]);
 
   const handleApprove = async () => {
-    await axios.post(`/projects/admin/approve/${id}`);
-    navigate("/head-admin/approved-projects");
+    try {
+      await axios.post(`/projects/admin/approve/${id}`);
+      navigate("/admin/manage-projects");
+    } catch (err) {
+      console.error("Approve failed:", err);
+      alert("Failed to approve project.");
+    }
   };
 
   const handleRequestRevision = async () => {
-    await axios.post(`/projects/adviser/need-revision/${id}`);
-    navigate("/head-admin/request-for-revision");
+    try {
+      // research adviser endpoint kept for compatibility — adjust if route differs
+      await axios.post(`/projects/adviser/need-revision/${id}`);
+      navigate("/admin/manage-projects");
+    } catch (err) {
+      console.error("Request revision failed:", err);
+      alert("Failed to request revision.");
+    }
   };
 
-  if (loading) return <HeadAdminLayout><div>Loading...</div></HeadAdminLayout>;
-  if (!project) return <HeadAdminLayout><div>Project not found.</div></HeadAdminLayout>;
+  if (loading) return <div style={{ padding: "6rem" }}>Loading...</div>;
+  if (!project) return <div style={{ padding: "6rem" }}>Project not found.</div>;
 
   return (
-    <HeadAdminLayout>
       <div className="project-details-page">
         <div className="research-details-container">
           <h2>{project.title}</h2>
@@ -85,8 +95,7 @@ const HeadAdminProjectDetails = () => {
           )}
         </div>
       </div>
-    </HeadAdminLayout>
   );
 };
 
-export default HeadAdminProjectDetails;
+export default AdminProjectDetails;

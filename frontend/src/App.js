@@ -1,6 +1,6 @@
 import React from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
-import { AuthProvider, AuthContext } from "./context/AuthContext";
+import { AuthContext } from "./context/AuthContext";
 import Home from "./components/Home";
 import Login from "./components/Auth/Login";
 import Signup from "./components/Auth/Signup";
@@ -22,7 +22,7 @@ import ResearchAdviserDashboard from "./components/Dashboard/ResearchAdviserDash
 import ResearchAdviserLayout from "./components/Layout/ResearchAdviserLayout";
 import HeadAdminDashboard from "./components/Dashboard/HeadAdminDashboard";
 import MyAccountWithHeadAdminSidebar from "./components/Layout/MyAccountWithHeadAdminSidebar";
-import HeadAdminProjectDetails from "./components/Dashboard/HeadAdminProjectDetails";
+import AdminProjectDetails from "./components/Dashboard/AdminProjectDetails";
 import GuestDashboard from "./components/Dashboard/GuestDashboard";
 import NotificationDetails from "./components/Dashboard/NotificationDetails";
 import HeadAdminLayout from "./components/Layout/HeadAdminLayout";
@@ -84,6 +84,16 @@ function App() {
               <ProtectedRoute allowedRoles={["admin"]}>
                 <AdminLayout>
                   <AdminDashboard activeSection="projects" />
+                </AdminLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/projects/:id"
+            element={
+              <ProtectedRoute allowedRoles={["admin"]}>
+                <AdminLayout>
+                  <AdminProjectDetails />
                 </AdminLayout>
               </ProtectedRoute>
             }
