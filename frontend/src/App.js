@@ -39,7 +39,6 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
 
 function App() {
   return (
-    <AuthProvider>
       <Router>
         <Navbar />
         <Routes>
@@ -75,6 +74,16 @@ function App() {
               <ProtectedRoute allowedRoles={["admin"]}>
                 <AdminLayout>
                   <AdminDashboard activeSection="users" />
+                </AdminLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/manage-projects"
+            element={
+              <ProtectedRoute allowedRoles={["admin"]}>
+                <AdminLayout>
+                  <AdminDashboard activeSection="projects" />
                 </AdminLayout>
               </ProtectedRoute>
             }
@@ -289,7 +298,6 @@ function App() {
           <Route path="*" element={<Navigate to="/login" />} />
         </Routes>
       </Router>
-    </AuthProvider>
   );
 }
 

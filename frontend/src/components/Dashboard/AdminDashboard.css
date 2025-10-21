@@ -375,7 +375,7 @@
 
 /* Explicitly reinforcing the red style for the Delete button in the table */
 .admin-table .delete-btn {
-    background-color: #6b7280; 
+    background-color: #b63b2b; 
     color: white;
 }
 .delete-btn:hover {
