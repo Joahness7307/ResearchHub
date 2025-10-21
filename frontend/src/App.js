@@ -28,6 +28,7 @@ import NotificationDetails from "./components/Dashboard/NotificationDetails";
 import HeadAdminLayout from "./components/Layout/HeadAdminLayout";
 import MyAccountWithAdviserSidebar from "./components/Layout/MyAccountWithAdviserSidebar";
 import ForceChangePassword from "./components/Auth/ForceChangePassword";
+import RedirectIfAuthenticated from "./components/RedirectIfAuthenticated";
 
 const ProtectedRoute = ({ children, allowedRoles }) => {
   const { user, loading } = React.useContext(AuthContext);
@@ -42,11 +43,46 @@ function App() {
       <Router>
         <Navbar />
         <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Signup />} />
-          <Route path="/register-user" element={<GuestSignup />} />
-          <Route path="/register-seniorhigh" element={<SeniorHighSignup />} />
+          <Route
+            path="/"
+            element={
+              <RedirectIfAuthenticated>
+                <Home />
+              </RedirectIfAuthenticated>
+            }
+          />
+        <Route
+          path="/login"
+          element={
+            <RedirectIfAuthenticated>
+              <Login />
+            </RedirectIfAuthenticated>
+          }
+        />
+        <Route
+          path="/register"
+          element={
+            <RedirectIfAuthenticated>
+              <Signup />
+            </RedirectIfAuthenticated>
+          }
+        />
+        <Route
+          path="/register-user"
+          element={
+            <RedirectIfAuthenticated>
+              <GuestSignup />
+            </RedirectIfAuthenticated>
+          }
+        />
+        <Route
+          path="/register-seniorhigh"
+          element={
+            <RedirectIfAuthenticated>
+              <SeniorHighSignup />
+            </RedirectIfAuthenticated>
+          }
+        />
           <Route path="/role-selection" element={<RoleSelection />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
