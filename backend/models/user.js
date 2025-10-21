@@ -17,7 +17,7 @@ module.exports = (sequelize, DataTypes) => {
     profile_pic_url: { 
       type: DataTypes.STRING, 
       allowNull: false, // Set to false to match the database's NOT NULL constraint
-      defaultValue: '/images/default_avatar.png' // <-- ADD THIS DEFAULT VALUE
+      defaultValue: '/images/default-pp.png' // <-- ADD THIS DEFAULT VALUE
     },
     created_at: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW },
     updated_at: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW },

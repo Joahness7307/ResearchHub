@@ -4,7 +4,7 @@ const { CloudinaryStorage } = require("multer-storage-cloudinary");
 const cloudinary = require("../config/cloudinary");
 
 // Allowed image MIME types
-const allowedImageMimeTypes = ["image/jpeg", "image/png", "image/gif"];
+const allowedImageMimeTypes = ["image/jpeg", "image/png", "image/gif", "image/webp"];
 
 const storage = new CloudinaryStorage({
   cloudinary,
@@ -29,13 +29,13 @@ const storage = new CloudinaryStorage({
 const uploadProfilePic = multer({
   storage,
   limits: {
-    fileSize: 2 * 1024 * 1024, // 2MB max file size for images
+    fileSize: 5 * 1024 * 1024, // 5MB max file size for images
   },
   fileFilter: (req, file, cb) => {
     if (allowedImageMimeTypes.includes(file.mimetype)) {
       cb(null, true);
     } else {
-      cb(new multer.MulterError("LIMIT_UNEXPECTED_FILE", "Only JPG, PNG, and GIF image files are allowed"));
+      cb(new multer.MulterError("LIMIT_UNEXPECTED_FILE", "Only JPG, PNG, GIF or WEBP image files are allowed"));
     }
   },
 });

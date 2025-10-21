@@ -1,5 +1,6 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const multer = require("multer");
 const { User, Project } = require("../models");
 const { Invitation } = require("../models");
 const crypto = require("crypto");
@@ -96,7 +97,8 @@ exports.login = async (req, res) => {
         type: user.type,
         force_password_change: !!user.force_password_change,
         created_at: user.created_at,
-        updated_at: user.updated_at
+        updated_at: user.updated_at,
+        profile_pic_url: user.profile_pic_url || '/images/default-pp.png'
       }
     });
   } catch (error) {
@@ -410,6 +412,10 @@ exports.updateOwnProfile = async (req, res) => {
     return res.json({ message: "Profile updated", user: safeUser });
   } catch (error) {
     console.error("updateOwnProfile error:", error);
+    // Multer file-too-large
+    if (error && (error instanceof multer.MulterError || error.code === "LIMIT_FILE_SIZE")) {
+      return res.status(413).json({ message: "Uploaded file is too large. Max size is 5 MB." });
+    }
     return res.status(500).json({ message: "Failed to update profile.", error: error.message });
   }
 };

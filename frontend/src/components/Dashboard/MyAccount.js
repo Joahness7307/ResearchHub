@@ -50,11 +50,27 @@ const MyAccount = () => {
 
   // handle profile file change (preview)
   const handleProfileFileChange = (e) => {
-    const f = e.target.files[0];
+    const f = e.target.files && e.target.files[0];
     if (!f) return;
+    const MAX = 5 * 1024 * 1024; // 5MB
+    const allowed = ["image/jpeg", "image/png", "image/gif", "image/webp"];
+    if (!allowed.includes(f.type)) {
+      setEditError("Only JPG, PNG, GIF, or WEBP images are allowed.");
+      setEditForm((prev) => ({ ...prev, profileFile: null }));
+      setPreviewUrl(user?.profile_pic_url || null);
+      return;
+    }
+    if (f.size > MAX) {
+      setEditError("Image is too large. Maximum allowed size is 5 MB.");
+      setEditForm((prev) => ({ ...prev, profileFile: null }));
+      setPreviewUrl(user?.profile_pic_url || null);
+      return;
+    }
+    // valid file
+    setEditError("");
     setEditForm((prev) => ({ ...prev, profileFile: f }));
     setPreviewUrl(URL.createObjectURL(f));
-  };
+   };
 
   const handleEditField = (e) => {
     setEditForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -221,9 +237,10 @@ const MyAccount = () => {
             <div className="account-avatar account-avatar-with-pic">
               {user?.profile_pic_url ? (
                 <img
-                  src={user.profile_pic_url}
+                  src={user.profile_pic_url || "/images/default-pp.png"}
                   alt="avatar"
                   className="profile-pic"
+                  onError={(e) => { e.target.onerror = null; e.target.src = "/images/default-pp.png"; }}
                 />
               ) : (
                 user.full_name ? user.full_name[0].toUpperCase() : "?"
@@ -272,9 +289,10 @@ const MyAccount = () => {
                   <div className="profile-pic-preview">
                     {previewUrl ? (
                       <img
-                        src={previewUrl}
+                        src={previewUrl || user?.profile_pic_url || "/images/default-pp.png"}
                         alt="preview"
                         className="profile-pic"
+                        onError={(e) => { e.target.onerror = null; e.target.src = "/images/default-pp.png"; }}
                       />
                     ) : (
                       user.full_name ? user.full_name[0].toUpperCase() : "?"
@@ -414,9 +432,10 @@ const MyAccount = () => {
                   <div className="profile-pic-preview">
                     {previewUrl ? (
                       <img
-                        src={previewUrl}
+                        src={previewUrl || user?.profile_pic_url || "/images/default-pp.png"}
                         alt="preview"
                         className="profile-pic"
+                        onError={(e) => { e.target.onerror = null; e.target.src = "/images/default-pp.png"; }}
                       />
                     ) : (
                       user.full_name ? user.full_name[0].toUpperCase() : "?"
