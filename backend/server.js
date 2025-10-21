@@ -25,11 +25,23 @@ const io = new Server(server, {
 app.set("io", io);
 
 // Middleware
+const allowedOrigins = [
+  process.env.FRONTEND_URL,
+  "http://localhost:3000",
+];
+
 app.use(cors({
-  origin: [process.env.FRONTEND_URL],
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
-  credentials: true
+  credentials: true,
 }));
+
 
 app.use(bodyParser.json());
 app.use("/uploads", express.static("uploads"));
@@ -37,6 +49,11 @@ app.use("/uploads", express.static("uploads"));
 // Health check route (important for Render)
 app.get("/health", (req, res) => {
   res.status(200).json({ status: "ok", message: "Server running fine" });
+});
+
+app.use((req, res, next) => {
+  res.set('Cache-Control', 'no-store');
+  next();
 });
 
 // Routes
