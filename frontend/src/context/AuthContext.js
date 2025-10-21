@@ -1,39 +1,25 @@
-// filepath: researchhub-frontend/src/context/AuthContext.js
 import React, { createContext, useState, useEffect } from "react";
 import axios from "../api/axios";
 
 export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true); // New state to indicate if auth check is in progress
+  // hydrate from localStorage synchronously to avoid flash-logout
+  const initialUser = (() => {
+    try {
+      return JSON.parse(localStorage.getItem("user")) || null;
+    } catch {
+      return null;
+    }
+  })();
 
-  useEffect(() => {
-    const loadUser = async () => {
-      const token = localStorage.getItem("token");
-      if (token) {
-        try {
-          // Use relative path so axios baseURL is used
-          const res = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/users/profile`, {
-            headers: { Authorization: `Bearer ${token}` }
-          });
-          setUser(res.data.user);
-          localStorage.setItem("user", JSON.stringify(res.data.user));
-        } catch (error) {
-          console.error("Failed to re-authenticate user:", error);
-          localStorage.removeItem("token");
-          localStorage.removeItem("user");
-          setUser(null);
-        }
-      }
-      setLoading(false);
-    };
-    loadUser();
-  }, []);
+  const [user, setUser] = useState(initialUser);
+  const [loading, setLoading] = useState(true);
 
+  // login / logout helpers
   const login = (userData, token) => {
     setUser(userData);
-    localStorage.setItem("user", JSON.stringify(userData)); // Still store user object for quick access
+    localStorage.setItem("user", JSON.stringify(userData));
     localStorage.setItem("token", token);
   };
 
@@ -43,10 +29,62 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem("token");
   };
 
-  // Provide loading state so components can wait for auth check
+  useEffect(() => {
+    let mounted = true;
+    const token = localStorage.getItem("token");
+    if (!token) {
+      setLoading(false);
+      return;
+    }
+
+    // keep cached user visible while revalidating in background
+    const revalidate = async () => {
+      try {
+        const res = await axios.get("/users/profile"); // axios will include token via request interceptor
+        if (!mounted) return;
+        if (res?.data?.user) {
+          setUser(res.data.user);
+          localStorage.setItem("user", JSON.stringify(res.data.user));
+        }
+      } catch (err) {
+        // Only remove token on explicit 401
+        if (err.response && err.response.status === 401) {
+          logout();
+        } else {
+          // transient/network error — keep cached user so user stays logged in
+          console.warn("Auth revalidation failed (network), keeping cached user", err.message);
+        }
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    };
+
+    revalidate();
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  // global axios response interceptor to handle 401 -> force logout
+  useEffect(() => {
+    const id = axios.interceptors.response.use(
+      (resp) => resp,
+      (err) => {
+        if (err.response && err.response.status === 401) {
+          // force logout (user must login again)
+          setUser(null);
+          localStorage.removeItem("token");
+          localStorage.removeItem("user");
+        }
+        return Promise.reject(err);
+      }
+    );
+    return () => axios.interceptors.response.eject(id);
+  }, []);
+
   return (
     <AuthContext.Provider value={{ user, login, logout, loading }}>
-      {loading ? <div>Loading user session...</div> : children}
+      {children}
     </AuthContext.Provider>
   );
 };

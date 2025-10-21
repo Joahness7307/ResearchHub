@@ -1,7 +1,10 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo, useCallback } from "react";
 import axios from "../../api/axios";
 import "./AdminDashboard.css"
 import UserRolePieChart from "../UserRolePieChart";
+
+const USERS_PER_PAGE = 10;
+const PROJECTS_PER_PAGE = 10;
 
 const AdminDashboard = ({ activeSection }) => {
     const [projects, setProjects] = useState([]);
@@ -37,7 +40,13 @@ const AdminDashboard = ({ activeSection }) => {
     
     // 💡 NEW STATE FOR PAGINATION
     const [currentPage, setCurrentPage] = useState(1);
-    const USERS_PER_PAGE = 10;
+
+    // ✅ NEW: PROJECT MANAGEMENT STATES (ADDED)
+    const [projectSearch, setProjectSearch] = useState("");
+    const [projectPage, setProjectPage] = useState(1);
+    const [loadingProjects, setLoadingProjects] = useState(false);
+    const [projectsError, setProjectsError] = useState("");
+
     // ----------------------------
 
     // Handler functions
@@ -70,7 +79,7 @@ const AdminDashboard = ({ activeSection }) => {
             }
 
             const response = await axios.post("/users/add", payload);
-            setAddUserMessage(`User added successfully. Temporary Password: ${response.data.tempPassword || 'N/A'}`); // Assuming your server now returns tempPassword
+            setAddUserMessage(`User added successfully. Temporary Password: ${response.data.tempPassword || 'N/A'}`);
             setAddUserForm({
                 username: "",
                 full_name: "",
@@ -88,12 +97,47 @@ const AdminDashboard = ({ activeSection }) => {
         }
     };
     
-    // ... (useEffect for projects and counts remains the same) ...
+    // ✅ NEW: FETCH PROJECTS FUNCTION (ADDED)
+    const fetchProjects = useCallback(async () => {
+        setLoadingProjects(true);
+        setProjectsError("");
+        try {
+            const res = await axios.get("/projects/admin/all");
+            setProjects(Array.isArray(res.data) ? res.data : []);
+        } catch (err) {
+            console.error("fetchProjects error", err);
+            setProjects([]);
+            setProjectsError("Failed to load projects.");
+        } finally {
+            setLoadingProjects(false);
+        }
+    }, []);
+
+    // ✅ NEW: DELETE PROJECT FUNCTION (ADDED)
+    const handleDeleteProject = async (id) => {
+        if (!window.confirm("Delete this project? This action cannot be undone.")) return;
+        try {
+            await axios.delete(`/projects/admin/delete/${id}`);
+            setProjects((prev) => prev.filter((p) => p.id !== id));
+            // Refresh counts
+            axios.get("/projects/counts")
+                .then(res => setCounts(prev => ({ ...prev, ...res.data })))
+                .catch(err => console.error("Failed to fetch project counts:", err));
+        } catch (err) {
+            console.error("delete project error", err);
+            alert("Failed to delete project.");
+        }
+    };
+
+    // ... (useEffect for projects and counts - UPDATED)
     useEffect(() => {
         if (activeSection === "dashboard" || activeSection === undefined) {
             axios.get("/projects/admin/all")
                 .then(res => setProjects(res.data.projects || []))
                 .catch(() => setProjects([]));
+            
+            // ✅ NEW: Fetch projects for project management
+            fetchProjects();
         }
         if (activeSection === "dashboard" || activeSection === undefined) {
             axios.get("/users/count")
@@ -104,10 +148,10 @@ const AdminDashboard = ({ activeSection }) => {
                 .then(res => setCounts(prev => ({ ...prev, ...res.data })))
                 .catch(err => console.error("Failed to fetch project counts:", err));
 
-            // 💡 NEW: Fetch all users for the chart
+            // Fetch all users for the chart
             fetchUsers();
         }
-    }, [activeSection]);
+    }, [activeSection, fetchProjects]);
 
     // Fetch users for user management
     const fetchUsers = () => {
@@ -121,7 +165,12 @@ const AdminDashboard = ({ activeSection }) => {
             fetchUsers();
             setCurrentPage(1); // Reset page when switching to users section
         }
-    }, [activeSection]);
+        // ✅ NEW: Fetch projects when switching to projects section
+        if (activeSection === "projects") {
+            fetchProjects();
+            setProjectPage(1);
+        }
+    }, [activeSection, fetchProjects]);
 
     // User management handlers
     const handleUserSubmit = async (e) => {
@@ -135,7 +184,6 @@ const AdminDashboard = ({ activeSection }) => {
                 role: editForm.role 
             };
 
-            // Only send password if it's not empty, which will trigger a password change on the backend
             if (editForm.password) {
                  updatePayload.password = editForm.password;
             }
@@ -149,22 +197,19 @@ const AdminDashboard = ({ activeSection }) => {
         }
     };
 
-const handleDeleteUser = async (id) => {
+    const handleDeleteUser = async (id) => {
         if (!window.confirm("Are you sure you want to delete this user?")) return;
-        setMessage(""); // Use Message state for success/error of edit/delete actions
+        setMessage("");
         setError("");
         try {
             await axios.delete(`/users/delete/${id}`);
-            // Use setMessage for success
             setMessage("User deleted successfully!"); 
-            fetchUsers(); // Refresh users list
+            fetchUsers();
             
-            // Recalculate page to prevent empty last page
             if (filteredUsersOnPage.length === 1 && currentPage > 1) {
                 setCurrentPage(prev => prev - 1);
             }
         } catch (err) {
-            // Use setError for error, which will be styled red
             setError(err.response?.data?.message || "Error deleting user."); 
         }
     };
@@ -174,39 +219,54 @@ const handleDeleteUser = async (id) => {
         setEditForm({ full_name: user.full_name, email: user.email, role: user.role, password: "" }); 
     };
 
-   // 💡 NEW HANDLER FOR SEARCH INPUT CHANGE
+    // 💡 HANDLER FOR SEARCH INPUT CHANGE
     const handleSearchChange = (e) => {
         setUserSearch(e.target.value);
-        setCurrentPage(1); // Reset to the first page when the search term changes
+        setCurrentPage(1);
+    };
+
+    // ✅ NEW: PROJECT SEARCH HANDLER (ADDED)
+    const handleProjectSearchChange = (e) => {
+        setProjectSearch(e.target.value);
+        setProjectPage(1);
     };
 
     // 💡 UPDATED FILTER LOGIC: includes full_name, email, role, and joined date
     const filteredUsers = users.filter(user => {
         const searchTerm = userSearch.toLowerCase();
         
-        // 1. Check Full Name
         const nameMatch = user.full_name && user.full_name.toLowerCase().includes(searchTerm);
-        
-        // 2. Check Email
         const emailMatch = user.email && user.email.toLowerCase().includes(searchTerm);
-        
-        // 3. Check Role
         const roleMatch = user.role && user.role.toLowerCase().includes(searchTerm);
-        
-        // 4. Check Joined Date (formatted as locale date string)
         const joinedDate = new Date(user.created_at).toLocaleDateString();
-        const dateMatch = joinedDate.includes(searchTerm); // Search based on the displayed format
+        const dateMatch = joinedDate.includes(searchTerm);
         
         return nameMatch || emailMatch || roleMatch || dateMatch;
     });
 
-    // 💡 PAGINATION CALCULATIONS
+    // PAGINATION CALCULATIONS
     const totalPages = Math.ceil(filteredUsers.length / USERS_PER_PAGE);
     const indexOfLastUser = currentPage * USERS_PER_PAGE;
     const indexOfFirstUser = indexOfLastUser - USERS_PER_PAGE;
-    
-    // Get users for the current page
     const filteredUsersOnPage = filteredUsers.slice(indexOfFirstUser, indexOfLastUser);
+
+    // ✅ NEW: PROJECTS FILTERING + PAGINATION (ADDED)
+    const filteredProjects = useMemo(() => {
+        const term = (projectSearch || "").toLowerCase();
+        if (!term) return projects;
+        return projects.filter((p) => {
+            return (
+                (p.title && p.title.toLowerCase().includes(term)) ||
+                (p.category && p.category.toLowerCase().includes(term)) ||
+                (p.authors && p.authors.toLowerCase().includes(term)) ||
+                (p.abstract && p.abstract.toLowerCase().includes(term))
+            );
+        });
+    }, [projects, projectSearch]);
+
+    const totalProjectPages = Math.max(1, Math.ceil(filteredProjects.length / PROJECTS_PER_PAGE));
+    const projectStart = (projectPage - 1) * PROJECTS_PER_PAGE;
+    const paginatedProjects = filteredProjects.slice(projectStart, projectStart + PROJECTS_PER_PAGE);
 
     // Pagination handlers
     const paginate = (pageNumber) => {
@@ -215,12 +275,19 @@ const handleDeleteUser = async (id) => {
         }
     };
 
+    // ✅ NEW: PROJECT PAGINATION HANDLERS (ADDED)
+    const paginateProjects = (pageNumber) => {
+        if (pageNumber >= 1 && pageNumber <= totalProjectPages) {
+            setProjectPage(pageNumber);
+        }
+    };
+
     const pendingProjects = projects.filter(p => p.status === "pending" || p.status === "endorsed");
-    const section = activeSection || window.location.pathname.includes("manage-users") ? "users" : "dashboard";
+    const section = activeSection || "dashboard";
 
     return (
         <>
-            {/* ... (Dashboard Section JSX remains the same) ... */}
+            {/* DASHBOARD SECTION (UNCHANGED) */}
             {section === "dashboard" && (
                 <>
                     <div className="dashboard-summary-cards">
@@ -234,7 +301,6 @@ const handleDeleteUser = async (id) => {
                         </div>
                     </div>
 
-                    {/* Project Status Breakdown */}
                     <h2 style={{ marginTop: '3rem', marginBottom: '1.5rem', fontSize: '1.8rem', color: '#3a3e92' }}>Project Status Summary</h2>
                     <div className="dashboard-status-cards">
                         <div className="status-card pending">
@@ -255,15 +321,14 @@ const handleDeleteUser = async (id) => {
                         </div>
                     </div>
 
-                    {/* 💡 NEW: User Role Distribution Chart */}
-                    <h2 style={{ fontSize: '1.8rem', color: '#3a3e92' }}>User Role Distribution</h2>
-                    <div className="chart-container-wrapper">
-                        <UserRolePieChart users={users} />
-                    </div>
-
+                    <h2 style={{ fontSize: '1.8rem', color: '#3a3e92' }}>User Role Distribution</h2>
+                    <div className="chart-container-wrapper">
+                        <UserRolePieChart users={users} />
+                    </div>
                 </>
             )}
 
+            {/* USERS SECTION (UNCHANGED) */}
             {section === "users" && (
                 <section className="admin-section admin-users">
                     <h3 style={{ marginTop: '5rem', marginBottom: '2rem', fontSize: '1.5rem' }}>User Management</h3>
@@ -282,7 +347,6 @@ const handleDeleteUser = async (id) => {
                                 <option value="guest">Guest</option>
                             </select>
 
-                            {/* Adviser extra fields */}
                             {addUserForm.role === "research_adviser" && (
                                 <>
                                     <select name="type" value={addUserForm.type} onChange={handleAddUserChange} required>
@@ -311,7 +375,6 @@ const handleDeleteUser = async (id) => {
                             <input name="confirm_password" type="password" placeholder="Confirm Password" value={addUserForm.confirm_password} onChange={handleAddUserChange} required />
 
                             <button type="submit" className="admin-btn">Add User</button>
-                            {/* Display message with password */}
                             {addUserMessage && <div className="admin-message" style={{ color: "green", whiteSpace: "pre-wrap" }}>{addUserMessage}</div>}
                             {addUserError && <div className="admin-message" style={{ color: "red" }}>{addUserError}</div>}
                         </form>
@@ -319,7 +382,6 @@ const handleDeleteUser = async (id) => {
 
                     {message && <div className="admin-message">{message}</div>}
 
-                    {/* Edit User Modal/Form (JSX remains the same) */}
                     {editUserId && (
                         <div className="admin-edit-modal">
                             <form onSubmit={handleUserSubmit} className="admin-edit-form">
@@ -339,23 +401,18 @@ const handleDeleteUser = async (id) => {
                         </div>
                     )}
 
-                    {/* 💡 NEW: Search Input and Button */}
-                        <div className="admin-search-bar">
-                            <input
-                                type="text"
-                                placeholder="Search users..."
-                                value={userSearch}
-                                onChange={handleSearchChange}
-                                className="admin-search-input"
-                            />
-                            {/* Search is handled dynamically by onChange, but keeping a button for consistency/future features */}
-                            <button className="admin-btn">
-                                Search
-                            </button>
-                        </div>
+                    <div className="admin-search-bar">
+                        <input
+                            type="text"
+                            placeholder="Search users..."
+                            value={userSearch}
+                            onChange={handleSearchChange}
+                            className="admin-search-input"
+                        />
+                        <button className="admin-btn">Search</button>
+                    </div>
 
                     <div className="admin-list-wrapper">
-                        {/* 💡 Table now uses filteredUsersOnPage */}
                         <table className="admin-table">
                             <thead><tr>
                                 <th>Name</th>
@@ -372,9 +429,7 @@ const handleDeleteUser = async (id) => {
                                     <tr key={user.id}>
                                         <td>{user.full_name}</td>
                                         <td>{user.email}</td>
-                                        <td>
-                                            <span className={`role-badge role-${user.role}`}>{user.role}</span>
-                                        </td>
+                                        <td><span className={`role-badge role-${user.role}`}>{user.role}</span></td>
                                         <td>{new Date(user.created_at).toLocaleDateString()}</td>
                                         <td>
                                             <button onClick={() => handleEditUser(user)} className="admin-btn edit-btn">Edit</button>
@@ -387,7 +442,6 @@ const handleDeleteUser = async (id) => {
                         </table>
                     </div>
                     
-                    {/* 💡 PAGINATION CONTROLS */}
                     {totalPages > 1 && (
                         <div className="pagination-controls" style={{ display: 'flex', justifyContent: 'center', margin: '20px 0', gap: '10px' }}>
                             <button 
@@ -409,6 +463,102 @@ const handleDeleteUser = async (id) => {
                                 Next
                             </button>
                         </div>
+                    )}
+                </section>
+            )}
+
+            {/* ✅ NEW: PROJECTS SECTION (ADDED) */}
+            {section === "projects" && (
+                <section className="admin-section">
+                    <h3 style={{ marginTop: '5rem', marginBottom: '2rem', fontSize: '1.5rem' }}>Project Management</h3>
+
+                    <div className="admin-search-bar" style={{ margin: "1rem 0 1.5rem 0" }}>
+                        <input
+                            type="text"
+                            className="admin-search-input"
+                            placeholder="Search projects by title, category, author or abstract..."
+                            value={projectSearch}
+                            onChange={handleProjectSearchChange}
+                        />
+                        <button className="admin-btn" onClick={() => setProjectPage(1)}>Search</button>
+                        <button className="admin-btn" style={{ marginLeft: 8 }} onClick={fetchProjects}>Refresh</button>
+                    </div>
+
+                    {loadingProjects ? (
+                        <div>Loading projects...</div>
+                    ) : projectsError ? (
+                        <div style={{ color: "red" }}>{projectsError}</div>
+                    ) : (
+                        <>
+                            <div className="admin-list-wrapper">
+                                <table className="admin-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Title</th>
+                                            <th>Category</th>
+                                            <th>Authors</th>
+                                            <th>Submitted By</th>
+                                            <th>Status</th>
+                                            <th>Uploaded</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {paginatedProjects.length === 0 ? (
+                                            <tr><td colSpan="7" style={{ textAlign: "center", padding: "1.5rem" }}>No projects found.</td></tr>
+                                        ) : (
+                                            paginatedProjects.map((p) => (
+                                                <tr key={p.id}>
+                                                    <td style={{ maxWidth: 300 }}>{p.title}</td>
+                                                    <td>{p.category}</td>
+                                                    <td>{p.authors}</td>
+                                                    <td>{p.submitter?.full_name || p.submitter?.username || p.submitted_by}</td>
+                                                    <td>{p.status}</td>
+                                                    <td>{new Date(p.created_at).toLocaleDateString()}</td>
+                                                    <td>
+                                                        <button 
+                                                            className="admin-btn" 
+                                                            onClick={() => window.open(`/projects/${p.id}`, "_blank")}
+                                                        >
+                                                            View
+                                                        </button>
+                                                        <button 
+                                                            className="admin-btn delete-btn"
+                                                            onClick={() => handleDeleteProject(p.id)}
+                                                        >
+                                                            Delete
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            ))
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            {totalProjectPages > 1 && (
+                                <div className="pagination-controls" style={{ display: 'flex', justifyContent: 'center', margin: '20px 0', gap: '10px' }}>
+                                    <button 
+                                        onClick={() => paginateProjects(projectPage - 1)} 
+                                        disabled={projectPage === 1}
+                                        className="admin-btn"
+                                        style={{ background: '#6b7280' }}
+                                    >
+                                        Previous
+                                    </button>
+                                    <span style={{ alignSelf: 'center', color: '#3a3e92', fontWeight: 'bold' }}>
+                                        Page {projectPage} of {totalProjectPages}
+                                    </span>
+                                    <button 
+                                        onClick={() => paginateProjects(projectPage + 1)} 
+                                        disabled={projectPage === totalProjectPages}
+                                        className="admin-btn"
+                                    >
+                                        Next
+                                    </button>
+                                </div>
+                            )}
+                        </>
                     )}
                 </section>
             )}
