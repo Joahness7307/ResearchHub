@@ -208,6 +208,13 @@ const Navbar = ({
             )}
           </div>
           <div className={`navbar-sidebar ${isSidebarOpen ? "open" : ""}`}>
+            <button
+              className="sidebar-close-btn"
+              onClick={() => toggleSidebar(false)}
+              aria-label="Close sidebar"
+            >
+              &#10005;
+            </button>
             {unauthLinks.map(link => (
               <a
                 key={link.label}
@@ -293,6 +300,13 @@ const Navbar = ({
             {isSidebarOpen ? <span className="hamburger-close">&#10005;</span> : <span className="hamburger-icon">&#9776;</span>}
           </div>
           <div className={`navbar-sidebar ${isSidebarOpen ? "open" : ""}`}>
+            <button
+              className="sidebar-close-btn"
+              onClick={() => toggleSidebar(false)}
+              aria-label="Close sidebar"
+            >
+              &#10005;
+            </button>
             {sidebarLinks.map((link) =>
               link.action ? (
                 <button key={link.label} className="sidebar-link" onClick={() => { link.action(); toggleSidebar(false); }}>

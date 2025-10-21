@@ -209,6 +209,21 @@
   background: #1e52c9;
 }
 
+/* close button inside sidebar */
+.sidebar-close-btn {
+  position: absolute;
+  top: 0.9rem;
+  right: 0.9rem;
+  background: transparent;
+  border: none;
+  color: var(--text-light);
+  font-size: 1.8rem;
+  cursor: pointer;
+  z-index: 3300;
+  line-height: 1;
+  padding: 0.25rem 0.35rem;
+}
+
 /* --- Responsive & Mobile Sidebar --- */
 
 /* Hide desktop navigation elements by default on smaller screens */
@@ -320,6 +335,11 @@
   .notification-icon {
     width: 24px;
     height: 24px;
+  }
+    .sidebar-close-btn {
+    top: 0.8rem;
+    right: 0.8rem;
+    font-size: 1.8rem;
   }
 }
 
