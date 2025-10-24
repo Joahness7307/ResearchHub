@@ -12,6 +12,7 @@ const AdminDashboard = ({ activeSection }) => {
     const { user } = useContext(AuthContext);
     const [projects, setProjects] = useState([]);
     const [users, setUsers] = useState([]);
+    const navigate = useNavigate();
     const [counts, setCounts] = useState({ 
         totalUsers: 0, 
         totalProjects: 0,
@@ -521,7 +522,7 @@ const AdminDashboard = ({ activeSection }) => {
                                                     <td>
                                                         <button 
                                                             className="admin-btn" 
-                                                            onClick={() => window.open(`/admin/projects/${p.id}`)}
+                                                            onClick={() => navigate(`/admin/projects/${p.id}`)}
                                                         >
                                                             View
                                                         </button>

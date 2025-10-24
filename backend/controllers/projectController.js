@@ -1,4 +1,4 @@
-const { Project, User, Notification } = require("../models");
+const { Project, User, Notification, Comment } = require("../models");
 const path = require("path");
 const fs = require("fs");
 const cloudinary = require("../config/cloudinary");
@@ -417,6 +417,9 @@ exports.deleteProject = async (req, res) => {
     if (!project) {
       return res.status(404).json({ error: "Project not found" });
     }
+
+    // Delete related comments first (to satisfy FK constraint)
+    await Comment.destroy({ where: { projectId } });
 
     // Delete notifications
     await Notification.destroy({ where: { projectId } });
