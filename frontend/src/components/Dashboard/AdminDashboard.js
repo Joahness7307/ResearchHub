@@ -119,18 +119,17 @@ const AdminDashboard = ({ activeSection }) => {
 
     // ✅ NEW: DELETE PROJECT FUNCTION (ADDED)
     const handleDeleteProject = async (id) => {
-        if (!window.confirm("Delete this project? This action cannot be undone.")) return;
-        try {
-            await axios.delete(`/projects/admin/delete/${id}`);
-            setProjects((prev) => prev.filter((p) => p.id !== id));
-            // Refresh counts
-            axios.get("/projects/counts")
-                .then(res => setCounts(prev => ({ ...prev, ...res.data })))
-                .catch(err => console.error("Failed to fetch project counts:", err));
-        } catch (err) {
-            console.error("delete project error", err);
-            alert("Failed to delete project.");
-        }
+    if (!window.confirm("Delete this project? This action cannot be undone.")) return;
+    try {
+        await axios.delete(`/projects/admin/delete/${id}`);
+        setProjects((prev) => prev.filter((p) => p.id !== id));
+        axios.get("/projects/counts")
+        .then(res => setCounts(prev => ({ ...prev, ...res.data })))
+        .catch(err => console.error("Failed to fetch project counts:", err));
+    } catch (err) {
+        console.error("delete project error", err);
+        alert(`Failed to delete project: ${err.response?.data?.error || "Unknown error"}`);
+    }
     };
 
     // ... (useEffect for projects and counts - UPDATED)

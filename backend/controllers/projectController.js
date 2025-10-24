@@ -1,6 +1,7 @@
 const { Project, User, Notification } = require("../models");
 const path = require("path");
 const fs = require("fs");
+const cloudinary = require("../config/cloudinary");
 
 // Upload final research paper
 exports.submitProject = async (req, res) => {
@@ -406,12 +407,32 @@ exports.hideProject = async (req, res) => {
 
 exports.deleteProject = async (req, res) => {
   try {
-    // Delete notifications first
-    await Notification.destroy({ where: { projectId: req.params.id } });
-    // Then delete the project
-    await Project.destroy({ where: { id: req.params.id } });
+    const projectId = parseInt(req.params.id, 10);
+    if (isNaN(projectId)) {
+      return res.status(400).json({ error: "Invalid project ID" });
+    }
+
+    // Find the project to get documentPath
+    const project = await Project.findByPk(projectId);
+    if (!project) {
+      return res.status(404).json({ error: "Project not found" });
+    }
+
+    // Delete notifications
+    await Notification.destroy({ where: { projectId } });
+
+    // Delete Cloudinary file
+    if (project.documentPath) {
+      const publicId = project.documentPath.split("/").pop().split(".")[0]; // Extract public_id
+      await cloudinary.uploader.destroy(`researchhub_projects/${publicId}`);
+    }
+
+    // Delete project
+    await Project.destroy({ where: { id: projectId } });
+
     res.status(200).json({ message: "Research project deleted successfully" });
   } catch (error) {
+    console.error("Delete project error:", error);
     res.status(500).json({ error: error.message });
   }
 };
