@@ -70,7 +70,7 @@ const AdminProjectDetails = () => {
           <p><b>Abstract:</b> {project.abstract}</p>
           <div className="details-actions">
             <a
-              href={`/${project.documentPath}`}
+              href={project.documentPath}  // Absolute URL for direct view
               target="_blank"
               rel="noopener noreferrer"
               className="view-pdf-btn"
@@ -78,7 +78,7 @@ const AdminProjectDetails = () => {
               View PDF
             </a>
             <a
-              href={`/${project.documentPath}`}
+              href={`${process.env.REACT_APP_BACKEND_URL}/api/projects/download/${id}`}  // Backend endpoint for proper download
               download
               target="_blank"
               rel="noopener noreferrer"
