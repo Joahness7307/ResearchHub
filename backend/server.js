@@ -1,4 +1,3 @@
-// filepath: backend/server.js
 require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
@@ -7,79 +6,66 @@ const { sequelize } = require("./models");
 const http = require("http");
 const { Server } = require("socket.io");
 
-// Import routes
+// routes …
 const userRoutes = require("./routes/userRoutes");
 const projectRoutes = require("./routes/projectRoutes");
-// const reviewRoutes = require("./routes/reviewRoutes");
 const commentRoutes = require("./routes/commentRoutes");
 const notificationRoutes = require("./routes/notificationRoutes");
 const contactRoutes = require('./routes/contactRoutes');
 
 const app = express();
-
-// Server + Socket.io setup
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: { origin: process.env.FRONTEND_URL || "*" },
 });
 app.set("io", io);
 
-// Middleware
+/* ---------- CORS ---------- */
 const allowedOrigins = [
   process.env.FRONTEND_URL,
   "http://localhost:3000",
 ];
 
-app.use(cors({
-  origin: function (origin, callback) {
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error("Not allowed by CORS"));
-    }
-  },
-  methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
+const corsOptions = {
+  origin: (origin, cb) => (!origin || allowedOrigins.includes(origin)) ? cb(null, true) : cb(new Error("CORS")),
+  methods: ["GET","POST","PUT","PATCH","DELETE","OPTIONS"],
+  allowedHeaders: ["Content-Type","Authorization"],
   credentials: true,
-}));
+  optionsSuccessStatus: 200
+};
 
+app.use(cors(corsOptions));
 
+/* ---------- Middleware ---------- */
 app.use(bodyParser.json());
 app.use("/uploads", express.static("uploads"));
 
-// Health check route (important for Render)
+/* ---------- Routes ---------- */
 app.get("/health", (req, res) => {
-  res.status(200).json({ status: "ok", message: "Server running fine" });
+  res.setHeader("Access-Control-Allow-Origin", process.env.FRONTEND_URL || "*");
+  res.json({ status: "ok" });
 });
 
-app.use((req, res, next) => {
-  res.set('Cache-Control', 'no-store');
-  next();
-});
-
-// Routes
 app.use("/api/users", userRoutes);
 app.use("/api/projects", projectRoutes);
-// app.use("/api/reviews", reviewRoutes);
 app.use("/api/comments", commentRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use('/api/contact', contactRoutes);
 
-// Global error handler
+/* ---------- Error handler ---------- */
 app.use((err, req, res, next) => {
-  console.error("Server Error:", err);
-  res.status(500).json({ error: "Internal Server Error" });
+  console.error(err);
+  res.status(500).json({ error: err.message });
 });
 
-// Start server
-const PORT = process.env.PORT || 5000;
+/* ---------- Start ---------- */
+const PORT = process.env.PORT || 4000;
 server.listen(PORT, async () => {
   try {
-    // await sequelize.sync({ alter: true });
-    // 1. New: Test the database connection without modifying the schema
-    await sequelize.authenticate(); 
-    console.log("✅ Database connected successfully!");
-    console.log(`🚀 Server running on port ${PORT}`);
-  } catch (error) {
-    console.error("❌ Database connection failed:", error);
+    await sequelize.authenticate();
+    console.log("DB connected");
+    console.log(`Server listening on ${PORT}`);
+  } catch (e) {
+    console.error("DB error:", e);
   }
 });
