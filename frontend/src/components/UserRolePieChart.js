@@ -46,18 +46,32 @@ const UserRolePieChart = ({ users = [] }) => {
         ],
     };
 
+
     const options = {
         responsive: true,
+        maintainAspectRatio: false,
         plugins: {
             legend: {
-                position: 'right',
+                position: 'bottom',
                 labels: {
+                    padding: 20,
                     usePointStyle: true,
                 }
             },
+            datalabels: {
+                formatter: (value, context) => {
+                    const total = context.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
+                    const percentage = (value * 100 / total).toFixed(1);
+                    return percentage + '%';
+                },
+                color: '#fff',
+                font: {
+                    weight: 'bold',
+                    size: 14,
+                },
+            },
             tooltip: {
                 callbacks: {
-                    // Tooltip still displays count and percentage
                     label: function (context) {
                         let label = context.label || '';
                         if (label) {
@@ -69,23 +83,6 @@ const UserRolePieChart = ({ users = [] }) => {
                     }
                 }
             },
-            // 💡 DATALABELS CONFIGURATION
-            datalabels: {
-                color: '#fff', // White color for labels on the colored slices
-                anchor: 'end',
-                align: 'start',
-                offset: 10,
-                textAlign: 'center',
-                font: {
-                    weight: 'bold'
-                },
-                formatter: (value, context) => {
-                    const total = context.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
-                    const percentage = (value * 100 / total).toFixed(1) + '%';
-                    
-                    return percentage;
-                }
-            }
         },
     };
 
@@ -94,7 +91,7 @@ const UserRolePieChart = ({ users = [] }) => {
     }
 
     return (
-        <div style={{ maxWidth: '400px', margin: '0 auto' }}>
+        <div style={{ height: '300px', width: '100%', maxWidth: '500px', margin: '0 auto' }}>
             <Pie data={data} options={options} />
         </div>
     );

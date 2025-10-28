@@ -200,10 +200,9 @@ const HeadAdminDashboard = ({ section }) => {
     return (
         <div className="head-admin-dashboard-wrapper">
             <div style={{
-                maxWidth: "1200px",
+                maxWidth: "1400px",
                 margin: "0 auto",
                 minHeight: "100vh",
-                padding: "2.5rem 2.5rem",
                 background: "#f9f9ff17"
             }}>
                 {/* Dashboard */}

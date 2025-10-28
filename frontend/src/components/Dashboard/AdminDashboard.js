@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import axios from "../../api/axios";
 import "./AdminDashboard.css"
 import UserRolePieChart from "../UserRolePieChart";
+import ProjectStatusPieChart from "../ProjectStatusPieChart";
 import { AuthContext } from "../../context/AuthContext";
 
 const USERS_PER_PAGE = 10;
@@ -320,14 +321,24 @@ const AdminDashboard = ({ activeSection }) => {
                             <p className="count-number">{counts.revision}</p>
                         </div>
                         <div className="status-card approved">
-                            <h3>In Repository (Approved)</h3>
+                            <h3>Approved</h3>
                             <p className="count-number">{counts.approved}</p>
                         </div>
                     </div>
 
-                    <h2 style={{ fontSize: '1.8rem', color: '#3a3e92' }}>User Role Distribution</h2>
-                    <div className="chart-container-wrapper">
-                        <UserRolePieChart users={users} />
+                    <div className="charts-section">
+                        <div className="chart-container">
+                            <h2 style={{ fontSize: '1.8rem', color: '#3a3e92' }}>User Role Distribution</h2>
+                            <div className="chart-container-wrapper">
+                                <UserRolePieChart users={users} />
+                            </div>
+                        </div>
+                        <div className="chart-container">
+                            <h2 style={{ fontSize: '1.8rem', color: '#3a3e92' }}>Project Status Distribution</h2>
+                            <div className="chart-container-wrapper">
+                                <ProjectStatusPieChart counts={counts} />
+                            </div>
+                        </div>
                     </div>
                 </>
             )}
@@ -335,7 +346,7 @@ const AdminDashboard = ({ activeSection }) => {
             {/* USERS SECTION (UNCHANGED) */}
             {section === "users" && (
                 <section className="admin-section admin-users">
-                    <h3 style={{ marginTop: '5rem', marginBottom: '2rem', fontSize: '1.5rem' }}>User Management</h3>
+                    <h3 style={{ marginTop: '3rem', marginBottom: '2rem', fontSize: '1.8rem' }}>User Management</h3>
 
                     <section style={{ marginTop: "2rem" }}>
                         <form onSubmit={handleAddUserSubmit} className="admin-form" style={{ gap: "0.75rem" }}>
@@ -474,7 +485,7 @@ const AdminDashboard = ({ activeSection }) => {
             {/* ✅ NEW: PROJECTS SECTION (ADDED) */}
             {section === "projects" && (
                 <section className="admin-section">
-                    <h3 style={{ marginTop: '5rem', marginBottom: '2rem', fontSize: '1.5rem' }}>Project Management</h3>
+                    <h3 style={{ marginTop: '3rem', marginBottom: '2rem', fontSize: '1.8rem' }}>Project Management</h3>
 
                     <div className="admin-search-bar" style={{ margin: "1rem 0 1.5rem 0" }}>
                         <input
@@ -485,7 +496,7 @@ const AdminDashboard = ({ activeSection }) => {
                             onChange={handleProjectSearchChange}
                         />
                         <button className="admin-btn" onClick={() => setProjectPage(1)}>Search</button>
-                        <button className="admin-btn" style={{ marginLeft: 8 }} onClick={fetchProjects}>Refresh</button>
+                        <button className="admin-btn" onClick={fetchProjects}>Refresh</button>
                     </div>
 
                     {loadingProjects ? (

@@ -10,13 +10,13 @@
   display: flex;
   align-items: center;
   justify-content: flex-start;
-  min-height: 600px;
+  min-height: 700px;
   padding: 3rem 2rem;
   position: relative;
   background-image: linear-gradient(
     rgba(0, 0, 0, 0.8),
     rgba(0, 0, 0, 0.8)
-  ), url('/src/assets/bg3.jpg');
+  ), url('/src/assets/backImage.jpeg');
   background-position: center center;
   background-repeat: no-repeat;
   background-size: cover;
@@ -130,7 +130,7 @@
 
   flex: 1;
 
-  background: url('../assets/about-pic.jpg') center/cover no-repeat;
+  background: url('../assets/picTanan.jpg') center/cover no-repeat;
 
   border-radius: 10px;
 
@@ -219,7 +219,7 @@
 
   font-size: 2rem;
 
-  margin-bottom: 3.5rem;
+  margin-bottom: 0.5rem;
 
   font-weight: 600;
 
@@ -343,7 +343,7 @@
 
 .feature-card p {
 
-  font-size: 0.97rem;
+  font-size: 16px;
 
   color: #4a5568;
 
@@ -359,7 +359,83 @@
 
 }
 
+/* --- Our Team Section --- */
+.team {
+  max-width: 1200px;
+  margin: 3.5rem auto;
+  padding: 2.5rem 1.25rem;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 8px 30px rgba(6, 12, 34, 0.04);
+  text-align: center;
+}
 
+.team h2 {
+  color: #4e54c8;
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+}
+
+.team-bar {
+  width: 50px;
+  height: 4px;
+  background: #4e54c8;
+  border-radius: 2px;
+  margin: 0 auto 1rem auto;
+}
+
+.team-sub {
+  color: #4a5568;
+  margin-bottom: 1.5rem;
+  font-size: 18px
+}
+
+.team-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.25rem;
+  margin-top: 1.25rem;
+}
+
+.team-card {
+  background: linear-gradient(180deg, #ffffff 0%, #fbfbff 100%);
+  padding: 1rem;
+  border-radius: 10px;
+  border: 1px solid #eef2ff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.team-photo-wrapper {
+  width: 112px;
+  height: 112px;
+  border-radius: 50%;
+  overflow: hidden;
+  box-shadow: 0 6px 18px rgba(78, 84, 200, 0.12);
+}
+
+.team-photo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.team-name {
+  margin: 0;
+  font-size: 1.05rem;
+  color: #1f2937;
+  font-weight: 600;
+}
+
+.team-role {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #6b7280;
+}
 
 /* --- Contact Section --- */
 
@@ -772,6 +848,14 @@
 
   }
 
+    .team {
+    padding: 1.5rem;
+  }
+  .team-photo-wrapper {
+    width: 96px;
+    height: 96px;
+  }
+
 
 
   .contact {
@@ -864,7 +948,6 @@
   }
 
 
-
   .features-wrapper {
 
     padding: 3rem 1rem;
@@ -879,7 +962,9 @@
 
   }
 
-
+  .team-sub {
+    font-size: 16px
+  }
 
   .footer-links {
     flex-direction: column;

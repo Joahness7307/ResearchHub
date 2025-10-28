@@ -159,7 +159,7 @@ const ResearchAdviserDashboard = ({ section }) => {
     // Render sections (ALL using FIXED SearchInput)
     if (section === "request-for-revision") {
         return (
-            <div className="adviser-dashboard-container" style={{ padding: "5rem 2rem" }}>
+            <div className="adviser-dashboard-container">
                 <h2>{sectionTitles[section]}</h2>
                 <div className="dashboard-card-row" style={{ display: "flex", gap: "2rem", marginBottom: "2rem" }}>
                     <div className={`dashboard-card${selectedRevisionCard === "adviser" ? " active" : ""}`} style={{ cursor: "pointer" }} onClick={() => setSelectedRevisionCard("adviser")}>
@@ -240,7 +240,7 @@ const ResearchAdviserDashboard = ({ section }) => {
 
     // Default sections
     return (
-        <div className="adviser-dashboard-container" style={{ padding: "5rem 2rem" }}>
+        <div className="adviser-dashboard-container">
             <h2>{sectionTitles[section] || "Research Adviser Dashboard"}</h2>
             {/* ✅ FIXED */}
             <SearchInput value={searchTerm} onChange={handleSearchChange} />

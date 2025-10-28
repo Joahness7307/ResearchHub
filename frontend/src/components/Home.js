@@ -2,6 +2,12 @@ import React, { useEffect, useState } from "react";
 import { useLocation, Link, useNavigate } from "react-router-dom";
 import axios from "../api/axios";
 import "./Home.css";
+import caparidaImg from "../assets/caparida.png";
+import yongcoImg from "../assets/yongco2.jpeg";
+import caparasImg from "../assets/caparas.jpeg";
+import montillaImg from "../assets/montilla.jpg";
+import toringImg from "../assets/toring2.jpeg";
+import lapisImg from "../assets/lapis.jpeg";
 
 const Home = () => {
   const location = useLocation();
@@ -10,6 +16,15 @@ const Home = () => {
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
   const [feedback, setFeedback] = useState("");
+
+  const teamMembers = [
+    { name: "Jan Niño Caparida", role: "Project Manager", img: caparidaImg },
+    { name: "Quennie Hazen Yongco", role: "Assistant Project Manager", img: yongcoImg },
+    { name: "Joahness M. Caparas", role: "Programmer", img: caparasImg },
+    { name: "Kate Montilla", role: "UI/UX Designer", img: montillaImg },
+    { name: "Jeremiah Toring", role: "System Analyst", img: toringImg },
+    { name: "John Kinon Lapis", role: "Tester", img: lapisImg }
+  ];
 
   // Scroll to section if state.scrollTo is set (when navigating from navbar)
   useEffect(() => {
@@ -104,6 +119,27 @@ const Home = () => {
               <p>Access approved research documentation and able to get references.</p>
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* Our Team Section (ADDED) */}
+      <section className="team" id="team">
+        <h2>Our Team</h2>
+        <div className="team-bar"></div>
+        <p className="team-sub">Meet the people behind ResearchHub — developers, designers, and maintainers.</p>
+
+        <div className="team-grid">
+          {teamMembers.map((m, idx) => (
+            <div className="team-card" key={idx}>
+              <div className="team-photo-wrapper">
+                <img src={m.img} alt={m.name} className="team-photo" />
+              </div>
+              <div className="team-info">
+                <h4 className="team-name">{m.name}</h4>
+                <p className="team-role">{m.role}</p>
+              </div>
+            </div>
+          ))}
         </div>
       </section>
 
