@@ -1,7 +1,7 @@
 .notification-page-container {
   max-width: 700px;
   margin: 80px auto 40px auto;
-  margin-top: 100px;
+  margin-top: 110px;
   background: #fff; 
   padding: 2.5rem 2rem;
   border-radius: 14px;
@@ -66,4 +66,28 @@
   border-radius: 20px;
   font-weight: 600;
   margin-left: 1rem;
+}
+
+/* 📲 Tablet Portrait */
+@media (max-width: 768px) {
+  .notification-page-container {
+    margin-top: 90px;
+    margin-left: 2rem;
+    margin-right: 2rem
+  }
+  .notification-title {
+  font-size: 1.5rem;
+}
+}
+
+/* 📱 Small Mobile */
+@media (max-width: 480px) {
+  .notification-page-container {
+    margin-top: 70px;
+    margin-left: 1rem;
+    margin-right: 1rem
+  }
+  .notification-title {
+  font-size: 1.5rem;
+}
 }

@@ -31,7 +31,7 @@
 .search-wrapper {
   display: flex;
   align-items: center;
-  margin-bottom: 4rem;
+  margin-bottom: 3rem;
   gap: 0.5rem;
 }
 
@@ -207,7 +207,7 @@
     font-size: 0.97rem;
   }
   .student-dashboard-container h2 {
-    margin-top: 50px
+    margin-top: 30px
   }
   .dashboard-card {
     min-width: 140px;
@@ -240,6 +240,9 @@
   .student-dashboard-container {
     padding: 1.5rem 0.5rem;
     font-size: 0.96rem;
+  }
+  .student-dashboard-container h2 {
+    margin-top: 15px
   }
   .dashboard-card {
     min-width: 110px;
