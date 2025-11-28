@@ -1,11 +1,12 @@
-/* --- General Account Styling (Single-Column) --- */
+/* Shared variables already in :root from above */
+
 .my-account {
   max-width: 600px;
-  margin: 120px auto 40px auto;
+  margin: 120px auto 40px;
   background: #fff;
   padding: 2.5rem 2rem;
   border-radius: 14px;
-  box-shadow: 0 2px 12px rgba(37, 99, 235, 0.07);
+  box-shadow: 0 2px 12px rgba(37,99,235,0.07);
 }
 
 .account-header {
@@ -14,13 +15,13 @@
   gap: 1.5rem;
   margin-bottom: 2rem;
   padding-bottom: 2rem;
-  border-bottom: 1px lightgray solid;
+  border-bottom: 1px solid #e5e7eb;
 }
 
 .account-avatar {
   width: 70px;
   height: 70px;
-  background: linear-gradient(135deg, #2563eb 60%, #38bdf8 100%);
+  background: linear-gradient(135deg, var(--clr-primary) 60%, #38bdf8 100%);
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -28,27 +29,27 @@
   font-size: 2.2rem;
   color: #fff;
   font-weight: 700;
-  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.13);
-  /* Added for image usage */
-  overflow: hidden; 
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(37,99,235,0.13);
 }
 
-.account-avatar-with-pic img.profile-pic {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
+.account-avatar img.profile-pic,
+.profile-pic-preview img.profile-pic {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .account-info h2 {
   margin: 0;
   font-size: 1.7rem;
-  color: #374151;
+  color: var(--clr-text);
   font-weight: 700;
 }
 
 .account-role {
-  background: #e0e7ff;
-  color: #2563eb;
+  background: var(--clr-primary-light);
+  color: var(--clr-primary);
   font-size: 1rem;
   padding: 0.2rem 0.7rem;
   border-radius: 6px;
@@ -57,58 +58,40 @@
   margin-top: 0.5rem;
 }
 
-.account-details {
-  margin-bottom: 1.5rem;
-}
-
 .account-detail-row {
   display: flex;
   justify-content: space-between;
   margin-bottom: 0.7rem;
-  /* Ensure details wrap on very small screens */
-  flex-wrap: wrap; 
+  flex-wrap: wrap;
 }
 
 .detail-label {
-  color: #374151;
+  color: var(--clr-text);
   font-weight: 600;
-  min-width: 30%; /* Gives label space on small screens */
+  min-width: 30%;
 }
 
 .detail-value {
-  color: #374151;
-  font-weight: 500;
+  color: var(--clr-text);
   text-align: right;
-  word-break: break-word; /* Prevents overflow */
+  word-break: break-word;
 }
 
-/* --- Project List/Groups Styling --- */
 .account-papers-section h3 {
-  color: #374151;
+  color: var(--clr-text);
   margin-bottom: 3rem;
-  font-size: 1.5rem; /* Increased size for visual impact */
+  font-size: 1.5rem;
   font-weight: 700;
 }
 
-.no-papers {
-  text-align: center;
-  color: #6b7280;
-  font-size: 1rem;
-  margin-top: 1.5rem;
-}
-
 .no-papers-found {
-    text-align: center;
-    color: #6b7280;
-    font-size: 1.1rem;
-    padding: 30px;
-    border: 1px dashed #d1d5db;
-    border-radius: 8px;
-    margin-top: 2rem;
-}
-
-.status-group-wrapper {
-  margin-bottom: 2rem; /* Adjusted for better spacing between groups */
+  text-align: center;
+  color: var(--clr-text-light);
+  font-size: 1.1rem;
+  padding: 30px;
+  border: 1px dashed var(--clr-border);
+  border-radius: var(--radius-md);
+  margin-top: 2rem;
 }
 
 .status-group-header {
@@ -126,135 +109,83 @@
   width: 20px;
   height: 20px;
   transition: transform 0.2s;
-  flex-shrink: 0; /* Prevents arrow from shrinking */
 }
 
 .status-group-header .group-title {
-  color: #2563eb;
+  color: var(--clr-primary);
   margin: 0;
-  font-size: 1.2rem; /* Slightly larger title */
+  font-size: 1.2rem;
 }
 
 .status-group-header .group-count {
-  margin-left: auto; /* Pushes count to the right */
-  color: #888;
+  margin-left: auto;
+  color: var(--clr-muted);
   font-weight: 500;
-  font-size: 0.98rem;
-  flex-shrink: 0;
-}
-
-
-.my-papers-list {
-  list-style: none;
-  padding: 0;
-  margin-top: 0.5rem;
 }
 
 .my-paper-item {
   background: #f2f3f5;
   border-radius: 10px;
   margin-bottom: 1.2rem;
-  padding: 1.2rem 1rem 1rem 1rem;
-  box-shadow: 0 1px 4px rgba(37, 99, 235, 0.04);
-  position: relative;
+  padding: 1.2rem 1rem;
+  box-shadow: var(--shadow-sm);
   cursor: pointer;
-  transition: background 0.2s, box-shadow 0.2s;
+  transition: var(--transition);
 }
 
 .my-paper-item:hover {
-  background: #e0e7ff;
-  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.1);
+  background: var(--clr-primary-light);
+  box-shadow: var(--shadow-md);
 }
 
 .paper-title {
   font-size: 1.15rem;
   font-weight: 700;
-  color: #374151;
+  color: var(--clr-text);
   margin-bottom: 0.3rem;
-  word-break: break-word;
 }
 
 .paper-category {
-  display: inline-block;
-  padding: 0.18rem 0.9rem;
-  border-radius: 8px;
-  font-size: 1rem;
-  font-weight: 600;
-  margin-bottom: 0.7rem;
+  background: var(--clr-primary);
   color: #fff;
-}
-
-.paper-authors-row {
-  margin: 0.3rem 0 0.7rem 0;
-  display: flex;
-  gap: 0.5rem;
-  align-items: baseline;
-  flex-wrap: wrap; /* Added for responsiveness */
-}
-
-.paper-authors-label {
-  color: #374151;
-  font-weight: 600;
-  flex-shrink: 0;
-}
-
-.paper-authors {
-  color: #2563eb;
-  font-weight: 500;
-  word-break: break-word;
-}
-
-.paper-abstract {
-  font-size: 0.98rem;
-  color: #374151;
-  margin-bottom: 0.7rem;
-  word-break: break-word;
 }
 
 .paper-actions {
   display: flex;
-  align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 10px;
+  margin-top: 0.7rem;
 }
 
 .view-pdf-btn {
-  color: #3a3e92;
-  text-decoration: none;
+  color: var(--clr-primary-dark);
   font-weight: 600;
-  font-size: 1rem;
-  flex-shrink: 0;
 }
 
 .paper-date {
   font-size: 0.92rem;
-  color: #888;
+  color: var(--clr-muted);
   font-style: italic;
 }
 
-
-/* --- Two-Column Layout (Eligible Students) --- */
+/* Two-Column Layout */
 .two-column-layout {
   display: flex;
   gap: 2.5rem;
   max-width: 1400px;
-  margin: 120px auto 40px auto;
-  background: #f8faff;
-  padding: 2.5rem 2.5rem; /* Slightly increased padding */
+  margin: 120px auto 40px;
+  background: var(--clr-bg-light);
+  padding: 2.5rem;
   border-radius: 14px;
-  box-shadow: 0 2px 12px rgba(37, 99, 235, 0.07);
+  box-shadow: 0 2px 12px rgba(37,99,235,0.07);
 }
 
 .account-info-col {
-  flex: 1 1 350px; /* Increased min width */
+  flex: 1 1 350px;
   min-width: 300px;
   border-right: 1px solid #e5e7eb;
   padding-right: 2.5rem;
-  margin-right: 0; /* Removed margin-right to use the padding */
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
 }
 
 .account-papers-col {
@@ -262,251 +193,68 @@
   min-width: 0;
 }
 
-/* --- Edit Profile Form Styling --- */
-.edit-profile-container {
-    padding-top: 1rem;
-    border-top: 1px solid #e5e7eb;
-    margin-top: 1rem;
-}
-
+/* Edit Profile */
 .edit-profile-form {
   margin-top: 1rem;
   padding: 1.5rem;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
+  border: 1px solid var(--clr-border);
+  border-radius: var(--radius-md);
   background: #fff;
-}
-
-.edit-error-message {
-    color: red;
-    margin-bottom: 1rem;
-    font-weight: 500;
-}
-
-.profile-pic-uploader {
-  display: flex;
-  gap: 1rem;
-  align-items: center;
-  margin-bottom: 1.5rem;
-}
-
-.profile-pic-preview {
-  width: 72px;
-  height: 72px;
-  border-radius: 50%;
-  overflow: hidden;
-  background: #f3f4f6;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 2rem;
-  color: #6b7280;
-  flex-shrink: 0;
-}
-
-.profile-pic-preview img.profile-pic {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-
-.file-input-wrapper {
-  flex: 1;
-}
-
-.form-group {
-    margin-bottom: 1rem;
-}
-
-.form-group label {
-    display: block;
-    font-weight: 600;
-    color: #374151;
-    margin-bottom: 0.3rem;
-    font-size: 0.95rem;
 }
 
 .form-input {
   width: 100%;
   padding: 0.6rem 0.8rem;
-  border-radius: 6px;
-  border: 1px solid #d1d5db;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--clr-border);
   font-size: 1rem;
-  box-sizing: border-box; /* Important for full width */
-  transition: border-color 0.2s;
+  box-sizing: border-box;
 }
 
 .form-input:focus {
-    outline: none;
-    border-color: #2563eb;
-    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+  outline: none;
+  border-color: var(--clr-primary);
+  box-shadow: 0 0 0 2px rgba(37,99,235,0.2);
 }
 
-.edit-profile-actions {
-  display: flex;
-  gap: 1rem;
-  margin-top: 1.5rem;
-}
-
-/* Updated button styles to use semantic names */
-.edit-profile-btn, .save-profile-btn {
-  background: #3a3e92;
-  color: #fff;
-  border: none;
-  border-radius: 6px;
-  padding: 0.7rem 1.2rem;
-  font-weight: 600;
-  cursor: pointer;
-  font-size: 0.95rem;
-  transition: background 0.2s;
-  flex-grow: 1;
-  max-width: 150px; /* Constrain size */
-}
-
-.edit-profile-btn {
-    margin-top: 2rem;
-    max-width: 200px;
-}
-
-.save-profile-btn:hover {
-  background: #4e54c8;
-}
-
+.edit-profile-btn,
+.save-profile-btn,
 .cancel-profile-btn {
-  background: #6b7280;
-  color: #fff;
-  border: none;
-  border-radius: 6px;
   padding: 0.7rem 1.2rem;
+  border: none;
+  border-radius: var(--radius-sm);
   font-weight: 600;
   cursor: pointer;
-  font-size: 0.95rem;
-  transition: background 0.2s;
-  flex-grow: 1;
-  max-width: 150px; /* Constrain size */
+  transition: var(--transition);
 }
 
-.cancel-profile-btn:hover {
-  background: #4b5563;
-}
+.save-profile-btn { background: var(--clr-primary-dark); color: #fff; }
+.save-profile-btn:hover { background: var(--clr-primary-hover); }
+.cancel-profile-btn { background: #6b7280; color: #fff; }
+.cancel-profile-btn:hover { background: #4b5563; }
 
-.save-profile-btn:disabled {
-    background: #a5b4fc;
-    cursor: not-allowed;
-}
-
-
-/* --- Media Queries for Responsiveness --- */
-
-/* Switches two-column layout to single-column on medium screens */
+/* Responsive */
 @media (max-width: 950px) {
   .two-column-layout {
-    flex-direction: column; /* Stacks columns vertically */
+    flex-direction: column;
     padding: 2rem 1.5rem;
-    margin-top: 100px;
-    max-width: 90vw;
   }
   .account-info-col {
-    border-right: none; /* Removes the vertical divider */
-    border-bottom: 1px solid #e5e7eb; /* Adds a horizontal divider */
-    padding-right: 0;
+    border-right: none;
+    border-bottom: 1px solid #e5e7eb;
     padding-bottom: 2rem;
     margin-bottom: 2rem;
   }
 }
 
-/* Further adjustments for smaller mobile screens */
 @media (max-width: 600px) {
-  .my-account { /* Also adjusts the single-column view */
+  .my-account, .two-column-layout {
+    margin: 80px auto 30px;
     padding: 1.5rem 1rem;
-    margin: 80px auto 30px auto;
     max-width: 95vw;
   }
-
-  .two-column-layout {
-    padding: 1.5rem 1rem;
-    margin: 80px auto 30px auto;
-    max-width: 95vw;
-    gap: 1.5rem;
-  }
-  
   .account-header {
-      flex-direction: column;
-      text-align: center;
-      gap: 0.5rem;
+    flex-direction: column;
+    text-align: center;
   }
-  
-  .account-info h2 {
-      font-size: 1.5rem;
-  }
-
-  .account-details {
-      padding: 0 0.5rem;
-  }
-  
-  .detail-label, .detail-value {
-      font-size: 0.95rem;
-  }
-
-  /* Adjustments for the Edit Form */
-  .profile-pic-uploader {
-      flex-direction: column;
-      text-align: center;
-  }
-  
-  .file-input-wrapper {
-      margin-top: 1rem;
-  }
-  
-  .edit-profile-actions {
-      flex-direction: column;
-      gap: 0.75rem;
-  }
-
-  .edit-profile-btn, .save-profile-btn, .cancel-profile-btn {
-      max-width: 100%;
-      margin-top: 0;
-  }
-
-  /* Adjustments for Project List */
-  .account-papers-section h3 {
-      font-size: 1.5rem;
-  }
-
-  .paper-title {
-      font-size: 1.05rem;
-  }
-  
-  .paper-category {
-      font-size: 0.9rem;
-      padding: 0.15rem 0.7rem;
-  }
-
-  .paper-actions {
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 8px;
-  }
-  
-  .view-pdf-btn {
-      font-size: 0.95rem;
-  }
-
-  .paper-date {
-      margin-top: 0.2rem;
-      font-size: 0.85rem;
-  }
-}
-
-/* Micro screen adjustments */
-@media (max-width: 400px) {
-    .account-avatar {
-        width: 60px;
-        height: 60px;
-        font-size: 1.8rem;
-    }
-    .profile-pic-preview {
-        width: 60px;
-        height: 60px;
-    }
 }

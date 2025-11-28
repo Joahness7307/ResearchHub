@@ -5,6 +5,8 @@ import "./AdminDashboard.css"
 import UserRolePieChart from "../UserRolePieChart";
 import ProjectStatusPieChart from "../ProjectStatusPieChart";
 import { AuthContext } from "../../context/AuthContext";
+import eyeIcon from "../../assets/eye.png";
+import hiddenIcon from "../../assets/hidden.png";
 
 const USERS_PER_PAGE = 10;
 const PROJECTS_PER_PAGE = 10;
@@ -13,6 +15,10 @@ const AdminDashboard = ({ activeSection }) => {
     const { user } = useContext(AuthContext);
     const [projects, setProjects] = useState([]);
     const [users, setUsers] = useState([]);
+    // password visibility toggles for add-user and edit-user forms
+    const [showAddPassword, setShowAddPassword] = useState(false);
+    const [showAddConfirmPassword, setShowAddConfirmPassword] = useState(false);
+    const [showEditPassword, setShowEditPassword] = useState(false);
     const navigate = useNavigate();
     const [counts, setCounts] = useState({ 
         totalUsers: 0, 
@@ -386,8 +392,63 @@ const AdminDashboard = ({ activeSection }) => {
                                 </>
                             )}
 
-                            <input name="password" type="password" placeholder="Password" value={addUserForm.password} onChange={handleAddUserChange} required />
-                            <input name="confirm_password" type="password" placeholder="Confirm Password" value={addUserForm.confirm_password} onChange={handleAddUserChange} required />
+                            <div style={{ position: "relative" }}>
+                                <input
+                                    name="password"
+                                    type={showAddPassword ? "text" : "password"}
+                                    placeholder="Password"
+                                    value={addUserForm.password}
+                                    onChange={handleAddUserChange}
+                                    required
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowAddPassword(prev => !prev)}
+                                    style={{
+                                    position: "absolute",
+                                    right: "0.5rem",
+                                    top: "50%",
+                                    transform: "translateY(-50%)",
+                                    background: "none",
+                                    border: "none",
+                                    cursor: "pointer",
+                                    padding: 0
+                                    }}
+                                    tabIndex={-1}
+                                    aria-label={showAddPassword ? "Hide password" : "Show password"}
+                                >
+                                    <img src={showAddPassword ? hiddenIcon : eyeIcon} alt={showAddPassword ? "Hide" : "Show"} style={{ width: "1.2rem", height: "1.2rem" }} />
+                                </button>
+                                </div>
+
+                                <div style={{ position: "relative" }}>
+                                <input
+                                    name="confirm_password"
+                                    type={showAddConfirmPassword ? "text" : "password"}
+                                    placeholder="Confirm Password"
+                                    value={addUserForm.confirm_password}
+                                    onChange={handleAddUserChange}
+                                    required
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowAddConfirmPassword(prev => !prev)}
+                                    style={{
+                                    position: "absolute",
+                                    right: "0.5rem",
+                                    top: "50%",
+                                    transform: "translateY(-50%)",
+                                    background: "none",
+                                    border: "none",
+                                    cursor: "pointer",
+                                    padding: 0
+                                    }}
+                                    tabIndex={-1}
+                                    aria-label={showAddConfirmPassword ? "Hide password" : "Show password"}
+                                >
+                                    <img src={showAddConfirmPassword ? hiddenIcon : eyeIcon} alt={showAddConfirmPassword ? "Hide" : "Show"} style={{ width: "1.2rem", height: "1.2rem" }} />
+                                </button>
+                                </div>
 
                             <button type="submit" className="admin-btn">Add User</button>
                             {addUserMessage && <div className="admin-message" style={{ color: "green", whiteSpace: "pre-wrap" }}>{addUserMessage}</div>}

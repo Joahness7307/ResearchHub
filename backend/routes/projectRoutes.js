@@ -1,6 +1,7 @@
+// Modified backend/projectRoutes.js
 const express = require("express");
 const path = require("path");
-const { submitProject, getAdminNotifications, markNotificationRead, getStudentNotifications, getAllProjects, getProjectCounts, endorseProject, needRevision, approveProject, getAllProjectsAdmin, editProjectMetadata, hideProject, deleteProject, informStudentOfRevision, reuploadProjectDocument  } = require("../controllers/projectController");
+const { submitProject, getAdminNotifications, markNotificationRead, getStudentNotifications, getAllProjects, getProjectCounts, endorseProject, needRevision, approveProject, getAllProjectsAdmin, editProjectMetadata, hideProject, deleteProject, informStudentOfRevision, reuploadProjectDocument, toggleLike, getLikes, toggleBookmark, getBookmarks, getMyBookmarks, getUserBookmarks, getCommentCount  } = require("../controllers/projectController");
 const categories = require("../config/categories");
 const { Project, User } = require("../models");
 const authMiddleware = require("../middlewares/authMiddleware");
@@ -21,7 +22,7 @@ router.get("/", getAllProjects);
 
 router.get("/counts", authMiddleware(["admin"]), getProjectCounts);
 
-// Get sinlge research project
+// Get single research project
 router.get("/:id", authMiddleware(["student", "admin", "head_admin", "research_adviser", "guest"]), async (req, res) => {
   try {
     const { id } = req.params; // <-- FIX: get id from params
@@ -88,6 +89,22 @@ router.post("/admin/approve/:id", authMiddleware(["admin", "head_admin"]), appro
 router.post("/adviser/inform-student/:id", authMiddleware(["research_adviser"]), informStudentOfRevision);
 
 router.put("/reupload/:id", authMiddleware(["student"]), upload.single("document"), reuploadProjectDocument);
+
+// Like endpoints
+router.post("/:id/like", authMiddleware(), toggleLike);
+router.get("/:id/likes", getLikes);
+
+// Bookmark endpoints
+router.post("/:id/bookmark", authMiddleware(), toggleBookmark);
+router.get("/:id/bookmarks", getBookmarks);
+
+// Get user's bookmarked projects
+router.get("/my-bookmarks", authMiddleware(), getMyBookmarks);
+
+router.get("/bookmarks/:userId", authMiddleware(), getUserBookmarks);
+
+// Get comment count for a project
+router.get("/:id/comments/count", getCommentCount);
 
 // Edit metadata (title, abstract, etc.)
 router.put("/admin/edit/:id", authMiddleware(["admin", "head_admin"]), editProjectMetadata);

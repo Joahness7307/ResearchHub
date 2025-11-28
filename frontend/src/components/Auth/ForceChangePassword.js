@@ -8,6 +8,12 @@ import "./AuthForm.css";
 const ForceChangePassword = () => {
   const [password, setPassword] = useState("");
   const [confirm_password, setConfirm] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  // ...existing code...
+  // Import icons
+  // At the top of the file, add:
+  // import eyeIcon from "../../assets/eye.png";
+  // import hiddenIcon from "../../assets/hidden.png";
   const [error, setError] = useState("");
   const [msg, setMsg] = useState("");
   const navigate = useNavigate();
@@ -60,8 +66,72 @@ const ForceChangePassword = () => {
         <p className="subtext">You must change your password before continuing.</p>
         {msg && <div className="auth-success">{msg}</div>}
         {error && <div className="auth-error">{error}</div>}
-        <input type="password" placeholder="New Password" value={password} onChange={e => setPassword(e.target.value)} className="auth-input" required />
-        <input type="password" placeholder="Confirm New Password" value={confirm_password} onChange={e => setConfirm(e.target.value)} className="auth-input" required />
+        <div style={{ position: "relative" }}>
+          <input
+            type={showPassword ? "text" : "password"}
+            placeholder="New Password"
+            value={password}
+            onChange={e => setPassword(e.target.value)}
+            className="auth-input"
+            required
+            style={{ paddingRight: "2.5rem" }}
+          />
+          <button
+            type="button"
+            onClick={() => setShowPassword(prev => !prev)}
+            style={{
+              position: "absolute",
+              right: "0.5rem",
+              top: "40%",
+              transform: "translateY(-50%)",
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              padding: 0
+            }}
+            tabIndex={-1}
+            aria-label={showPassword ? "Hide password" : "Show password"}
+          >
+            <img
+              src={showPassword ? require("../../assets/hidden.png") : require("../../assets/eye.png")}
+              alt={showPassword ? "Hide password" : "Show password"}
+              style={{ width: "1.3rem", height: "1.3rem" }}
+            />
+          </button>
+        </div>
+        <div style={{ position: "relative" }}>
+          <input
+            type={showPassword ? "text" : "password"}
+            placeholder="Confirm New Password"
+            value={confirm_password}
+            onChange={e => setConfirm(e.target.value)}
+            className="auth-input"
+            required
+            style={{ paddingRight: "2.5rem" }}
+          />
+          <button
+            type="button"
+            onClick={() => setShowPassword(prev => !prev)}
+            style={{
+              position: "absolute",
+              right: "0.5rem",
+              top: "40%",
+              transform: "translateY(-50%)",
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              padding: 0
+            }}
+            tabIndex={-1}
+            aria-label={showPassword ? "Hide password" : "Show password"}
+          >
+            <img
+              src={showPassword ? require("../../assets/hidden.png") : require("../../assets/eye.png")}
+              alt={showPassword ? "Hide password" : "Show password"}
+              style={{ width: "1.3rem", height: "1.3rem" }}
+            />
+          </button>
+        </div>
         <button type="submit">Save New Password</button>
       </form>
     </div>

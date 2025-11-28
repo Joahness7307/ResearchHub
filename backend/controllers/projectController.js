@@ -1,4 +1,5 @@
-const { Project, User, Notification, Comment } = require("../models");
+// Modified backend/projectController.js (added getMyBookmarks and getCommentCount)
+const { Project, User, Notification, Comment, Like, Bookmark } = require("../models");
 const path = require("path");
 const fs = require("fs");
 const cloudinary = require("../config/cloudinary");
@@ -156,45 +157,45 @@ exports.markStudentNotificationRead = async (req, res) => {
 };
 // NEW: Get total project counts grouped by status (for Admin Dashboard)
 exports.getProjectCounts = async (req, res) => {
-  try {
-    // 1. Fetch counts grouped by status
-    const counts = await Project.findAll({
-      attributes: [
-        'status',
-        [Project.sequelize.fn('COUNT', Project.sequelize.col('id')), 'count']
-      ],
-      group: ['status']
-    });
+  try {
+    // 1. Fetch counts grouped by status
+    const counts = await Project.findAll({
+      attributes: [
+        'status',
+        [Project.sequelize.fn('COUNT', Project.sequelize.col('id')), 'count']
+      ],
+      group: ['status']
+    });
 
-    // 2. Map results to a simpler object for easier access
-    const countMap = counts.reduce((acc, curr) => {
-      acc[curr.status] = parseInt(curr.dataValues.count, 10);
-      return acc;
-    }, {});
+    // 2. Map results to a simpler object for easier access
+    const countMap = counts.reduce((acc, curr) => {
+      acc[curr.status] = parseInt(curr.dataValues.count, 10);
+      return acc;
+    }, {});
 
-    // 3. Calculate the total and group the revision statuses
-    const totalProjects = counts.reduce((sum, curr) => sum + parseInt(curr.dataValues.count, 10), 0);
+    // 3. Calculate the total and group the revision statuses
+    const totalProjects = counts.reduce((sum, curr) => sum + parseInt(curr.dataValues.count, 10), 0);
 
-    // Combine 'need_revision', 'admin_revision', and potentially 'rejected' into 'revision'
-    const revisionCount = 
-      (countMap['need_revision'] || 0) + 
-      (countMap['admin_revision'] || 0) +
-      (countMap['rejected'] || 0); // Include 'rejected' just in case it's still used
+    // Combine 'need_revision', 'admin_revision', and potentially 'rejected' into 'revision'
+    const revisionCount = 
+      (countMap['need_revision'] || 0) + 
+      (countMap['admin_revision'] || 0) +
+      (countMap['rejected'] || 0); // Include 'rejected' just in case it's still used
 
-    // 4. Map the final desired status names for the frontend
-    const results = {
-      totalProjects: totalProjects,
-      'pending': countMap['pending'] || 0,
-      'endorsed': countMap['endorsed'] || 0, // Endorsed is kept separate as requested
-      'approved': countMap['approved'] || 0,
-      'revision': revisionCount, // This is the new combined count
-    };
+    // 4. Map the final desired status names for the frontend
+    const results = {
+      totalProjects: totalProjects,
+      'pending': countMap['pending'] || 0,
+      'endorsed': countMap['endorsed'] || 0, // Endorsed is kept separate as requested
+      'approved': countMap['approved'] || 0,
+      'revision': revisionCount, // This is the new combined count
+    };
 
-    res.status(200).json(results);
-  } catch (error) {
-    console.error("getProjectCounts error:", error);
-    res.status(500).json({ error: error.message });
-  }
+    res.status(200).json(results);
+  } catch (error) {
+    console.error("getProjectCounts error:", error);
+    res.status(500).json({ error: error.message });
+  }
 };
 
 // Get all research projects (repository)
@@ -400,6 +401,96 @@ exports.hideProject = async (req, res) => {
     if (!project) return res.status(404).json({ message: "Project not found" });
     await project.update({ status: "hidden" });
     res.json({ message: "Project hidden/unpublished" });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+// Toggle like
+exports.toggleLike = async (req, res) => {
+  const userId = req.user.id;
+  const projectId = req.params.id;
+  const existing = await Like.findOne({ where: { userId, projectId } });
+  if (existing) {
+    await existing.destroy();
+    return res.json({ liked: false });
+  } else {
+    await Like.create({ userId, projectId });
+    return res.json({ liked: true });
+  }
+};
+
+// Get like count and user like status
+exports.getLikes = async (req, res) => {
+  const projectId = req.params.id;
+  const count = await Like.count({ where: { projectId } });
+  let liked = false;
+  if (req.user) {
+    liked = !!(await Like.findOne({ where: { userId: req.user.id, projectId } }));
+  }
+  res.json({ count, liked });
+};
+
+// Toggle bookmark
+exports.toggleBookmark = async (req, res) => {
+  const userId = req.user.id;
+  const projectId = req.params.id;
+  const existing = await Bookmark.findOne({ where: { userId, projectId } });
+  if (existing) {
+    await existing.destroy();
+    return res.json({ bookmarked: false });
+  } else {
+    await Bookmark.create({ userId, projectId });
+    return res.json({ bookmarked: true });
+  }
+};
+
+// Get bookmark status
+exports.getBookmarks = async (req, res) => {
+  const projectId = req.params.id;
+  let bookmarked = false;
+  if (req.user) {
+    bookmarked = !!(await Bookmark.findOne({ where: { userId: req.user.id, projectId } }));
+  }
+  res.json({ bookmarked });
+};
+
+// Get user's bookmarked projects
+exports.getMyBookmarks = async (req, res) => {
+  try {
+    const bookmarks = await Bookmark.findAll({
+      where: { userId: req.user.id },
+      include: {
+        model: Project,
+        where: { status: 'approved' },
+        include: [{ model: User, as: 'submitter', attributes: ["id", "full_name", "email", "role", "department", "year_level", "strand", "grade_level"] }]
+      }
+    });
+    const projects = bookmarks.map(b => b.Project);
+    res.json(projects);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+// Get all projects bookmarked by a user
+exports.getUserBookmarks = async (req, res) => {
+  try {
+  const userId = req.params.userId;
+  const bookmarks = await Bookmark.findAll({ where: { userId } });
+  const projectIds = bookmarks.map(b => b.projectId);
+  const projects = await Project.findAll({ where: { id: projectIds } });
+  res.json(Array.isArray(projects) ? projects : []);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+// Get comment count for a project
+exports.getCommentCount = async (req, res) => {
+  try {
+    const count = await Comment.count({ where: { projectId: req.params.id } });
+    res.json({ count });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

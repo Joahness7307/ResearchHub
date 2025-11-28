@@ -1,7 +1,13 @@
+// Modified frontend/StudentDashboard.js
 import React, { useEffect, useState, useContext } from "react";
 import axios from "../../api/axios";
 import { AuthContext } from "../../context/AuthContext";
 import { useNavigate } from "react-router-dom";
+import likeIcon from "../../assets/likeIcon.png";
+import likedIcon from "../../assets/likedIcon.png";
+import commentIcon from "../../assets/commentIcon.png";
+import bookmarkIcon from "../../assets/bookmarkIcon.png";
+import bookmarkedIcon from "../../assets/bookmarkedIcon.png";
 import "./StudentDashboard.css";
 // NOTE: categoryColors is not provided, assuming it's correctly mapped in your constants
 import categoryColors from "../../constants/categoryColors"; 
@@ -9,6 +15,9 @@ import categoryColors from "../../constants/categoryColors";
 const StudentDashboard = () => {
     const { user } = useContext(AuthContext);
     const [projects, setProjects] = useState([]);
+    const [likeData, setLikeData] = useState({});
+    const [bookmarkData, setBookmarkData] = useState({});
+    const [commentCounts, setCommentCounts] = useState({});
     const [selectedCard, setSelectedCard] = useState("all");
     const [searchTerm, setSearchTerm] = useState("");
     const [currentPage, setCurrentPage] = useState(1);
@@ -25,8 +34,80 @@ const StudentDashboard = () => {
             });
     }, []);
 
-    // Only approved projects
-    const approvedProjects = projects.filter(project => project.status === "approved");
+    useEffect(() => {
+        if (projects.length > 0) {
+            const fetchLikes = Promise.all(
+                projects.map(p =>
+                    axios.get(`/projects/${p.id}/likes`).then(res => ({ id: p.id, ...res.data }))
+                )
+            ).then(results => {
+                setLikeData(Object.fromEntries(results.map(r => [r.id, { count: r.count, liked: r.liked }])));
+            });
+
+            const fetchBookmarks = Promise.all(
+                projects.map(p =>
+                    axios.get(`/projects/${p.id}/bookmarks`).then(res => ({ id: p.id, ...res.data }))
+                )
+            ).then(results => {
+                setBookmarkData(Object.fromEntries(results.map(r => [r.id, { bookmarked: r.bookmarked }])));
+            });
+
+            const fetchComments = Promise.all(
+                projects.map(p =>
+                    axios.get(`/projects/${p.id}/comments/count`).then(res => ({ id: p.id, count: res.data.count }))
+                )
+            ).then(results => {
+                setCommentCounts(Object.fromEntries(results.map(r => [r.id, r.count])));
+            });
+
+            Promise.all([fetchLikes, fetchBookmarks, fetchComments]).catch(err => console.error("Error fetching interactions:", err));
+        }
+    }, [projects]);
+
+    const handleToggleLike = async (projectId, e) => {
+        e.stopPropagation();
+        if (!user) {
+            alert("Please login to like projects.");
+            return;
+        }
+        try {
+            const res = await axios.post(`/projects/${projectId}/like`);
+            setLikeData(prev => ({
+                ...prev,
+                [projectId]: {
+                    liked: res.data.liked,
+                    count: prev[projectId].count + (res.data.liked ? 1 : -1)
+                }
+            }));
+        } catch (err) {
+            console.error("Error toggling like:", err);
+        }
+    };
+
+    const handleToggleBookmark = async (projectId, e) => {
+        e.stopPropagation();
+        if (!user) {
+            alert("Please login to bookmark projects.");
+            return;
+        }
+        try {
+            const res = await axios.post(`/projects/${projectId}/bookmark`);
+            setBookmarkData(prev => ({
+                ...prev,
+                [projectId]: { bookmarked: res.data.bookmarked }
+            }));
+        } catch (err) {
+            console.error("Error toggling bookmark:", err);
+        }
+    };
+
+    const handleCommentClick = (projectId, e) => {
+        e.stopPropagation();
+        navigate(`/projects/${projectId}#comments`);
+    };
+
+        const approvedProjects = projects.filter(project => project.status === "approved");
+        // Removed duplicate declaration of approvedProjects
 
     // College projects: must have department and year_level, and NOT have strand/grade_level
     const collegeProjects = approvedProjects.filter(
@@ -37,6 +118,8 @@ const StudentDashboard = () => {
             !project.submitter.strand && // Ensure SHS fields are not present
             !project.submitter.grade_level
     );
+        // Helper: Only show icons for approved projects
+        const showInteractionIcons = (project) => project.status === "approved";
 
     // Senior high projects: must have strand and grade_level, and NOT have department/year_level
     const shsProjects = approvedProjects.filter(
@@ -156,21 +239,60 @@ const StudentDashboard = () => {
                                     className="repository-item"
                                     onClick={() => projectCardClick(project.id)}
                                 >
-                                    <div className="repository-title">{project.title}</div>
-                                    <div className="repository-meta">
-                                        <span
-                                            className="repository-category"
-                                            style={{
-                                                background: categoryColors[project.category] || "#586b94ff",
-                                                color: "#fff"
-                                            }}
+                                    <div className="repository-title" style={{ position: 'relative' }}>
+                                        {project.title}
+                                        <button
+                                            style={{ position: 'absolute', top: 0, right: 0, background: 'none', border: 'none', cursor: 'pointer' }}
+                                            onClick={(e) => handleToggleBookmark(project.id, e)}
                                         >
-                                            {project.category}
-                                        </span>
-                                        <span className="repository-authors">{project.authors}</span>
+                                            <img
+                                                src={bookmarkData[project.id]?.bookmarked ? bookmarkedIcon : bookmarkIcon}
+                                                alt="bookmark"
+                                                className="interaction-icon"
+                                            />
+                                        </button>
                                     </div>
-                                    <div className="repository-abstract">
+                                    <div className="repository-meta">
+                                        <div className="category-authors-row" style={{ display: 'flex', alignItems: 'center', gap: '18px', marginBottom: '8px' }}>
+                                            <span
+                                                className="repository-category"
+                                                style={{
+                                                    background: categoryColors[project.category] || "#586b94ff",
+                                                    color: "#fff"
+                                                }}
+                                            >
+                                                {project.category}
+                                            </span>
+                                            <span className="repository-authors">{project.authors}</span>
+                                        </div>
+                                    </div>
+                                    <div className="repository-abstract" style={{ position: 'relative', minHeight: 60 }}>
                                         <b>Abstract:</b> {project.abstract?.length > 120 ? project.abstract.slice(0, 120) + "..." : project.abstract}
+                                    </div>
+                                    {/* Like and comment icons in a separate div below abstract */}
+                                    <div style={{ display: 'flex', gap: '16px', justifyContent: 'flex-end', marginTop: '4px' }}>
+                                        <button
+                                            style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                                            onClick={(e) => handleToggleLike(project.id, e)}
+                                        >
+                                            <img
+                                                src={likeData[project.id]?.liked ? likedIcon : likeIcon}
+                                                alt="like"
+                                                className="interaction-icon"
+                                            />
+                                            <span>{likeData[project.id]?.count || 0}</span>
+                                        </button>
+                                        <button
+                                            style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                                            onClick={(e) => handleCommentClick(project.id, e)}
+                                        >
+                                            <img
+                                                src={commentIcon}
+                                                alt="comment"
+                                                className="interaction-icon"
+                                            />
+                                            <span>{commentCounts[project.id] || 0}</span>
+                                        </button>
                                     </div>
                                 </li>
                             ))}

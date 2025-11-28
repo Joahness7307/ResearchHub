@@ -1,16 +1,25 @@
+// Modified frontend/GuestDashboard.js
 import React, { useEffect, useState, useContext } from "react";
 import axios from "../../api/axios";
+import { AuthContext } from "../../context/AuthContext";
 import { useNavigate } from "react-router-dom";
+import likeIcon from "../../assets/likeIcon.png";
+import likedIcon from "../../assets/likedIcon.png";
+import commentIcon from "../../assets/commentIcon.png";
+import bookmarkIcon from "../../assets/bookmarkIcon.png";
+import bookmarkedIcon from "../../assets/bookmarkedIcon.png";
 import "./StudentDashboard.css"; // Reusing the same styles
 // NOTE: categoryColors is not provided, assuming it's correctly mapped in your constants
 import categoryColors from "../../constants/categoryColors"; 
 
-// NOTE: AuthContext is imported but not used, I've kept it as you included it, but it's not needed for guest view logic.
-// The GuestDashboard is structurally identical to the StudentDashboard as it just views the repository.
-
 const GuestDashboard = () => {
-  // const { user } = useContext(AuthContext); // Removed unnecessary AuthContext import destructuring
+  // Helper: Only show icons for approved projects
+  const showInteractionIcons = (project) => project.status === "approved";
+  const { user } = useContext(AuthContext);
   const [projects, setProjects] = useState([]);
+  const [likeData, setLikeData] = useState({});
+  const [bookmarkData, setBookmarkData] = useState({});
+  const [commentCounts, setCommentCounts] = useState({});
   const [selectedCard, setSelectedCard] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -26,6 +35,78 @@ const GuestDashboard = () => {
         setProjects([]);
       });
   }, []);
+
+  useEffect(() => {
+      if (projects.length > 0) {
+          const fetchLikes = Promise.all(
+              projects.map(p =>
+                  axios.get(`/projects/${p.id}/likes`).then(res => ({ id: p.id, ...res.data }))
+              )
+          ).then(results => {
+              setLikeData(Object.fromEntries(results.map(r => [r.id, { count: r.count, liked: r.liked }])));
+          });
+
+          const fetchBookmarks = Promise.all(
+              projects.map(p =>
+                  axios.get(`/projects/${p.id}/bookmarks`).then(res => ({ id: p.id, ...res.data }))
+              )
+          ).then(results => {
+              setBookmarkData(Object.fromEntries(results.map(r => [r.id, { bookmarked: r.bookmarked }])));
+          });
+
+          const fetchComments = Promise.all(
+              projects.map(p =>
+                  axios.get(`/projects/${p.id}/comments/count`).then(res => ({ id: p.id, count: res.data.count }))
+              )
+          ).then(results => {
+              setCommentCounts(Object.fromEntries(results.map(r => [r.id, r.count])));
+          });
+
+          Promise.all([fetchLikes, fetchBookmarks, fetchComments]).catch(err => console.error("Error fetching interactions:", err));
+      }
+  }, [projects]);
+
+  const handleToggleLike = async (projectId, e) => {
+      e.stopPropagation();
+      if (!user) {
+          alert("Please login to like projects.");
+          return;
+      }
+      try {
+          const res = await axios.post(`/projects/${projectId}/like`);
+          setLikeData(prev => ({
+              ...prev,
+              [projectId]: {
+                  liked: res.data.liked,
+                  count: prev[projectId].count + (res.data.liked ? 1 : -1)
+              }
+          }));
+      } catch (err) {
+          console.error("Error toggling like:", err);
+      }
+  };
+
+  const handleToggleBookmark = async (projectId, e) => {
+      e.stopPropagation();
+      if (!user) {
+          alert("Please login to bookmark projects.");
+          return;
+      }
+      try {
+          const res = await axios.post(`/projects/${projectId}/bookmark`);
+          setBookmarkData(prev => ({
+              ...prev,
+              [projectId]: { bookmarked: res.data.bookmarked }
+          }));
+      } catch (err) {
+          console.error("Error toggling bookmark:", err);
+      }
+  };
+
+  const handleCommentClick = (projectId, e) => {
+      e.stopPropagation();
+      navigate(`/projects/${projectId}#comments`);
+  };
 
   // Only approved projects
   const approvedProjects = projects.filter(project => project.status === "approved");
@@ -147,7 +228,21 @@ const GuestDashboard = () => {
                   className="repository-item"
                   onClick={() => projectCardClick(project.id)}
                 >
-                  <div className="repository-title">{project.title}</div>
+                  <div className="repository-title" style={{ position: 'relative' }}>
+                      {project.title}
+                      {showInteractionIcons(project) && (
+                        <button
+                            style={{ position: 'absolute', top: 0, right: 0, background: 'none', border: 'none', cursor: 'pointer' }}
+                            onClick={(e) => handleToggleBookmark(project.id, e)}
+                        >
+                            <img
+                                src={bookmarkData[project.id]?.bookmarked ? bookmarkedIcon : bookmarkIcon}
+                                alt="bookmark"
+                                className="interaction-icon"
+                            />
+                        </button>
+                      )}
+                  </div>
                   <div className="repository-meta">
                     <span
                       className="repository-category"
@@ -160,8 +255,34 @@ const GuestDashboard = () => {
                     </span>
                     <span className="repository-authors">{project.authors}</span>
                   </div>
-                  <div className="repository-abstract">
+                  <div className="repository-abstract" style={{ position: 'relative' }}>
                     <b>Abstract:</b> {project.abstract.length > 120 ? project.abstract.slice(0, 120) + "..." : project.abstract}
+                    {showInteractionIcons(project) && (
+                      <div style={{ position: 'absolute', bottom: 0, right: 0, display: 'flex', gap: '10px', alignItems: 'center' }}>
+                          <button
+                              style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                              onClick={(e) => handleToggleLike(project.id, e)}
+                          >
+                              <img
+                                  src={likeData[project.id]?.liked ? likedIcon : likeIcon}
+                                  alt="like"
+                                  className="interaction-icon"
+                              />
+                              <span>{likeData[project.id]?.count || 0}</span>
+                          </button>
+                          <button
+                              style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                              onClick={(e) => handleCommentClick(project.id, e)}
+                          >
+                              <img
+                                  src={commentIcon}
+                                  alt="comment"
+                                  className="interaction-icon"
+                              />
+                              <span>{commentCounts[project.id] || 0}</span>
+                          </button>
+                      </div>
+                    )}
                   </div>
                 </li>
               ))}
