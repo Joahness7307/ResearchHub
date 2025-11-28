@@ -30,10 +30,16 @@ import MyAccountWithAdviserSidebar from "./components/Layout/MyAccountWithAdvise
 import ForceChangePassword from "./components/Auth/ForceChangePassword";
 import RedirectIfAuthenticated from "./components/RedirectIfAuthenticated";
 
+import { useLocation } from "react-router-dom";
 const ProtectedRoute = ({ children, allowedRoles }) => {
   const { user, loading } = React.useContext(AuthContext);
+  const location = useLocation();
   if (loading) return <div>Loading authentication...</div>;
-  if (!user) return <Navigate to="/login" />;
+  if (!user) return <Navigate to="/login" state={{ from: location }} replace />;
+  // Enforce force password change for all users except on the force-change-password page
+  if (user.force_password_change && location.pathname !== "/force-change-password") {
+    return <Navigate to="/force-change-password" replace />;
+  }
   if (allowedRoles && !allowedRoles.includes(user.role)) return <Navigate to="/" />;
   return children;
 };
@@ -325,20 +331,22 @@ function App() {
           <Route path="/setup-account" element={<SetupAccount />} />
           
           <Route path="/adviser/*" element={
-            <ResearchAdviserLayout>
-              <Routes>
-                <Route path="" element={<ResearchAdviserDashboard section="dashboard" />} />
-                <Route path="pending-projects" element={<ResearchAdviserDashboard section="pending" />} />
-                <Route path="endorsed-projects" element={<ResearchAdviserDashboard section="endorsed" />} /> 
-                <Route path="approved-projects" element={<ResearchAdviserDashboard section="approved" />} />
-                <Route path="request-for-revision" element={<ResearchAdviserDashboard section="request-for-revision" />} />
-                <Route path="repository" element={<ResearchAdviserDashboard section="repository" />} />
-                <Route path="notifications" element={<NotificationPage />} />
-                <Route path="notifications/:id" element={<NotificationDetails />} />
-                <Route path="my-account" element={<MyAccount />} />
-                <Route path="projects/:id" element={<ProjectDetails />} />
-              </Routes>         
-            </ResearchAdviserLayout>
+            <ProtectedRoute allowedRoles={["research_adviser"]}>
+              <ResearchAdviserLayout>
+                <Routes>
+                  <Route path="" element={<ResearchAdviserDashboard section="dashboard" />} />
+                  <Route path="pending-projects" element={<ResearchAdviserDashboard section="pending" />} />
+                  <Route path="endorsed-projects" element={<ResearchAdviserDashboard section="endorsed" />} /> 
+                  <Route path="approved-projects" element={<ResearchAdviserDashboard section="approved" />} />
+                  <Route path="request-for-revision" element={<ResearchAdviserDashboard section="request-for-revision" />} />
+                  <Route path="repository" element={<ResearchAdviserDashboard section="repository" />} />
+                  <Route path="notifications" element={<NotificationPage />} />
+                  <Route path="notifications/:id" element={<NotificationDetails />} />
+                  <Route path="my-account" element={<MyAccount />} />
+                  <Route path="projects/:id" element={<ProjectDetails />} />
+                </Routes>         
+              </ResearchAdviserLayout>
+            </ProtectedRoute>
           } />
 
           <Route path="*" element={<Navigate to="/login" />} />
