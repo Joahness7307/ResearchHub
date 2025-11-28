@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../../context/AuthContext";
 import "./AuthForm.css";
 
+
 const ForceChangePassword = () => {
   const [password, setPassword] = useState("");
   const [confirm_password, setConfirm] = useState("");
@@ -11,6 +12,29 @@ const ForceChangePassword = () => {
   const [msg, setMsg] = useState("");
   const navigate = useNavigate();
   const { user, logout } = useContext(AuthContext);
+
+  // Prevent access if force_password_change is false
+  React.useEffect(() => {
+    if (user && !user.force_password_change) {
+      // Redirect to dashboard based on role
+      switch(user.role) {
+        case "admin":
+          navigate("/admin");
+          break;
+        case "head_admin":
+          navigate("/head-admin");
+          break;
+        case "guest":
+          navigate("/guest");
+          break;
+        case "research_adviser":
+          navigate("/adviser");
+          break;
+        default:
+          navigate("/projects");
+      }
+    }
+  }, [user, navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -20,8 +44,6 @@ const ForceChangePassword = () => {
     try {
       await axios.post("/users/force-change-password", { password, confirm_password });
       setMsg("Password changed. Redirecting...");
-      // after success, refresh profile or clear force flag locally and redirect
-      // easiest: logout then ask user to login again (or fetch profile)
       setTimeout(() => {
         logout();
         navigate("/login");

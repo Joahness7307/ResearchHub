@@ -1,4 +1,6 @@
 import React, { useState } from "react";
+import eyeIcon from "../../assets/eye.png";
+import hiddenIcon from "../../assets/hidden.png";
 
 import axios from "../../api/axios";
 
@@ -25,6 +27,7 @@ const GuestSignup = () => { // Renamed for clarity, assuming you use /register-u
   });
 
   const [error, setError] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
   const navigate = useNavigate();
 
@@ -130,19 +133,82 @@ const GuestSignup = () => { // Renamed for clarity, assuming you use /register-u
 
         <input id="email" name="email" type="email" placeholder="Email" value={form.email} onChange={handleChange} required className="auth-input" />
 
-
-
         <label className="auth-label" htmlFor="password">Password</label>
-
-        <input id="password" name="password" type="password" placeholder="Password" value={form.password} onChange={handleChange} required className="auth-input" />
+        <div style={{ position: "relative" }}>
+          <input
+            id="password"
+            name="password"
+            type={showPassword ? "text" : "password"}
+            placeholder="Password"
+            value={form.password}
+            onChange={handleChange}
+            required
+            className="auth-input"
+            style={{ paddingRight: "2.5rem" }}
+          />
+          <button
+            type="button"
+            onClick={() => setShowPassword(prev => !prev)}
+            style={{
+              position: "absolute",
+              right: "0.5rem",
+              top: "40%",
+              transform: "translateY(-50%)",
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              padding: 0
+            }}
+            tabIndex={-1}
+            aria-label={showPassword ? "Hide password" : "Show password"}
+          >
+            <img
+              src={showPassword ? hiddenIcon : eyeIcon}
+              alt={showPassword ? "Hide password" : "Show password"}
+              style={{ width: "1.3rem", height: "1.3rem" }}
+            />
+          </button>
+        </div>
 
 
 
         <label className="auth-label" htmlFor="confirm_password">Confirm Password</label>
 
-        <input id="confirm_password" name="confirm_password" type="password" placeholder="Confirm Password" value={form.confirm_password} onChange={handleChange} required className="auth-input" />
-
-
+       <div style={{ position: "relative" }}>
+        <input
+          id="confirm_password"
+          name="confirm_password"
+          type={showPassword ? "text" : "password"}
+          placeholder="Confirm Password"
+          value={form.confirm_password}
+          onChange={handleChange}
+          required
+          className="auth-input"
+          style={{ paddingRight: "2.5rem" }}
+        />
+        <button
+          type="button"
+          onClick={() => setShowPassword(prev => !prev)}
+          style={{
+            position: "absolute",
+            right: "0.5rem",
+            top: "40%",
+            transform: "translateY(-50%)",
+            background: "none",
+            border: "none",
+            cursor: "pointer",
+            padding: 0
+          }}
+          tabIndex={-1}
+          aria-label={showPassword ? "Hide password" : "Show password"}
+        >
+          <img
+            src={showPassword ? hiddenIcon : eyeIcon}
+            alt={showPassword ? "Hide password" : "Show password"}
+            style={{ width: "1.3rem", height: "1.3rem" }}
+          />
+        </button>
+      </div>
 
         <button type="submit">Signup</button>
 

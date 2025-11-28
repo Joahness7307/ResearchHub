@@ -84,7 +84,7 @@ const AdminDashboard = ({ activeSection }) => {
             }
 
             const response = await axios.post("/users/add", payload);
-            setAddUserMessage(`User added successfully. Temporary Password: ${response.data.tempPassword || 'N/A'}`);
+            setAddUserMessage(`User added successfully with temporary Password`);
             setAddUserForm({
                 username: "",
                 full_name: "",
