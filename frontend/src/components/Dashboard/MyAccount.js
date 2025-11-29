@@ -1,3 +1,4 @@
+// Modified frontend/MyAccount.js
 import React, { useContext, useState, useEffect } from "react";
 import { AuthContext } from "../../context/AuthContext";
 import "./MyAccount.css";
@@ -8,7 +9,8 @@ import dropdownArrow from "../../assets/dropdownArrow.png";
 
 const MyAccount = () => {
   const { user, login } = useContext(AuthContext);
-  const [projects, setProjects] = useState([]);
+  const [submittedProjects, setSubmittedProjects] = useState([]);
+  const [bookmarkedProjects, setBookmarkedProjects] = useState([]);
   const [editing, setEditing] = useState(false);
   const [editForm, setEditForm] = useState({
     full_name: "",
@@ -24,6 +26,7 @@ const MyAccount = () => {
     endorsed: false,
     need_revision: false,
     approved: false,
+    bookmarked: false,
   });
   const navigate = useNavigate();
 
@@ -38,6 +41,33 @@ const MyAccount = () => {
       }));
       setPreviewUrl(user.profile_pic_url || null);
     }
+  }, [user]);
+
+  // Fetch submitted projects for students
+  useEffect(() => {
+    if (user && user.role === "student" && isEligible(user)) {
+      axios
+        .get("/users/my-projects")
+        .then((res) => setSubmittedProjects(res.data.projects || []))
+        .catch((err) => {
+         console.error("GET /users/my-projects failed:", err?.response || err);
+         setSubmittedProjects([]);
+         });
+    }
+  }, [user]);
+
+  // Fetch bookmarked projects for all users
+  useEffect(() => {
+    if (!user) return;
+    axios.get(`/projects/bookmarks/${user.id}`).then(res => {
+      // Only show approved projects as bookmarks
+      const approvedBookmarks = Array.isArray(res.data)
+        ? res.data.filter(p => p.status === "approved")
+        : [];
+      setBookmarkedProjects(approvedBookmarks);
+    }).catch(() => {
+      setBookmarkedProjects([]);
+    });
   }, [user]);
 
   // Helper: check if student is eligible to upload/see two-column layout
@@ -116,28 +146,16 @@ const MyAccount = () => {
     }
   };
 
-  // Only fetch projects for students
-  useEffect(() => {
-    if (user && user.role === "student" && isEligible(user)) {
-      axios
-        .get("/users/my-projects")
-        .then((res) => setProjects(res.data.projects || []))
-        .catch((err) => {
-         console.error("GET /users/my-projects failed:", err?.response || err);
-         setProjects([]);
-         });
-    }
-  }, [user]);
-
   // Only show projects with status "need_revision" (not "admin_revision")
   const grouped = {
-    pending: [],
-    endorsed: [],
-    need_revision: [],
-    approved: [],
+  pending: [],
+  endorsed: [],
+  need_revision: [],
+  approved: [],
+  bookmarked: Array.isArray(bookmarkedProjects) ? bookmarkedProjects : [],
   };
   
-  projects.forEach((project) => {
+  submittedProjects.forEach((project) => {
     let status = project.status;
     // Map admin_revision to need_revision for student view
     if (status === "admin_revision") status = "need_revision";
@@ -365,10 +383,11 @@ const MyAccount = () => {
             {renderGroup("Endorsed", "endorsed")}
             {renderGroup("Need Revision", "need_revision")}
             {renderGroup("Approved", "approved")}
+            {renderGroup("Bookmarked", "bookmarked")}
             
             {/* Fallback if no projects exist, and all groups are closed (which shouldn't happen with default `pending: true`) */}
-            {projects.length === 0 && (
-                <div className="no-papers-found">You have not submitted any projects yet.</div>
+            {submittedProjects.length === 0 && bookmarkedProjects.length === 0 && (
+                <div className="no-papers-found">You have no projects yet.</div>
             )}
           </div>
         </div>
@@ -496,6 +515,13 @@ const MyAccount = () => {
                   </button>
                 </div>
               </div>
+            )}
+          </div>
+          <div className="account-papers-section">
+            <h3>My Bookmarked Projects</h3>
+            {renderGroup("Bookmarked", "bookmarked")}
+            {bookmarkedProjects.length === 0 && (
+                <div className="no-papers-found">You have no bookmarked projects yet.</div>
             )}
           </div>
     </div>

@@ -1,14 +1,22 @@
+// Modified frontend/ProjectDetails.js
 import React, { useState, useEffect, useContext } from "react";
 import axios from "../../api/axios";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { AuthContext } from "../../context/AuthContext";
 import RevisionReasonModal from "../RevisionReasonModal";
 import "./ProjectDetails.css";
 import categoryColors from "../../constants/categoryColors";
+import likeIcon from "../../assets/likeIcon.png";
+import likedIcon from "../../assets/likedIcon.png";
+import commentIcon from "../../assets/commentIcon.png";
+import bookmarkIcon from "../../assets/bookmarkIcon.png";
+import bookmarkedIcon from "../../assets/bookmarkedIcon.png";
 
 const ProjectDetails = () => {
     const { id } = useParams();
     const [project, setProject] = useState(null);
+    // Only show icons for approved projects
+    const showInteractionIcons = project && project.status === "approved";
     const { user } = useContext(AuthContext); // user can be null
     const [actionLoading, setActionLoading] = useState(false);
     const [showRevisionModal, setShowRevisionModal] = useState(false);
@@ -20,7 +28,12 @@ const ProjectDetails = () => {
     const [commentInput, setCommentInput] = useState("");
     const [replyInputs, setReplyInputs] = useState({});
 
+    const [likeData, setLikeData] = useState({ count: 0, liked: false });
+    const [bookmarkData, setBookmarkData] = useState({ bookmarked: false });
+    const [commentCount, setCommentCount] = useState(0);
+
     const navigate = useNavigate();
+    const location = useLocation();
 
     const [editFields, setEditFields] = useState({
         title: "",
@@ -61,6 +74,65 @@ const ProjectDetails = () => {
         };
         fetchProject();
     }, [id]);
+
+    useEffect(() => {
+        if (id) {
+            axios.get(`/projects/${id}/likes`).then(res => setLikeData(res.data));
+            axios.get(`/projects/${id}/bookmarks`).then(res => setBookmarkData(res.data));
+        }
+    }, [id]);
+
+    useEffect(() => {
+        if (project && project.status === "approved") {
+            axios.get(`/comments/${project.id}`)
+                .then(res => {
+                    setComments(res.data);
+                    // Calculate total comments including replies
+                    const total = res.data.reduce((acc, c) => acc + 1 + (c.replies ? c.replies.length : 0), 0);
+                    setCommentCount(total);
+                })
+                .catch(() => setComments([]));
+        }
+    }, [project]);
+
+    useEffect(() => {
+        if (location.hash === '#comments') {
+            document.querySelector('.comments-card-container')?.scrollIntoView({ behavior: 'smooth' });
+        }
+    }, [location]);
+
+    const handleToggleLike = async () => {
+        if (!user) {
+            alert("Please login to like projects.");
+            return;
+        }
+        try {
+            const res = await axios.post(`/projects/${id}/like`);
+            setLikeData({
+                liked: res.data.liked,
+                count: likeData.count + (res.data.liked ? 1 : -1)
+            });
+        } catch (err) {
+            console.error("Error toggling like:", err);
+        }
+    };
+
+    const handleToggleBookmark = async () => {
+        if (!user) {
+            alert("Please login to bookmark projects.");
+            return;
+        }
+        try {
+            const res = await axios.post(`/projects/${id}/bookmark`);
+            setBookmarkData({ bookmarked: res.data.bookmarked });
+        } catch (err) {
+            console.error("Error toggling bookmark:", err);
+        }
+    };
+
+    const handleCommentClick = () => {
+        document.querySelector('.comments-card-container')?.scrollIntoView({ behavior: 'smooth' });
+    };
 
     const handleEndorse = async () => {
         setActionLoading(true);
@@ -136,15 +208,6 @@ const ProjectDetails = () => {
         }
     };
 
-    // Fetch comments
-    useEffect(() => {
-        if (project && project.status === "approved") {
-            axios.get(`/comments/${project.id}`)
-                .then(res => setComments(res.data))
-                .catch(() => setComments([]));
-        }
-    }, [project]);
-
     // Add comment
     const handleAddComment = async () => {
         if (!commentInput.trim()) return;
@@ -154,6 +217,8 @@ const ProjectDetails = () => {
             // Re-fetch comments
             const res = await axios.get(`/comments/${project.id}`);
             setComments(res.data);
+            const total = res.data.reduce((acc, c) => acc + 1 + (c.replies ? c.replies.length : 0), 0);
+            setCommentCount(total);
         } catch (err) {
             alert("Failed to add comment.");
         }
@@ -169,6 +234,8 @@ const ProjectDetails = () => {
             // Re-fetch comments
             const res = await axios.get(`/comments/${project.id}`);
             setComments(res.data);
+            const total = res.data.reduce((acc, c) => acc + 1 + (c.replies ? c.replies.length : 0), 0);
+            setCommentCount(total);
         } catch (err) {
             alert("Failed to add reply.");
         }
@@ -181,7 +248,22 @@ const ProjectDetails = () => {
     return (
         <div className="project-details-page" style={{ padding: 10 }}>
             <div className="research-details-container">
-                <h2>{project.title}</h2>
+                {/* Project Details Card */}
+                <div style={{ position: 'relative' }}>
+                    <h2>{project.title}</h2>
+                    {showInteractionIcons && (
+                        <button
+                            style={{ position: 'absolute', top: 0, right: 0, background: 'none', border: 'none', cursor: 'pointer' }}
+                            onClick={handleToggleBookmark}
+                        >
+                            <img
+                                src={bookmarkData.bookmarked ? bookmarkedIcon : bookmarkIcon}
+                                alt="bookmark"
+                                className="interaction-icon"
+                            />
+                        </button>
+                    )}
+                </div>
                 <span
                     className="category-badge"
                     style={{
@@ -194,7 +276,37 @@ const ProjectDetails = () => {
                 <div className="research-meta">
                     <p><b>Authors:</b> {project.authors}</p>
                 </div>
-                <p className="abstract-content"><b>Abstract:</b> {project.abstract}</p>
+                <div className="abstract-content" style={{ position: 'relative' }}>
+                    <b>Abstract:</b> {project.abstract}
+                </div>
+                {/* Like and comment icons in a separate row below abstract */}
+                {showInteractionIcons && (
+                    <div className="interaction-icons-row" style={{ display: 'flex', gap: '16px', justifyContent: 'flex-end', margin: '16px 0 8px 0' }}>
+                        <button
+                            style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                            onClick={handleToggleLike}
+                        >
+                            <img
+                                src={likeData.liked ? likedIcon : likeIcon}
+                                alt="like"
+                                className="interaction-icon"
+                            />
+                            <span>{likeData.count}</span>
+                        </button>
+                        <button
+                            style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                            onClick={handleCommentClick}
+                        >
+                            <img
+                                src={commentIcon}
+                                alt="comment"
+                                className="interaction-icon"
+                            />
+                            <span>{commentCount}</span>
+                        </button>
+                    </div>
+                )}
+                {/* The rest of the content stays inside research-details-container */}
                 {project.status === "need_revision" && project.rejection_reason && (
                     <div className="revision-required">
                         <b>Revision Required:</b> {project.rejection_reason}
@@ -206,8 +318,7 @@ const ProjectDetails = () => {
                         <b>Head Admin Revision Reason:</b> {project.rejection_reason}
                     </div>
                 )}
-                
-                {/* FIX 4: Add optional chaining to user.role and user.id */}
+                {/* ...existing code for reupload, inform student, pdf actions, adviser actions, head admin actions, revision modal... */}
                 {user?.role === "student" &&
                     project.status === "need_revision" &&
                     project.submitted_by === user?.id && (
@@ -295,7 +406,6 @@ const ProjectDetails = () => {
                         </div>
                     </div>
                 )}
-                {/* FIX 5: Add optional chaining to user.role */}
                 {user?.role === "research_adviser" &&
                     project.status === "admin_revision" && (
                         <button
@@ -318,135 +428,88 @@ const ProjectDetails = () => {
                         </a>
                     </div>
                     <span className="submission-date">
-                        Submitted: {new Date(project.created_at).toLocaleDateString()}
+                        Uploaded: {new Date(project.created_at).toLocaleDateString()}
                     </span>
                 </div>
-                {/* FIX 6: Add optional chaining to user.role */}
-                {user?.role === "research_adviser" && project.status === "pending" && (
-                    <div className="adviser-actions">
-                        <button
-                            onClick={handleEndorse}
-                            disabled={actionLoading}
-                            className="endorse-btn"
-                        >
-                            {actionLoading ? "Processing..." : "Approve (Endorse to Admin)"}
-                        </button>
-                        <button
-                            onClick={handleNeedRevision}
-                            disabled={actionLoading}
-                            className="revision-btn"
-                        >
-                            {actionLoading ? "Processing..." : "Request Revision"}
-                        </button>
-                    </div>
-                )}
-
-                {/* --- Comments Section --- */}
-                {project.status === "approved" && (
-                    <div className="comments-section">
-                        <h3 className="comments-title">Feedback & Comments</h3>
-                        {comments.length === 0 ? (
-                            <div className="no-comments">No comments yet.</div>
-                        ) : (
-                            <ul className="comments-list">
-                                {comments.map(comment => (
-                                    <li key={comment.id} className="comment-item">
-                                        <div className="comment-author">{comment.user?.full_name || "Unknown"}</div>
-                                        <div className="comment-content">{comment.content}</div>
-                                        <div className="comment-date">
-                                            {new Date(comment.createdAt).toLocaleString()}
+                </div>
+            {/* Comments Section: Separate Card */}
+            {project.status === "approved" && (
+                <div className="comments-card-container" style={{
+                    width: "100%",
+                    maxWidth: "1800px",
+                    margin: "30px auto 40px auto",
+                    padding: "2.5rem 2rem 3.5rem 2rem",
+                    background: "#f8faff",
+                    borderRadius: "16px",
+                    boxShadow: "0 4px 24px rgba(0,0,0,0.10)",
+                    boxSizing: "border-box"
+                }}>
+                    <h3 className="comments-title" style={{ color: "#2563eb", marginBottom: "1rem" }}>Comments</h3>
+                    {comments.length === 0 ? (
+                        <div className="no-comments">No comments yet.</div>
+                    ) : (
+                        <ul className="comments-list">
+                            {comments.map(comment => (
+                                <li key={comment.id} className="comment-item">
+                                    <div className="comment-author">{comment.user?.full_name || "Unknown"}</div>
+                                    <div className="comment-content">{comment.content}</div>
+                                    <div className="comment-date">
+                                        {new Date(comment.createdAt).toLocaleString()}
+                                    </div>
+                                    {/* Replies */}
+                                    {comment.replies && comment.replies.length > 0 && (
+                                        <ul className="replies-list">
+                                            {comment.replies.map(reply => (
+                                                <li key={reply.id} className="reply-item">
+                                                    <div className="reply-author">{reply.user?.full_name || "Unknown"}</div>
+                                                    <div className="reply-content">{reply.content}</div>
+                                                    <div className="reply-date">
+                                                        {new Date(reply.createdAt).toLocaleString()}
+                                                    </div>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    )}
+                                    {/* --- Allow ALL users to reply --- */}
+                                    {user && (
+                                        <div className="reply-input-row">
+                                            <input
+                                                type="text"
+                                                placeholder="Reply to this comment..."
+                                                value={replyInputs[comment.id] || ""}
+                                                onChange={e => setReplyInputs(prev => ({ ...prev, [comment.id]: e.target.value }))}
+                                                className="reply-input"
+                                            />
+                                            <button
+                                                className="reply-btn"
+                                                onClick={() => handleAddReply(comment.id)}
+                                            >
+                                                Reply
+                                            </button>
                                         </div>
-                                        {/* Replies */}
-                                        {comment.replies && comment.replies.length > 0 && (
-                                            <ul className="replies-list">
-                                                {comment.replies.map(reply => (
-                                                    <li key={reply.id} className="reply-item">
-                                                        <div className="reply-author">{reply.user?.full_name || "Unknown"}</div>
-                                                        <div className="reply-content">{reply.content}</div>
-                                                        <div className="reply-date">
-                                                            {new Date(reply.createdAt).toLocaleString()}
-                                                        </div>
-                                                    </li>
-                                                ))}
-                                            </ul>
-                                        )}
-                                        {/* --- Allow ALL users to reply --- */}
-                                        {user && (
-                                            <div className="reply-input-row">
-                                                <input
-                                                    type="text"
-                                                    placeholder="Reply to this comment..."
-                                                    value={replyInputs[comment.id] || ""}
-                                                    onChange={e => setReplyInputs(prev => ({ ...prev, [comment.id]: e.target.value }))}
-                                                    className="reply-input"
-                                                />
-                                                <button
-                                                    className="reply-btn"
-                                                    onClick={() => handleAddReply(comment.id)}
-                                                >
-                                                    Reply
-                                                </button>
-                                            </div>
-                                        )}
-                                    </li>
-                                ))}
-                            </ul>
-                        )}
-                        {/* Add new comment */}
-                        <div className="add-comment-row">
-                            <input
-                                type="text"
-                                placeholder="Add a comment or feedback..."
-                                value={commentInput}
-                                onChange={e => setCommentInput(e.target.value)}
-                                className="comment-input"
-                            />
-                            <button
-                                className="send-feedback-btn"
-                                onClick={handleAddComment}
-                            >
-                                Send Feedback
-                            </button>
-                        </div>
-                    </div>
-                )}
-
-                {/* FIX 7: Add optional chaining to user.role */}
-                {user?.role === "head_admin" && project.status === "endorsed" && (
-                    <div className="adviser-actions">
+                                    )}
+                                </li>
+                            ))}
+                        </ul>
+                    )}
+                    {/* Add new comment */}
+                    <div className="add-comment-row">
+                        <input
+                            type="text"
+                            placeholder="Add a comment or feedback..."
+                            value={commentInput}
+                            onChange={e => setCommentInput(e.target.value)}
+                            className="comment-input"
+                        />
                         <button
-                            onClick={async () => {
-                                setActionLoading(true);
-                                try {
-                                    await axios.post(`/projects/admin/approve/${project.id}`);
-                                    setProject({ ...project, status: "approved" });
-                                    alert("Project approved and moved to repository.");
-                                    navigate("/head-admin/approved-projects");
-                                } catch {
-                                    alert("Failed to approve project.");
-                                }
-                                setActionLoading(false);
-                            }}
-                            disabled={actionLoading}
-                            className="endorse-btn"
+                            className="send-feedback-btn"
+                            onClick={handleAddComment}
                         >
-                            {actionLoading ? "Processing..." : "Approve"}
-                        </button>
-                        <button
-                            onClick={() => setShowRevisionModal(true)}
-                            disabled={actionLoading}
-                            className="revision-btn"
-                        >
-                            {actionLoading ? "Processing..." : "Request Revision"}
+                            Send
                         </button>
                     </div>
-                )}
-                <RevisionReasonModal
-                    show={showRevisionModal}
-                    onClose={() => setShowRevisionModal(false)}
-                    onSubmit={submitRevisionReason}
-                />
-            </div>
+                </div>
+            )}
         </div>
     );
 };

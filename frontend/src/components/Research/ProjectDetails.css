@@ -30,7 +30,7 @@
   border-radius: 8px;
   font-size: 1rem;
   font-weight: 600;
-  margin-bottom: 0.7rem;
+  margin-bottom: 0;
   margin-right: 0.7rem;
   color: #fff;
 }
@@ -307,6 +307,24 @@
 .modal-btn.reject { background: #b33834; margin-right: 0; }
 .modal-btn:disabled { background: #a5b4fc; cursor: not-allowed; }
 
+.interaction-icon {
+  width: 20px;
+  height: 20px;
+}
+
+@media (max-width: 768px) {
+  .interaction-icon {
+    width: 20px;
+    height: 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .interaction-icon {
+    width: 18px;
+    height: 18px;
+  }
+}
 
 /* 🖥️ Large Screen */
 @media (min-width: 1441px) {
@@ -325,6 +343,10 @@
   .abstract-content,
   .research-details-container p {
     font-size: 1.18rem;
+  }
+  .interaction-icon {
+    width: 22px;
+    height: 22px;
   }
 }
 
