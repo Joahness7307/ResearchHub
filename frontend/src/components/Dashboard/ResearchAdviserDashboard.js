@@ -8,7 +8,6 @@ import categoryColors from "../../constants/categoryColors";
 
 const projectsPerPage = 10;
 
-// ✅ FIXED: SearchInput MOVED OUTSIDE
 const SearchInput = ({ value, onChange }) => (
     <div className="search-wrapper" style={{ display: "flex", alignItems: "center", marginBottom: "2rem", marginTop: "1.5rem" }}>
         <input
@@ -29,33 +28,111 @@ const ResearchAdviserDashboard = ({ section }) => {
     const [searchTerm, setSearchTerm] = useState("");
     const [selectedRevisionCard, setSelectedRevisionCard] = useState("adviser");
     const [currentPage, setCurrentPage] = useState(1);
+    const [bookmarkLoading, setBookmarkLoading] = useState({});
     const navigate = useNavigate();
     const socketRef = useRef(null);
 
-    // ✅ FIXED: Simple handler - NO useCallback needed
+    const handleBookmarkToggle = async (e, projectId, bookmarked) => {
+        e.stopPropagation();
+        if (!user) {
+            alert("You must be logged in to bookmark projects.");
+            return;
+        }
+        setBookmarkLoading(prev => ({ ...prev, [projectId]: true }));
+        try {
+            if (bookmarked) {
+                await axios.delete(`/bookmarks/${projectId}`);
+            } else {
+                await axios.post(`/bookmarks/${projectId}`);
+            }
+            setProjects(prev => prev.map(p =>
+                p.id === projectId ? { ...p, bookmarked: !bookmarked } : p
+            ));
+
+            // ADD THIS LINE — syncs other tabs/dashboards
+            window.dispatchEvent(new Event("bookmarks-updated"));
+        } catch (err) {
+            alert("Failed to update bookmark. Please try again.");
+        }
+        setBookmarkLoading(prev => ({ ...prev, [projectId]: false }));
+    };
+
+    useEffect(() => {
+        if (user && user.force_password_change) {
+            navigate("/force-change-password");
+        }
+    }, [user, navigate]);
+
     const handleSearchChange = (e) => {
         setCurrentPage(1);
         setSearchTerm(e.target.value);
     };
 
-    // Reset page when section changes
     useEffect(() => {
         setCurrentPage(1);
         setSearchTerm("");
     }, [section, selectedRevisionCard]);
 
-    // Data fetching (unchanged)
-    useEffect(() => {
-        if (user) {
-            if (section === "repository") {
-                axios.get("/projects").then(res => setProjects(res.data)).catch(() => setProjects([]));
-            } else {
-                axios.get("/projects/adviser/all").then(res => setProjects(res.data)).catch(() => setProjects([]));
+    // FETCH PROJECTS + COMMENT COUNTS (FIXED!) + BOOKMARK STATUS
+        useEffect(() => {
+        if (!user) return;
+
+        const fetchProjects = async () => {
+            try {
+                let res;
+                if (section === "repository") {
+                    res = await axios.get("/projects");
+                } else {
+                    res = await axios.get("/projects/adviser/all");
+                }
+
+                const projectsData = res.data;
+
+                // 1. Fetch comment counts
+                const commentPromises = projectsData.map(project =>
+                    axios.get(`/comments/${project.id}`)
+                        .then(r => {
+                            if (!Array.isArray(r.data)) return 0;
+                            return r.data.reduce((total, comment) => {
+                                return total + 1 + (comment.replies?.length || 0);
+                            }, 0);
+                        })
+                        .catch(() => 0)
+                );
+
+                // 2. Fetch bookmark status (THIS WAS MISSING!)
+                const bookmarkPromises = user
+                    ? projectsData.map(project =>
+                        axios.get(`/bookmarks/is-bookmarked/${project.id}`)
+                            .then(r => r.data.bookmarked)
+                            .catch(() => false)
+                      )
+                    : projectsData.map(() => false);
+
+                // 3. Run both in parallel
+                const [commentCounts, bookmarkStates] = await Promise.all([
+                    Promise.all(commentPromises),
+                    Promise.all(bookmarkPromises)
+                ]);
+
+                // 4. Attach BOTH comment count AND bookmark status
+                const projectsWithData = projectsData.map((project, idx) => ({
+                    ...project,
+                    comment_count: commentCounts[idx],
+                    bookmarked: bookmarkStates[idx]   // ← NOW IT WORKS PERFECTLY
+                }));
+
+                setProjects(projectsWithData);
+            } catch (err) {
+                console.error("Error fetching projects:", err);
+                setProjects([]);
             }
-        }
+        };
+
+        fetchProjects();
     }, [user, section]);
 
-    // Socket (unchanged)
+    // Socket setup (unchanged)
     useEffect(() => {
         if (!user || !process.env.REACT_APP_BACKEND_URL) return;
         socketRef.current = io(process.env.REACT_APP_BACKEND_URL);
@@ -139,24 +216,43 @@ const ResearchAdviserDashboard = ({ section }) => {
         ) : (
             <ul className="repository-list">
                 {listProjects.map(project => (
-                    <li key={project.id} className="repository-item" onClick={() => navigate(`/adviser/projects/${project.id}`)}>
+                    <li key={project.id} className="repository-item" onClick={() => navigate(`/adviser/projects/${project.id}`)} style={{ position: 'relative' }}>
+                        {/* Bookmark Icon - Top Right */}
+                        <img
+                        src={project.bookmarked ? require("../../assets/bookmarkedIcon.png") : require("../../assets/bookmarkIcon.png")}
+                        alt={project.bookmarked ? "Bookmarked" : "Bookmark"}
+                        className={`bookmark-icon ${bookmarkLoading[project.id] ? "loading" : ""}`}
+                        onClick={(e) => handleBookmarkToggle(e, project.id, project.bookmarked)}
+                        />
                         <div className="repository-title">{project.title}</div>
                         <div className="repository-meta">
                             <span className="repository-category" style={{ background: categoryColors[project.category] || "#2563eb", color: "#fff" }}>
                                 {project.category}
                             </span>
-                            <span className="repository-authors">{project.authors}</span>
+                            <span className="repository-authors"><i><span style={{fontWeight: 500}}>Authors: </span>{project.authors}</i></span>
                         </div>
-                        <div className="repository-abstract">
+                        <div className="repository-abstract adviser-abstract-border">
                             <b>Abstract:</b> {project.abstract?.length > 120 ? project.abstract.slice(0, 120) + "..." : project.abstract}
                         </div>
+
+                        {/* Comment Icon + Count - Bottom Right (Only on approved/repository) */}
+                        {(section === "approved" || section === "repository") && (
+                        <div className="comment-icon-container">
+                            <img 
+                            src={require("../../assets/commentIcon.png")} 
+                            alt="Comments" 
+                            className="comment-icon" 
+                            />
+                            <span>{project.comment_count ?? 0}</span>
+                        </div>
+                        )}
                     </li>
                 ))}
             </ul>
         )
     );
 
-    // Render sections (ALL using FIXED SearchInput)
+    // ... rest of your render logic (unchanged) ...
     if (section === "request-for-revision") {
         return (
             <div className="adviser-dashboard-container">
@@ -171,7 +267,6 @@ const ResearchAdviserDashboard = ({ section }) => {
                         <div className="dashboard-card-count">{adminRevision.length}</div>
                     </div>
                 </div>
-                {/* ✅ FIXED */}
                 <SearchInput value={searchTerm} onChange={handleSearchChange} />
                 <div className="dashboard-main-content">
                     <ProjectList projects={paginatedProjects} />
@@ -181,7 +276,7 @@ const ResearchAdviserDashboard = ({ section }) => {
         );
     }
 
-    if (section === "dashboard") {
+        if (section === "dashboard") {
         const pendingCount = pending.length;
         const endorsedCount = endorsed.length;
         const approvedCount = approved.length;
@@ -225,7 +320,7 @@ const ResearchAdviserDashboard = ({ section }) => {
                 <h3 style={{ marginBottom: "1.2rem", color: "#333" }}>Latest Pending Projects</h3>
                 <ProjectList projects={filteredLatestPending} />
                 
-                <div style={{ textAlign: "center", marginTop: "2rem" }}>
+                <div style={{ textAlign: "center", marginTop: "1rem" }}>
                     <button 
                         className="admin-btn" 
                         style={{ padding: "1rem 2rem", background: "#3a3e92", color: "#fff", border: "none", borderRadius: "8px", fontWeight: 600, fontSize: "1rem", cursor: "pointer" }} 
@@ -238,11 +333,9 @@ const ResearchAdviserDashboard = ({ section }) => {
         );
     }
 
-    // Default sections
     return (
         <div className="adviser-dashboard-container">
             <h2>{sectionTitles[section] || "Research Adviser Dashboard"}</h2>
-            {/* ✅ FIXED */}
             <SearchInput value={searchTerm} onChange={handleSearchChange} />
             <div className="dashboard-main-content">
                 <ProjectList projects={paginatedProjects} />

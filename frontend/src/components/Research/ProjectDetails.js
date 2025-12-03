@@ -5,6 +5,9 @@ import { AuthContext } from "../../context/AuthContext";
 import RevisionReasonModal from "../RevisionReasonModal";
 import "./ProjectDetails.css";
 import categoryColors from "../../constants/categoryColors";
+import bookmarkIcon from "../../assets/bookmarkIcon.png";
+import bookmarkedIcon from "../../assets/bookmarkedIcon.png";
+import commentIcon from "../../assets/commentIcon.png";
 
 const ProjectDetails = () => {
     const { id } = useParams();
@@ -19,6 +22,8 @@ const ProjectDetails = () => {
     const [comments, setComments] = useState([]);
     const [commentInput, setCommentInput] = useState("");
     const [replyInputs, setReplyInputs] = useState({});
+    const [isBookmarked, setIsBookmarked] = useState(false);
+    const [bookmarkLoading, setBookmarkLoading] = useState(false);
 
     const navigate = useNavigate();
 
@@ -61,6 +66,47 @@ const ProjectDetails = () => {
         };
         fetchProject();
     }, [id]);
+
+    // fetch bookmark status
+    useEffect(() => {
+        const fetchBookmarkStatus = async () => {
+            if (!user || !id) {
+                setIsBookmarked(false);
+                return;
+            }
+            try {
+                const res = await axios.get(`/bookmarks/is-bookmarked/${id}`);
+                setIsBookmarked(!!res.data.bookmarked);
+            } catch (err) {
+                setIsBookmarked(false);
+            }
+        };
+        fetchBookmarkStatus();
+    }, [user, id]);
+
+    // Toggle handler (already good, just make sure it dispatches event)
+    const handleToggleBookmark = async () => {
+        if (!user) {
+            alert("Please log in to bookmark projects.");
+            return;
+        }
+        setBookmarkLoading(true);
+        try {
+            if (isBookmarked) {
+                await axios.delete(`/bookmarks/${id}`);
+                setIsBookmarked(false);
+            } else {
+                await axios.post(`/bookmarks/${id}`);
+                setIsBookmarked(true);
+            }
+            // This helps MyAccount page refresh bookmarks
+            window.dispatchEvent(new Event("bookmarks-updated"));
+        } catch (err) {
+            alert("Failed to update bookmark.");
+        } finally {
+            setBookmarkLoading(false);
+        }
+    };
 
     const handleEndorse = async () => {
         setActionLoading(true);
@@ -138,12 +184,18 @@ const ProjectDetails = () => {
 
     // Fetch comments
     useEffect(() => {
-        if (project && project.status === "approved") {
-            axios.get(`/comments/${project.id}`)
-                .then(res => setComments(res.data))
-                .catch(() => setComments([]));
-        }
-    }, [project]);
+    if (project?.status === "approved") {
+        axios.get(`/comments/${project.id}`)
+        .then(res => setComments(res.data || []))
+        .catch(err => {
+            console.error("Failed to load comments:", err);
+            setComments([]);
+        });
+    } else {
+        // Clear comments if project is not approved
+        setComments([]);
+    }
+    }, [project?.id, project?.status]); // Re-run if status changes
 
     // Add comment
     const handleAddComment = async () => {
@@ -151,7 +203,6 @@ const ProjectDetails = () => {
         try {
             await axios.post(`/comments/${project.id}`, { content: commentInput });
             setCommentInput("");
-            // Re-fetch comments
             const res = await axios.get(`/comments/${project.id}`);
             setComments(res.data);
         } catch (err) {
@@ -181,7 +232,25 @@ const ProjectDetails = () => {
     return (
         <div className="project-details-page" style={{ padding: 10 }}>
             <div className="research-details-container">
-                <h2>{project.title}</h2>
+                <div className="project-header-with-bookmark">
+                <h2 className="project-title">{project.title}</h2>
+
+                {/* Beautiful Floating Bookmark Icon - Inside Card */}
+                {user && (
+                    <button
+                    onClick={handleToggleBookmark}
+                    disabled={bookmarkLoading}
+                    className="project-bookmark-btn"
+                    title={isBookmarked ? "Remove from bookmarks" : "Add to bookmarks"}
+                    >
+                    <img
+                        src={isBookmarked ? bookmarkedIcon : bookmarkIcon}
+                        alt={isBookmarked ? "Bookmarked" : "Bookmark"}
+                        className={`project-bookmark-icon ${isBookmarked ? "bookmarked" : ""} ${bookmarkLoading ? "loading" : ""}`}
+                    />
+                    </button>
+                )}
+                </div>
                 <span
                     className="category-badge"
                     style={{
@@ -318,7 +387,7 @@ const ProjectDetails = () => {
                         </a>
                     </div>
                     <span className="submission-date">
-                        Submitted: {new Date(project.created_at).toLocaleDateString()}
+                        Uploaded: {new Date(project.created_at).toLocaleDateString()}
                     </span>
                 </div>
                 {/* FIX 6: Add optional chaining to user.role */}
@@ -341,113 +410,157 @@ const ProjectDetails = () => {
                     </div>
                 )}
 
-                {/* --- Comments Section --- */}
-                {project.status === "approved" && (
-                    <div className="comments-section">
-                        <h3 className="comments-title">Feedback & Comments</h3>
-                        {comments.length === 0 ? (
-                            <div className="no-comments">No comments yet.</div>
-                        ) : (
-                            <ul className="comments-list">
-                                {comments.map(comment => (
-                                    <li key={comment.id} className="comment-item">
-                                        <div className="comment-author">{comment.user?.full_name || "Unknown"}</div>
-                                        <div className="comment-content">{comment.content}</div>
-                                        <div className="comment-date">
-                                            {new Date(comment.createdAt).toLocaleString()}
-                                        </div>
-                                        {/* Replies */}
-                                        {comment.replies && comment.replies.length > 0 && (
-                                            <ul className="replies-list">
-                                                {comment.replies.map(reply => (
-                                                    <li key={reply.id} className="reply-item">
-                                                        <div className="reply-author">{reply.user?.full_name || "Unknown"}</div>
-                                                        <div className="reply-content">{reply.content}</div>
-                                                        <div className="reply-date">
-                                                            {new Date(reply.createdAt).toLocaleString()}
-                                                        </div>
-                                                    </li>
-                                                ))}
-                                            </ul>
-                                        )}
-                                        {/* --- Allow ALL users to reply --- */}
-                                        {user && (
-                                            <div className="reply-input-row">
-                                                <input
-                                                    type="text"
-                                                    placeholder="Reply to this comment..."
-                                                    value={replyInputs[comment.id] || ""}
-                                                    onChange={e => setReplyInputs(prev => ({ ...prev, [comment.id]: e.target.value }))}
-                                                    className="reply-input"
-                                                />
-                                                <button
-                                                    className="reply-btn"
-                                                    onClick={() => handleAddReply(comment.id)}
-                                                >
-                                                    Reply
-                                                </button>
-                                            </div>
-                                        )}
-                                    </li>
-                                ))}
-                            </ul>
-                        )}
-                        {/* Add new comment */}
-                        <div className="add-comment-row">
-                            <input
-                                type="text"
-                                placeholder="Add a comment or feedback..."
-                                value={commentInput}
-                                onChange={e => setCommentInput(e.target.value)}
-                                className="comment-input"
-                            />
+                    {/* FIX 7: Add optional chaining to user.role */}
+                    {user?.role === "head_admin" && project.status === "endorsed" && (
+                        <div className="adviser-actions">
                             <button
-                                className="send-feedback-btn"
-                                onClick={handleAddComment}
+                                onClick={async () => {
+                                    setActionLoading(true);
+                                    try {
+                                        await axios.post(`/projects/admin/approve/${project.id}`);
+                                        setProject({ ...project, status: "approved" });
+                                        alert("Project approved and moved to repository.");
+                                        navigate("/head-admin/approved-projects");
+                                    } catch {
+                                        alert("Failed to approve project.");
+                                    }
+                                    setActionLoading(false);
+                                }}
+                                disabled={actionLoading}
+                                className="endorse-btn"
                             >
-                                Send Feedback
+                                {actionLoading ? "Processing..." : "Approve"}
+                            </button>
+                            <button
+                                onClick={() => setShowRevisionModal(true)}
+                                disabled={actionLoading}
+                                className="revision-btn"
+                            >
+                                {actionLoading ? "Processing..." : "Request Revision"}
                             </button>
                         </div>
+                    )}
+                </div>
+
+                {/* COMMENTS SECTION - ONLY FOR APPROVED PROJECTS */}
+                {project.status === "approved" ? (
+                <div className="comments-section">
+                    <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 5 }}>
+                        <h3 className="comments-title" style={{ marginBottom: 10 }}>Comments</h3>
+                        <img 
+                            src={commentIcon} 
+                            alt="Comments" 
+                            className="comments-header-icon" 
+                        />
+                        <span style={{ fontWeight: 600, color: "#2563eb", fontSize: "1.1rem", marginBottom: 10 }}>
+                            {comments.reduce((acc, c) => acc + 1 + (c.replies ? c.replies.length : 0), 0)}
+                        </span>
+                        </div>
+
+                    {/* Show loading or no comments */}
+                    {comments.length === 0 ? (
+                    <div className="no-comments">No comments yet. Be the first to leave feedback!</div>
+                    ) : (
+                    <ul className="comments-list">
+                        {comments.map(comment => (
+                        <li key={comment.id} className="comment-item">
+                            <div className="comment-author">
+                            {comment.user?.full_name || "Anonymous User"}
+                            </div>
+                            <div className="comment-content">{comment.content}</div>
+                            <div className="comment-date">
+                            {new Date(comment.createdAt).toLocaleString()}
+                            </div>
+
+                            {/* Replies */}
+                            {comment.replies && comment.replies.length > 0 && (
+                            <ul className="replies-list">
+                                {comment.replies.map(reply => (
+                                <li key={reply.id} className="reply-item">
+                                    <div className="reply-author">
+                                    {reply.user?.full_name || "Anonymous"}
+                                    </div>
+                                    <div className="reply-content">{reply.content}</div>
+                                    <div className="reply-date">
+                                    {new Date(reply.createdAt).toLocaleString()}
+                                    </div>
+                                </li>
+                                ))}
+                            </ul>
+                            )}
+
+                            {/* Reply Input - Only if logged in student and guest users */}
+                            {user && (user.role === "student" || user.role === "guest") && (
+                            <div className="reply-input-row">
+                                <input
+                                type="text"
+                                placeholder="Write a reply..."
+                                value={replyInputs[comment.id] || ""}
+                                onChange={(e) =>
+                                    setReplyInputs(prev => ({ ...prev, [comment.id]: e.target.value }))
+                                }
+                                className="reply-input"
+                                />
+                                <button
+                                className="reply-btn"
+                                onClick={() => handleAddReply(comment.id)}
+                                >
+                                Reply
+                                </button>
+                            </div>
+                            )}
+                        </li>
+                        ))}
+                    </ul>
+                    )}
+
+                    {/* Add New Comment - Only if user is logged in student and guest users */}
+                    {user && (user.role === "student" || user.role === "guest") ? (
+                    <div className="add-comment-row">
+                        <input
+                        type="text"
+                        placeholder="Add a comment or feedback..."
+                        value={commentInput}
+                        onChange={(e) => setCommentInput(e.target.value)}
+                        className="comment-input"
+                        />
+                        <button
+                        className="send-feedback-btn"
+                        onClick={handleAddComment}
+                        disabled={!commentInput.trim()}
+                        >
+                        Send
+                        </button>
                     </div>
+                    ) : user ? (
+                    // Logged in but not student → show message
+                    <p style={{ color: "#666", fontStyle: "italic", marginTop: "1.5rem", textAlign: "center" }}>
+                        Only students and guests can leave comments on approved projects.
+                    </p>
+                    ) : (
+                    // Not logged in
+                    <p style={{ color: "#666", fontStyle: "italic", marginTop: "1rem" }}>
+                        Please log in as a student or guest to leave a comment.
+                    </p>
+                    )}
+                </div>
+                ) : (
+                // Optional: Show a message for non-approved projects
+                project.status !== "approved" && ["pending", "endorsed", "need_revision", "admin_revision"].includes(project.status) && (
+                    <div className="comments-section" style={{ opacity: 0.6, pointerEvents: "none" }}>
+                    <p style={{ color: "#888", fontStyle: "italic", textAlign: "center", padding: "2rem 0" }}>
+                        Comments are only available for approved projects.
+                    </p>
+                    </div>
+                )
                 )}
 
-                {/* FIX 7: Add optional chaining to user.role */}
-                {user?.role === "head_admin" && project.status === "endorsed" && (
-                    <div className="adviser-actions">
-                        <button
-                            onClick={async () => {
-                                setActionLoading(true);
-                                try {
-                                    await axios.post(`/projects/admin/approve/${project.id}`);
-                                    setProject({ ...project, status: "approved" });
-                                    alert("Project approved and moved to repository.");
-                                    navigate("/head-admin/approved-projects");
-                                } catch {
-                                    alert("Failed to approve project.");
-                                }
-                                setActionLoading(false);
-                            }}
-                            disabled={actionLoading}
-                            className="endorse-btn"
-                        >
-                            {actionLoading ? "Processing..." : "Approve"}
-                        </button>
-                        <button
-                            onClick={() => setShowRevisionModal(true)}
-                            disabled={actionLoading}
-                            className="revision-btn"
-                        >
-                            {actionLoading ? "Processing..." : "Request Revision"}
-                        </button>
-                    </div>
-                )}
                 <RevisionReasonModal
                     show={showRevisionModal}
                     onClose={() => setShowRevisionModal(false)}
                     onSubmit={submitRevisionReason}
                 />
             </div>
-        </div>
     );
 };
 

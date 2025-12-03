@@ -1,3 +1,8 @@
+.headadmin-abstract-border {
+  border-bottom: 1.5px solid #e5e7eb;
+  padding-bottom: 0.5rem;
+  margin-bottom: 2rem;
+}
 /* Global Variables (Suggested) */
 :root {
   --primary-color: #2563eb;     
@@ -19,6 +24,28 @@
   box-shadow: 0 2px 12px rgba(37,99,235,0.07);
 }
 
+.admin-dashboard-header {
+  margin: 5rem 0 0 0;
+  padding: 0;
+  width: 100%;
+}
+
+.admin-dashboard-title {
+  margin: 0;
+  font-size: 2rem;
+  font-weight: bold;
+  letter-spacing: -0.5px;
+  line-height: 1.1;
+  text-align: left;
+  padding: 0;
+  display: inline-block;
+  padding-bottom: 0.4rem;
+  background:  #2563eb;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
 /* --- NEW STYLES FOR SUMMARY CARDS (Retained) --- */
 .head-admin-dashboard-wrapper h2 {
   color: var(--secondary-color);
@@ -27,7 +54,7 @@
 .dashboard-summary-cards {
   display: flex;
   gap: 2rem;
-  margin-top: 5rem;
+  margin-top: 1.5rem;
   margin-bottom: 2rem;
 }
 
@@ -67,7 +94,7 @@
 
 .status-card {
   background: #f8f8ff;
-  padding: 1rem;
+  padding: 0.8rem;
   border-radius: 8px;
   border-left: 5px solid;
   box-shadow: 0 2px 5px rgba(0,0,0,0.05);
@@ -410,6 +437,48 @@
     background-color: #4b5563;
 }
 
+.password-input-wrapper {
+    position: relative;
+    flex: 1;
+    min-width: 200px;
+}
+
+.admin-form-input {
+    width: 100%;
+    padding: 0.90rem 2.8rem 0.90rem 1rem; /* left:1rem + right:2.8rem for icon */
+    padding-right: 3.2rem; /* Space for the icon */
+    box-sizing: border-box;
+    font-size: 15px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.password-toggle-icon {
+    position: absolute;
+    right: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    height: 100%;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    pointer-events: none; /* Prevents focus issues */
+    z-index: 10;
+    pointer-events: auto; /* Re-enable click */
+}
+
+.password-toggle-icon img {
+    width: 24px;
+    height: 24px;
+    opacity: 0.85;
+    transition: opacity 0.2s;
+}
+
+.password-toggle-icon:hover img {
+    opacity: 1;
+}
+
 /* --- RESPONSIVENESS --- */
 /* Responsive adjustments for the admin search bar & button */
 @media (max-width: 1100px) {
@@ -422,6 +491,31 @@
   .admin-search-bar .admin-btn {
     /* allow button to shrink on medium screens while staying readable */
     flex: 0 0 auto;
+  }
+  .summary-card .count-number {
+    font-size: 2.2rem;
+  }
+  .status-card.pending .count-number {
+      font-size: 2rem;
+    }
+    .status-card.endorsed .count-number {
+      font-size: 2rem;
+    }
+    .status-card.revision .count-number {
+      font-size: 2rem;
+    }
+    .status-card.approved .count-number {
+      font-size: 2rem;
+    }
+    .status-card {
+      padding: 0.5rem;
+      padding-left: 0.8rem;
+    }
+}
+
+@media (max-width: 1024px) {
+  .admin-dashboard-title {
+    font-size: 2.4rem;
   }
 }
 
@@ -444,6 +538,39 @@
     padding: 0.7rem;
     font-size: 0.95rem;
   }
+  .summary-card {
+    padding: 1rem 1rem;
+  }
+  .summary-card .count-number {
+    font-size: 2rem;
+  }
+  .status-card.pending .count-number {
+      font-size: 1.8rem;
+    }
+    .status-card.endorsed .count-number {
+      font-size: 1.8rem;
+    }
+    .status-card.revision .count-number {
+      font-size: 1.8rem;
+    }
+    .status-card.approved .count-number {
+      font-size: 1.8rem;
+    }
+    .status-card {
+      padding: 0.2rem;
+      padding-left: 0.5rem;
+    }
+    .admin-dashboard-title {
+      font-size: 2.1rem;
+      border-bottom-width: 3px;
+    }
+    .password-toggle-icon img {
+        width: 22px;
+        height: 22px;
+    }
+    .admin-form-input {
+        padding-right: 3rem;
+    }
 }
 
 @media (max-width: 600px) {
@@ -459,8 +586,17 @@
   .dashboard-summary-cards {
     display: block;
     row-gap: 1rem;
-    margin-top: 5rem;
+    margin-top: 1.5rem;
     margin-bottom: 2rem;
+  }
+  .admin-dashboard-title {
+    font-size: 2rem;
+  }
+  .summary-card {
+    padding: 1rem 1rem;
+  }
+  .summary-card .count-number {
+    font-size: 1.8rem;
   }
   .summary-card, .total-projects {
     margin-bottom: 1rem;
@@ -485,5 +621,51 @@
         max-width: 95%; 
         padding: 0.75rem; /* Reduce padding slightly */
         margin: 1rem auto 2rem auto;
+    }
+    .headadmin-abstract-border {
+      border-bottom: 1.5px solid #e5e7eb;
+      padding-bottom: 0.5rem;
+      margin-bottom: 2.5rem;
+    }
+    .status-card.pending .count-number {
+      font-size: 1.6rem;
+    }
+    .status-card.endorsed .count-number {
+      font-size: 1.6rem;
+    }
+    .status-card.revision .count-number {
+      font-size: 1.6rem;
+    }
+    .status-card.approved .count-number {
+      font-size: 1.6rem;
+    }
+    .status-card {
+      padding: 0.2rem;
+      padding-left: 0.5rem;
+    }
+    .admin-dashboard-title {
+      font-size: 1.8rem;
+      border-bottom-width: 3px;
+      padding-bottom: 0.3rem;
+    }
+    .password-toggle-icon img {
+        width: 20px;
+        height: 20px;
+    }
+    .admin-form-input {
+        padding-right: 2.8rem;
+    }
+}
+
+@media (max-width: 380px) {
+  .admin-dashboard-title {
+    font-size: 1.6rem;
+  }
+  .password-toggle-icon img {
+        width: 18px;
+        height: 18px;
+    }
+    .admin-form-input {
+        padding-right: 2.6rem;
     }
 }

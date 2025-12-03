@@ -374,7 +374,30 @@ exports.getAllProjectsAdmin = async (req, res) => {
         { model: User, as: "submitter", attributes: ["id", "full_name", "username", "email", "department", "year_level", "strand", "grade_level"] }
       ]
     });
-    res.json(projects);
+
+    // For each project, count all comments (including replies)
+    const projectIds = projects.map(p => p.id);
+    const commentCountsRaw = await Comment.findAll({
+      attributes: [
+        "projectId",
+        [require("sequelize").fn("COUNT", require("sequelize").col("id")), "count"]
+      ],
+      where: { projectId: projectIds },
+      group: ["projectId"]
+    });
+    // Map: { projectId: count }
+    const commentCounts = {};
+    commentCountsRaw.forEach(row => {
+      commentCounts[row.projectId] = parseInt(row.get("count"), 10);
+    });
+
+    // Attach comment_count to each project
+    const projectsWithCounts = projects.map(p => {
+      const proj = p.toJSON();
+      proj.comment_count = commentCounts[p.id] || 0;
+      return proj;
+    });
+    res.json(projectsWithCounts);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

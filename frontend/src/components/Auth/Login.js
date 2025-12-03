@@ -1,4 +1,6 @@
 import React, { useState, useContext } from "react";
+import eyeIcon from "../../assets/eye.png";
+import hiddenIcon from "../../assets/hidden.png";
 import axios from "../../api/axios";
 import { AuthContext } from "../../context/AuthContext";
 import { useNavigate, Link } from "react-router-dom";
@@ -8,9 +10,8 @@ const Login = () => {
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  
-  // NOTE: setEmail and setPassword states were redundant; using identifier/password states is correct.
-  
+  const [showPassword, setShowPassword] = useState(false);
+
   const { login } = useContext(AuthContext);
   const navigate = useNavigate();
 
@@ -21,30 +22,18 @@ const Login = () => {
       const res = await axios.post("/users/login", { identifier, password });
       const { token, user } = res.data;
       login(user, token);
-      navigate("/");   
 
-      // If backend / user indicates force_password_change, send user to force-change page
       if (user && user.force_password_change) {
         navigate("/force-change-password");
         return;
       }
-      
-      // Determine navigation based on role
-      switch(user.role) {
-        case "admin":
-          navigate("/admin");
-          break;
-        case "head_admin":
-          navigate("/head-admin");
-          break;
-        case "guest":
-          navigate("/guest");
-          break;
-        case "research_adviser":
-          navigate("/adviser");
-          break;
-        default: // Includes 'student'
-          navigate("/projects");
+
+      switch (user.role) {
+        case "admin": navigate("/admin"); break;
+        case "head_admin": navigate("/head-admin"); break;
+        case "guest": navigate("/guest"); break;
+        case "research_adviser": navigate("/adviser"); break;
+        default: navigate("/projects");
       }
     } catch (err) {
       setError(err.response?.data?.message || "Login failed");
@@ -65,19 +54,25 @@ const Login = () => {
           required
           className="auth-input"
         />
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={e => setPassword(e.target.value)}
-          required
-          className="auth-input"
-        />
-        {/* <div style={{ textAlign: "right", marginBottom: "0.5rem" }}>
-          <Link to="/forgot-password" className="forgot-password-link">
-            Forgot Password?
-          </Link>
-        </div> */}
+        <div style={{ position: "relative" }}>
+          <input
+            type={showPassword ? "text" : "password"}
+            placeholder="Password"
+            value={password}
+            onChange={e => setPassword(e.target.value)}
+            required
+            className="auth-input"
+            style={{ paddingRight: "3.5rem" }}
+          />
+          <span
+            type="button"
+            className="password-toggle"
+            onClick={() => setShowPassword(prev => !prev)}
+            aria-label={showPassword ? "Hide password" : "Show password"}
+          >
+            <img src={showPassword ? hiddenIcon : eyeIcon} alt="" />
+          </span>
+        </div>
         <button type="submit">Login</button>
         <div className="auth-switch">
           Don't have an account? <Link to="/role-selection">Signup</Link>

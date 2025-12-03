@@ -2,30 +2,51 @@ import React, { useState, useContext } from "react";
 import axios from "../../api/axios";
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../../context/AuthContext";
+import eyeIcon from "../../assets/eye.png";
+import hiddenIcon from "../../assets/hidden.png";
 import "./AuthForm.css";
 
 const ForceChangePassword = () => {
   const [password, setPassword] = useState("");
   const [confirm_password, setConfirm] = useState("");
+  
+  // Independent toggles!
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
   const [error, setError] = useState("");
   const [msg, setMsg] = useState("");
   const navigate = useNavigate();
   const { user, logout } = useContext(AuthContext);
 
+  React.useEffect(() => {
+    if (user && !user.force_password_change) {
+      const routes = {
+        admin: "/admin",
+        head_admin: "/head-admin",
+        guest: "/guest",
+        research_adviser: "/adviser",
+        student: "/projects"
+      };
+      navigate(routes[user.role] || "/projects");
+    }
+  }, [user, navigate]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError(""); setMsg("");
-    if (!password || !confirm_password) { setError("Both fields are required."); return; }
-    if (password !== confirm_password) { setError("Passwords do not match."); return; }
+    setError(""); 
+    setMsg("");
+    
+    if (!password || !confirm_password) return setError("Both fields are required.");
+    if (password !== confirm_password) return setError("Passwords do not match.");
+
     try {
       await axios.post("/users/force-change-password", { password, confirm_password });
-      setMsg("Password changed. Redirecting...");
-      // after success, refresh profile or clear force flag locally and redirect
-      // easiest: logout then ask user to login again (or fetch profile)
-      setTimeout(() => {
-        logout();
-        navigate("/login");
-      }, 1200);
+      setMsg("Password changed successfully! Redirecting...");
+      setTimeout(() => { 
+        logout(); 
+        navigate("/login"); 
+      }, 1500);
     } catch (err) {
       setError(err.response?.data?.message || "Failed to change password.");
     }
@@ -36,11 +57,55 @@ const ForceChangePassword = () => {
       <form className="auth-login-form" onSubmit={handleSubmit}>
         <h2>Change Password</h2>
         <p className="subtext">You must change your password before continuing.</p>
+        
         {msg && <div className="auth-success">{msg}</div>}
         {error && <div className="auth-error">{error}</div>}
-        <input type="password" placeholder="New Password" value={password} onChange={e => setPassword(e.target.value)} className="auth-input" required />
-        <input type="password" placeholder="Confirm New Password" value={confirm_password} onChange={e => setConfirm(e.target.value)} className="auth-input" required />
-        <button type="submit">Save New Password</button>
+
+        {/* NEW PASSWORD FIELD */}
+        <div className="password-input-wrapper">
+          <input
+            type={showPassword ? "text" : "password"}
+            placeholder="New Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            className="auth-input"
+          />
+          <span
+            className="password-toggle-icon"
+            onClick={() => setShowPassword(prev => !prev)}
+          >
+            <img
+              src={showPassword ? hiddenIcon : eyeIcon}
+              alt={showPassword ? "Hide" : "Show"}
+            />
+          </span>
+        </div>
+
+        {/* CONFIRM PASSWORD FIELD */}
+        <div className="password-input-wrapper">
+          <input
+            type={showConfirmPassword ? "text" : "password"}
+            placeholder="Confirm New Password"
+            value={confirm_password}
+            onChange={(e) => setConfirm(e.target.value)}
+            required
+            className="auth-input"
+          />
+          <span
+            className="password-toggle-icon"
+            onClick={() => setShowConfirmPassword(prev => !prev)}
+          >
+            <img
+              src={showConfirmPassword ? hiddenIcon : eyeIcon}
+              alt={showConfirmPassword ? "Hide" : "Show"}
+            />
+          </span>
+        </div>
+
+        <button type="submit" className="auth-btn">
+          Save New Password
+        </button>
       </form>
     </div>
   );

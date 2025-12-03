@@ -84,8 +84,8 @@
 @media (max-width: 480px) {
   .notification-page-container {
     margin-top: 70px;
-    margin-left: 1rem;
-    margin-right: 1rem
+    margin-left: 0rem;
+    margin-right: 0rem
   }
   .notification-title {
   font-size: 1.5rem;

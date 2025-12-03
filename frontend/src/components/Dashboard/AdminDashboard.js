@@ -36,6 +36,8 @@ const AdminDashboard = ({ activeSection }) => {
     });
     const [addUserMessage, setAddUserMessage] = useState("");
     const [addUserError, setAddUserError] = useState("");
+    const [showAddUserPassword, setShowAddUserPassword] = useState(false);
+    const [showAddUserConfirm, setShowAddUserConfirm] = useState(false);
 
     const [userSearch, setUserSearch] = useState("");
     const [editUserId, setEditUserId] = useState(null); 
@@ -51,6 +53,35 @@ const AdminDashboard = ({ activeSection }) => {
     const [projectPage, setProjectPage] = useState(1);
     const [loadingProjects, setLoadingProjects] = useState(false);
     const [projectsError, setProjectsError] = useState("");
+    const [bookmarkLoading, setBookmarkLoading] = useState({});
+    // Toggle bookmark handler for admin
+    const handleBookmarkToggle = async (e, projectId, bookmarked) => {
+        e.stopPropagation();
+        if (!user) {
+            alert("You must be logged in to bookmark projects.");
+            return;
+        }
+        setBookmarkLoading(prev => ({ ...prev, [projectId]: true }));
+        try {
+            if (bookmarked) {
+                await axios.delete(`/bookmarks/${projectId}`);
+            } else {
+                await axios.post(`/bookmarks/${projectId}`);
+            }
+            setProjects(prev => prev.map(p =>
+                p.id === projectId ? { ...p, bookmarked: !bookmarked } : p
+            ));
+        } catch (err) {
+            alert("Failed to update bookmark. Please try again.");
+        }
+        setBookmarkLoading(prev => ({ ...prev, [projectId]: false }));
+    };
+
+    useEffect(() => {
+        if (user && user.force_password_change) {
+        navigate("/force-change-password");
+        }
+    }, [user, navigate]);
 
     // ----------------------------
 
@@ -84,7 +115,7 @@ const AdminDashboard = ({ activeSection }) => {
             }
 
             const response = await axios.post("/users/add", payload);
-            setAddUserMessage(`User added successfully. Temporary Password: ${response.data.tempPassword || 'N/A'}`);
+            setAddUserMessage(`User added successfully with temporary password`);
             setAddUserForm({
                 username: "",
                 full_name: "",
@@ -295,6 +326,9 @@ const AdminDashboard = ({ activeSection }) => {
             {/* DASHBOARD SECTION (UNCHANGED) */}
             {section === "dashboard" && (
                 <>
+                <div className="admin-dashboard-header">
+                    <h1 className="admin-dashboard-title">Admin Dashboard</h1>
+                </div>
                     <div className="dashboard-summary-cards">
                         <div className="summary-card total-projects">
                             <h3>📚 Total Projects</h3>
@@ -306,7 +340,7 @@ const AdminDashboard = ({ activeSection }) => {
                         </div>
                     </div>
 
-                    <h2 style={{ marginTop: '3rem', marginBottom: '1.5rem', fontSize: '1.8rem', color: '#3a3e92' }}>Project Status Summary</h2>
+                    <h2 style={{ marginTop: '3rem', marginBottom: '1.5rem', fontSize: '1.5rem', color: '#3a3e92' }}>Project Status Summary</h2>
                     <div className="dashboard-status-cards">
                         <div className="status-card pending">
                             <h3>Pending</h3>
@@ -328,13 +362,13 @@ const AdminDashboard = ({ activeSection }) => {
 
                     <div className="charts-section">
                         <div className="chart-container">
-                            <h2 style={{ fontSize: '1.8rem', color: '#3a3e92' }}>User Role Distribution</h2>
+                            <h2 style={{ fontSize: '1.5rem', color: '#3a3e92' }}>User Role Distribution</h2>
                             <div className="chart-container-wrapper">
                                 <UserRolePieChart users={users} />
                             </div>
                         </div>
                         <div className="chart-container">
-                            <h2 style={{ fontSize: '1.8rem', color: '#3a3e92' }}>Project Status Distribution</h2>
+                            <h2 style={{ fontSize: '1.5rem', color: '#3a3e92' }}>Project Status Distribution</h2>
                             <div className="chart-container-wrapper">
                                 <ProjectStatusPieChart counts={counts} />
                             </div>
@@ -386,8 +420,53 @@ const AdminDashboard = ({ activeSection }) => {
                                 </>
                             )}
 
-                            <input name="password" type="password" placeholder="Password" value={addUserForm.password} onChange={handleAddUserChange} required />
-                            <input name="confirm_password" type="password" placeholder="Confirm Password" value={addUserForm.confirm_password} onChange={handleAddUserChange} required />
+                           {/* PASSWORD FIELD */}
+                            <div className="password-input-wrapper">
+                                <input
+                                    name="password"
+                                    type={showAddUserPassword ? "text" : "password"}
+                                    placeholder="Password"
+                                    value={addUserForm.password}
+                                    onChange={handleAddUserChange}
+                                    required
+                                    className="admin-form-input"
+                                />
+                                <span
+                                    className="password-toggle-icon"
+                                    onClick={() => setShowAddUserPassword(prev => !prev)}
+                                >
+                                    <img
+                                        src={showAddUserPassword 
+                                            ? require("../../assets/eye.png") 
+                                            : require("../../assets/hidden.png")}
+                                        alt={showAddUserPassword ? "Hide" : "Show"}
+                                    />
+                                </span>
+                            </div>
+
+                            {/* CONFIRM PASSWORD FIELD - FIXED! */}
+                            <div className="password-input-wrapper">
+                                <input
+                                    name="confirm_password"
+                                    type={showAddUserConfirm ? "text" : "password"}  // ← FIXED HERE
+                                    placeholder="Confirm Password"
+                                    value={addUserForm.confirm_password}
+                                    onChange={handleAddUserChange}
+                                    required
+                                    className="admin-form-input"
+                                />
+                                <span
+                                    className="password-toggle-icon"
+                                    onClick={() => setShowAddUserConfirm(prev => !prev)}  // ← FIXED HERE
+                                >
+                                    <img
+                                        src={showAddUserConfirm 
+                                            ? require("../../assets/eye.png") 
+                                            : require("../../assets/hidden.png")}
+                                        alt={showAddUserConfirm ? "Hide" : "Show"}
+                                    />
+                                </span>
+                            </div>
 
                             <button type="submit" className="admin-btn">Add User</button>
                             {addUserMessage && <div className="admin-message" style={{ color: "green", whiteSpace: "pre-wrap" }}>{addUserMessage}</div>}
@@ -496,7 +575,6 @@ const AdminDashboard = ({ activeSection }) => {
                             onChange={handleProjectSearchChange}
                         />
                         <button className="admin-btn" onClick={() => setProjectPage(1)}>Search</button>
-                        <button className="admin-btn" onClick={fetchProjects}>Refresh</button>
                     </div>
 
                     {loadingProjects ? (
@@ -524,7 +602,9 @@ const AdminDashboard = ({ activeSection }) => {
                                         ) : (
                                             paginatedProjects.map((p) => (
                                                 <tr key={p.id}>
-                                                    <td style={{ maxWidth: 300 }}>{p.title}</td>
+                                                    <td style={{ maxWidth: 300, position: 'relative' }}>
+                                                        {p.title}
+                                                    </td>
                                                     <td>{p.category}</td>
                                                     <td>{p.authors}</td>
                                                     <td>{p.submitter?.full_name || p.submitter?.username || p.submitted_by}</td>

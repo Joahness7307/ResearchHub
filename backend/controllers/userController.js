@@ -95,7 +95,7 @@ exports.login = async (req, res) => {
         strand: user.strand,
         grade_level: user.grade_level,
         type: user.type,
-        force_password_change: !!user.force_password_change,
+        force_password_change: user.force_password_change,
         created_at: user.created_at,
         updated_at: user.updated_at,
         profile_pic_url: user.profile_pic_url || '/images/default-pp.png'

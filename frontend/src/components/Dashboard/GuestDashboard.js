@@ -1,15 +1,20 @@
-import React, { useEffect, useState, useContext } from "react";
+import React, { useEffect, useState } from "react";
 import axios from "../../api/axios";
+import commentIcon from "../../assets/commentIcon.png";
+import bookmarkIcon from "../../assets/bookmarkIcon.png";
+import bookmarkedIcon from "../../assets/bookmarkedIcon.png";
 import { useNavigate } from "react-router-dom";
 import "./StudentDashboard.css"; // Reusing the same styles
 // NOTE: categoryColors is not provided, assuming it's correctly mapped in your constants
 import categoryColors from "../../constants/categoryColors"; 
+import { useContext } from "react";
+import { AuthContext } from "../../context/AuthContext";
 
 // NOTE: AuthContext is imported but not used, I've kept it as you included it, but it's not needed for guest view logic.
 // The GuestDashboard is structurally identical to the StudentDashboard as it just views the repository.
 
 const GuestDashboard = () => {
-  // const { user } = useContext(AuthContext); // Removed unnecessary AuthContext import destructuring
+  const { user } = useContext(AuthContext);
   const [projects, setProjects] = useState([]);
   const [selectedCard, setSelectedCard] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
@@ -20,12 +25,42 @@ const GuestDashboard = () => {
   useEffect(() => {
     // Only fetch approved projects for the repository
     axios.get("/projects")
-      .then(res => setProjects(res.data))
+      .then(async res => {
+        const projectsData = res.data;
+        // Fetch comment counts for each project
+        const commentCountPromises = projectsData.map(project =>
+          axios.get(`/comments/${project.id}`)
+            .then(r => Array.isArray(r.data) ? r.data.reduce((acc, c) => acc + 1 + (c.replies ? c.replies.length : 0), 0) : 0)
+            .catch(() => 0)
+        );
+        // Fetch bookmark state for each project (if logged in)
+        let bookmarkPromises = [];
+        if (user) {
+          bookmarkPromises = projectsData.map(project =>
+            axios.get(`/bookmarks/is-bookmarked/${project.id}`)
+              .then(r => r.data.bookmarked)
+              .catch(() => false)
+          );
+        } else {
+          bookmarkPromises = projectsData.map(() => false);
+        }
+        const [commentCounts, bookmarkStates] = await Promise.all([
+          Promise.all(commentCountPromises),
+          Promise.all(bookmarkPromises)
+        ]);
+        // Attach comment_count and bookmarked to each project
+        const projectsWithCounts = projectsData.map((project, idx) => ({
+          ...project,
+          comment_count: commentCounts[idx],
+          bookmarked: bookmarkStates[idx]
+        }));
+        setProjects(projectsWithCounts);
+      })
       .catch((err) => {
         console.error("Error fetching projects:", err);
         setProjects([]);
       });
-  }, []);
+  }, [user]);
 
   // Only approved projects
   const approvedProjects = projects.filter(project => project.status === "approved");
@@ -82,6 +117,28 @@ const GuestDashboard = () => {
     setCurrentPage(1);
   }, [selectedCard, searchTerm]);
 
+  // Toggle bookmark handler
+  const handleBookmarkToggle = async (e, projectId, bookmarked) => {
+    e.stopPropagation();
+    if (!user) {
+      alert("You must be logged in to bookmark projects.");
+      return;
+    }
+    try {
+      if (bookmarked) {
+        await axios.delete(`/bookmarks/${projectId}`);
+      } else {
+        await axios.post(`/bookmarks/${projectId}`);
+      }
+      // Update local state
+      setProjects(prev => prev.map(p =>
+        p.id === projectId ? { ...p, bookmarked: !bookmarked } : p
+      ));
+    } catch (err) {
+      alert("Failed to update bookmark. Please try again.");
+    }
+  };
+
   const handlePageChange = (newPage) => {
     setCurrentPage(Math.max(1, Math.min(newPage, totalPages)));
   };
@@ -92,7 +149,7 @@ const GuestDashboard = () => {
 
   return (
     <div className="student-dashboard-container">
-      <h2 style={{ marginBottom: '25px' }}>Project Repository</h2>
+      <h2 style={{ marginBottom: '25px' }}>Research Project Repository</h2>
       <div className="dashboard-cards-row">
         <div
           className={`dashboard-card${selectedCard === "all" ? " active" : ""}`}
@@ -147,6 +204,22 @@ const GuestDashboard = () => {
                   className="repository-item"
                   onClick={() => projectCardClick(project.id)}
                 >
+                  <div className="repository-bookmark-row">
+                    <img
+                      src={user && project.bookmarked ? bookmarkedIcon : bookmarkIcon}
+                      alt={user && project.bookmarked ? "Bookmarked" : "Bookmark"}
+                      className="bookmark-icon"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (!user) {
+                          alert("Please log in to bookmark projects.");
+                          return;
+                        }
+                        handleBookmarkToggle(e, project.id, project.bookmarked);
+                      }}
+                      title={user ? (project.bookmarked ? "Remove bookmark" : "Add bookmark") : "Log in to bookmark"}
+                    />
+                  </div>
                   <div className="repository-title">{project.title}</div>
                   <div className="repository-meta">
                     <span
@@ -158,10 +231,14 @@ const GuestDashboard = () => {
                     >
                       {project.category}
                     </span>
-                    <span className="repository-authors">{project.authors}</span>
+                    <span className="repository-authors"><i><span style={{fontWeight: 500}}>Authors: </span>{project.authors}</i></span>
                   </div>
-                  <div className="repository-abstract">
+                  <div className="repository-abstract" style={{ borderBottom: "2px solid #e0e7ff", paddingBottom: "8px", marginBottom: "8px" }}>
                     <b>Abstract:</b> {project.abstract.length > 120 ? project.abstract.slice(0, 120) + "..." : project.abstract}
+                  </div>
+                  <div className="repository-icons-row" style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '8px' }}>
+                    <img src={commentIcon} alt="Comments" className="comment-icon" style={{ width: "20px", marginRight: "6px", verticalAlign: "middle" }} />
+                    <span className="comment-count" style={{ fontWeight: 500, verticalAlign: "middle" }}>{project.comment_count ?? 0}</span>
                   </div>
                 </li>
               ))}

@@ -3,6 +3,8 @@ import React, { useState } from "react";
 import axios from "../../api/axios";
 
 import { useNavigate, Link } from "react-router-dom";
+import eyeIcon from "../../assets/eye.png";
+import hiddenIcon from "../../assets/hidden.png";
 
 import "./AuthForm.css";
 
@@ -25,6 +27,8 @@ const GuestSignup = () => { // Renamed for clarity, assuming you use /register-u
   });
 
   const [error, setError] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
 
   const navigate = useNavigate();
 
@@ -130,19 +134,49 @@ const GuestSignup = () => { // Renamed for clarity, assuming you use /register-u
 
         <input id="email" name="email" type="email" placeholder="Email" value={form.email} onChange={handleChange} required className="auth-input" />
 
+        {/* Password Field */}
+        <label className="auth-label">Password</label>
+        <div style={{ position: "relative" }}>
+          <input
+            type={showPassword ? "text" : "password"}
+            placeholder="Password"
+            name="password"
+            value={form.password}
+            onChange={handleChange}
+            required
+            className="auth-input"
+            style={{ paddingRight: "3.5rem" }}
+          />
+          <span
+            type="button"
+            className="password-toggle"
+            onClick={() => setShowPassword(prev => !prev)}
+          >
+            <img src={showPassword ? eyeIcon : hiddenIcon} alt="" />
+          </span>
+        </div>
 
-
-        <label className="auth-label" htmlFor="password">Password</label>
-
-        <input id="password" name="password" type="password" placeholder="Password" value={form.password} onChange={handleChange} required className="auth-input" />
-
-
-
-        <label className="auth-label" htmlFor="confirm_password">Confirm Password</label>
-
-        <input id="confirm_password" name="confirm_password" type="password" placeholder="Confirm Password" value={form.confirm_password} onChange={handleChange} required className="auth-input" />
-
-
+        {/* Confirm Password Field */}
+        <label className="auth-label">Confirm Password</label>
+        <div style={{ position: "relative" }}>
+          <input
+            type={showConfirm ? "text" : "password"}
+            placeholder="Confirm Password"
+            name="confirm_password"
+            value={form.confirm_password}
+            onChange={handleChange}
+            required
+            className="auth-input"
+            style={{ paddingRight: "3.5rem" }}
+          />
+          <span
+            type="button"
+            className="password-toggle"
+            onClick={() => setShowConfirm(prev => !prev)}
+          >
+            <img src={showConfirm ? eyeIcon : hiddenIcon} alt="" />
+          </span>
+        </div>
 
         <button type="submit">Signup</button>
 

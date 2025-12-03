@@ -132,7 +132,7 @@
 .status-group-header .group-title {
   color: #2563eb;
   margin: 0;
-  font-size: 1.2rem; /* Slightly larger title */
+  font-size: 1.1rem; /* Slightly larger title */
 }
 
 .status-group-header .group-count {
@@ -413,6 +413,12 @@
     padding-bottom: 2rem;
     margin-bottom: 2rem;
   }
+  .account-papers-section h3 {
+      font-size: 1.5rem;
+  }
+  .status-group-header .group-title {
+    font-size: 1rem; /* Slightly larger title */
+  }
 }
 
 /* Further adjustments for smaller mobile screens */
@@ -470,7 +476,7 @@
 
   /* Adjustments for Project List */
   .account-papers-section h3 {
-      font-size: 1.5rem;
+      font-size: 1.3rem;
   }
 
   .paper-title {
@@ -496,6 +502,9 @@
       margin-top: 0.2rem;
       font-size: 0.85rem;
   }
+  .status-group-header .group-title {
+    font-size: 1rem; /* Slightly larger title */
+  }
 }
 
 /* Micro screen adjustments */
@@ -509,4 +518,7 @@
         width: 60px;
         height: 60px;
     }
+    .account-papers-section h3 {
+      font-size: 1.2rem;
+  }
 }

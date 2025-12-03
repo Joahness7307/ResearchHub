@@ -74,7 +74,7 @@ const NotificationDetails = () => {
             borderRadius: 8,
             padding: "0.7rem 1.5rem",
             fontWeight: 600,
-            fontSize: 15,
+            fontSize: 13,
             cursor: "pointer",
             marginBottom: 24
           }}
@@ -102,7 +102,7 @@ const NotificationDetails = () => {
           padding: "0.7rem 1.5rem",
           marginLeft: "1rem",
           fontWeight: 600,
-          fontSize: 15,
+          fontSize: 13,
           cursor: "pointer"
         }}
         onClick={() => {

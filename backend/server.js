@@ -12,6 +12,7 @@ const projectRoutes = require("./routes/projectRoutes");
 const commentRoutes = require("./routes/commentRoutes");
 const notificationRoutes = require("./routes/notificationRoutes");
 const contactRoutes = require('./routes/contactRoutes');
+const bookmarkRoutes = require("./routes/bookmarkRoutes");
 
 const app = express();
 const server = http.createServer(app);
@@ -51,6 +52,7 @@ app.use("/api/projects", projectRoutes);
 app.use("/api/comments", commentRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use('/api/contact', contactRoutes);
+app.use("/api/bookmarks", bookmarkRoutes);
 
 /* ---------- Error handler ---------- */
 app.use((err, req, res, next) => {

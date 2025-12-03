@@ -4,8 +4,6 @@ import { AuthContext } from "./context/AuthContext";
 import Home from "./components/Home";
 import Login from "./components/Auth/Login";
 import Signup from "./components/Auth/Signup";
-import ForgotPassword from "./components/Auth/ForgotPassword";
-import ResetPassword from "./components/Auth/ResetPassword";
 import AdminDashboard from "./components/Dashboard/AdminDashboard";
 import StudentDashboard from "./components/Dashboard/StudentDashboard";
 import SubmitResearch from "./components/Research/SubmitResearch";
@@ -22,7 +20,6 @@ import ResearchAdviserDashboard from "./components/Dashboard/ResearchAdviserDash
 import ResearchAdviserLayout from "./components/Layout/ResearchAdviserLayout";
 import HeadAdminDashboard from "./components/Dashboard/HeadAdminDashboard";
 import MyAccountWithHeadAdminSidebar from "./components/Layout/MyAccountWithHeadAdminSidebar";
-import AdminProjectDetails from "./components/Dashboard/AdminProjectDetails";
 import GuestDashboard from "./components/Dashboard/GuestDashboard";
 import NotificationDetails from "./components/Dashboard/NotificationDetails";
 import HeadAdminLayout from "./components/Layout/HeadAdminLayout";
@@ -84,8 +81,6 @@ function App() {
           }
         />
           <Route path="/role-selection" element={<RoleSelection />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/reset-password" element={<ResetPassword />} />
           <Route
             path="/force-change-password"
             element={
@@ -129,7 +124,7 @@ function App() {
             element={
               <ProtectedRoute allowedRoles={["admin"]}>
                 <AdminLayout>
-                  <AdminProjectDetails />
+                  <ProjectDetails />
                 </AdminLayout>
               </ProtectedRoute>
             }
@@ -144,18 +139,6 @@ function App() {
               </ProtectedRoute>
             }
           />
-
-         {/* <Route path="/head-admin" element={<HeadAdminLayout />}>
-          <Route index element={<HeadAdminDashboard />} />
-          <Route path="pending-projects" element={<HeadAdminDashboard section="pending" />} />
-          <Route path="approved-projects" element={<HeadAdminDashboard section="approved" />} />
-          <Route path="request-for-revision" element={<HeadAdminDashboard section="revision" />} />
-          <Route path="repository" element={<HeadAdminDashboard section="repository" />} />
-          <Route path="notifications" element={<NotificationPage />} />
-          <Route path="notifications/:id" element={<NotificationDetails />} />
-          <Route path="my-account" element={<MyAccount />} />
-          <Route path="projects/:id" element={<ProjectDetails />} />
-        </Route> */}
 
         <Route
           path="/head-admin"
