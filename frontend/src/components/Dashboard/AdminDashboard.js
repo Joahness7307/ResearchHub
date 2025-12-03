@@ -1,6 +1,8 @@
 import React, { useEffect, useState, useMemo, useCallback, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "../../api/axios";
+import eyeIcon from "../../assets/eye.png";
+import hiddenIcon from "../../assets/hidden.png";
 import "./AdminDashboard.css"
 import UserRolePieChart from "../UserRolePieChart";
 import ProjectStatusPieChart from "../ProjectStatusPieChart";
@@ -436,19 +438,17 @@ const AdminDashboard = ({ activeSection }) => {
                                     onClick={() => setShowAddUserPassword(prev => !prev)}
                                 >
                                     <img
-                                        src={showAddUserPassword 
-                                            ? require("../../assets/eye.png") 
-                                            : require("../../assets/hidden.png")}
+                                        src={showAddUserPassword ? eyeIcon : hiddenIcon}
                                         alt={showAddUserPassword ? "Hide" : "Show"}
                                     />
                                 </span>
                             </div>
 
-                            {/* CONFIRM PASSWORD FIELD - FIXED! */}
+                            {/* CONFIRM PASSWORD FIELD */}
                             <div className="password-input-wrapper">
                                 <input
                                     name="confirm_password"
-                                    type={showAddUserConfirm ? "text" : "password"}  // ← FIXED HERE
+                                    type={showAddUserConfirm ? "text" : "password"}
                                     placeholder="Confirm Password"
                                     value={addUserForm.confirm_password}
                                     onChange={handleAddUserChange}
@@ -457,12 +457,10 @@ const AdminDashboard = ({ activeSection }) => {
                                 />
                                 <span
                                     className="password-toggle-icon"
-                                    onClick={() => setShowAddUserConfirm(prev => !prev)}  // ← FIXED HERE
+                                    onClick={() => setShowAddUserConfirm(prev => !prev)}
                                 >
                                     <img
-                                        src={showAddUserConfirm 
-                                            ? require("../../assets/eye.png") 
-                                            : require("../../assets/hidden.png")}
+                                        src={showAddUserConfirm ? eyeIcon : hiddenIcon}
                                         alt={showAddUserConfirm ? "Hide" : "Show"}
                                     />
                                 </span>
