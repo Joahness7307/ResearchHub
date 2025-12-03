@@ -1,20 +1,30 @@
-# FRONTEND .gitignore (Inside ./frontend)
+# === FRONTEND ONLY ===
+# Root already covers most things — just add CRA/Vite-specific ones
 
-# 1. Build Folders
-# Ignore the output of your build process.
-/build 
-/dist 
-/out 
+# Build output
+build/
+dist/
+.out/
+.vercel
 
-# 2. Local Configuration
-# Ignore configuration files that are only used locally
+# Environment files (React)
 .env
 .env.local
-.env.*.local
+.env.development
+.env.production
 
-# 3. Test/Coverage
-/coverage
+# React/Vite cache
+.node_repositories/
+.cache/
+.temp/
+.tmp/
 
-# NOTE: node_modules is likely already ignored by the root .gitignore, 
-# but adding it here is good practice if you ever split the repository.
-# node_modules
+# Testing
+coverage/
+.nyc_output/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo

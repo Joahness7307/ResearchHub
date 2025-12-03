@@ -1,18 +1,49 @@
-# ROOT .gitignore
+# === ROOT LEVEL (RESEARCHHUB/.gitignore) ===
+# This one wins everywhere because it's in the root
 
-# 1. NODE DEPENDENCIES (Most critical for poly-repo structure)
-# This will ignore ALL node_modules folders in every directory.
-# If a dependency folder exists in /frontend, /backend, or /root, it's ignored.
-node_modules
-/package-lock.json
-/yarn.lock
+# Dependency directories (covers frontend, backend, and any future packages)
+node_modules/
+**/node_modules/
 
-# 2. LOGS & ARTIFACTS
-logs
+# Lock files (let each package manage its own)
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Build outputs
+build/
+dist/
+out/
+.vercel
+.netlify
+
+# Environment variables (NEVER commit these)
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Logs & temp files
+logs/
 *.log
 npm-debug.log*
-.eslintcache
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
 
-# 3. OS and EDITOR FILES
-.DS_Store # macOS
-.vscode/ # VS Code settings specific to THIS user's workspace
+# Editor & OS junk
+.DS_Store
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Cache files
+.eslintcache
+.stylelintcache
+.prettierecache
+.cache

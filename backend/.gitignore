@@ -1,18 +1,24 @@
-# BACKEND .gitignore (Inside ./backend)
+# === BACKEND ONLY ===
+# Everything from root already applies, so just add backend-specific ones
 
-# 1. Compiled/Transpiled Output (e.g., TypeScript)
-# If you compile source code (src) to an output folder (dist)
-/dist
-/out
-/lib
+# Build output (TypeScript/Node)
+dist/
+build/
 *.tsbuildinfo
 
-# 2. Sensitive Config & Logs
-# Never commit credentials or local DB files
+# Local DB or config
 .env
 .env.local
-/config/local-db.json # Example local database file
-/logs
+config/*.local.json
 
-# 3. Temporary Files
-.nodemon
+# Nodemon / PM2
+nodemon.json
+.pm2/
+
+# Logs folder
+logs/
+*.log
+
+# Uploads folder (if you store uploaded files locally during dev)
+/uploads
+/public/uploads
