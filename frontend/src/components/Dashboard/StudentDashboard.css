@@ -127,7 +127,7 @@
 }
 
 .repository-item {
-  position: relative;        /* ← THIS WAS MISSING */
+  position: relative;
   background: #fff;
   border-radius: 10px;
   box-shadow: 0 1px 4px rgba(0,0,0,0.03);
@@ -135,17 +135,19 @@
   margin-bottom: 1.2rem;
   cursor: pointer;
   transition: box-shadow 0.2s;
+  min-height: 140px; /* Prevents collapse */
 }
 
-/* Proper top-right bookmark */
+/* Bookmark stays top-right but never overlaps content */
 .repository-bookmark-row {
   position: absolute;
-  top: 12px;
-  right: 12px;
+  top: 10px;
+  right: 10px;
   z-index: 10;
-  background: rgba(255, 255, 255, 0.85);
+  background: rgba(255, 255, 255, 0.95);
   border-radius: 50%;
-  padding: 4px;
+  padding: 6px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
   backdrop-filter: blur(4px);
 }
 
@@ -335,7 +337,9 @@
     font-size: 1.1rem;
   }
   .repository-title {
-    font-size: 0.95rem;
+    font-size: 1rem;
+    line-height: 1.4;
+    padding-right: 40px; /* Prevents title from going under bookmark */
   }
   .search-wrapper {
     flex-direction: column;
@@ -357,8 +361,28 @@
   .repository-item {
     padding: 0.8rem 0.5rem;
   }
+  .repository-item {
+    padding: 1rem 1rem;
+    padding-right: 50px; /* ← Makes room for bookmark icon on the right */
+    min-height: 160px;
+  }
+  .repository-category {
+    align-self: flex-start;
+  }
   .repository-authors {
-    margin-bottom: 4rem;
+    margin-bottom: 0.5rem !important; /* Override any bad spacing */
+  }
+  .repository-abstract {
+    font-size: 0.93rem;
+    line-height: 1.5;
+    padding-right: 40px;
+    margin-bottom: 0.8rem;
+    border-bottom: 1px solid #e0e7ff;
+  }
+
+  .repository-icons-row {
+    justify-content: flex-end;
+    padding-right: 8px;
   }
   .pagination-controls {
     flex-direction: column;
@@ -372,5 +396,16 @@
   }
   .comment-count {
     font-size: 0.9rem;
+  }
+}
+
+/* Optional: Slightly smaller bookmark on very small screens */
+@media (max-width: 360px) {
+  .repository-item {
+    padding-right: 48px;
+  }
+  .bookmark-icon {
+    width: 20px;
+    height: 20px;
   }
 }
