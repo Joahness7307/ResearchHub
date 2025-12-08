@@ -2,8 +2,8 @@ import React, { useState, useContext } from "react";
 import axios from "../../api/axios";
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../../context/AuthContext";
-import eyeIcon from "../../assets/eye.png";
-import hiddenIcon from "../../assets/hidden.png";
+import openEyeIcon from "../../assets/openEyeIcon.png";
+import closeEyeIcon from "../../assets/closeEyeIcon.png";
 import "./AuthForm.css";
 
 const ForceChangePassword = () => {
@@ -76,7 +76,7 @@ const ForceChangePassword = () => {
             onClick={() => setShowPassword(prev => !prev)}
           >
             <img
-              src={showPassword ? hiddenIcon : eyeIcon}
+              src={showPassword ? openEyeIcon : closeEyeIcon}
               alt={showPassword ? "Hide" : "Show"}
             />
           </span>
@@ -97,7 +97,7 @@ const ForceChangePassword = () => {
             onClick={() => setShowConfirmPassword(prev => !prev)}
           >
             <img
-              src={showConfirmPassword ? hiddenIcon : eyeIcon}
+              src={showConfirmPassword ? openEyeIcon : closeEyeIcon}
               alt={showConfirmPassword ? "Hide" : "Show"}
             />
           </span>
