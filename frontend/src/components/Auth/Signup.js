@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 
 import axios from "../../api/axios";
-import eyeIcon from "../../assets/eye.png";
-import hiddenIcon from "../../assets/hidden.png";
+import openEyeIcon from "../../assets/openEyeIcon.png";
+import closeEyeIcon from "../../assets/closeEyeIcon.png";
 
 import { useNavigate, Link } from "react-router-dom";
 
@@ -358,7 +358,7 @@ const CollegeSignup = () => { // Renamed for clarity, assuming you use /register
               className="password-toggle"
               onClick={() => setShowPassword(prev => !prev)}
             >
-              <img src={showPassword ? eyeIcon : hiddenIcon} alt="" />
+              <img src={showPassword ? openEyeIcon : closeEyeIcon} alt="" />
             </span>
           </div>
   
@@ -380,7 +380,7 @@ const CollegeSignup = () => { // Renamed for clarity, assuming you use /register
               className="password-toggle"
               onClick={() => setShowConfirm(prev => !prev)}
             >
-              <img src={showConfirm ? eyeIcon : hiddenIcon} alt="" />
+              <img src={showConfirm ? openEyeIcon : closeEyeIcon} alt="" />
             </span>
           </div>
 

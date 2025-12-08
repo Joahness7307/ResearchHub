@@ -1,12 +1,15 @@
 import React, { useEffect, useState, useMemo, useCallback, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "../../api/axios";
-import eyeIcon from "../../assets/eye.png";
-import hiddenIcon from "../../assets/hidden.png";
+import openEyeIcon from "../../assets/openEyeIcon.png";
+import closeEyeIcon from "../../assets/closeEyeIcon.png";
 import "./AdminDashboard.css"
 import UserRolePieChart from "../UserRolePieChart";
 import ProjectStatusPieChart from "../ProjectStatusPieChart";
 import { AuthContext } from "../../context/AuthContext";
+
+console.log("openEyeIcon →", openEyeIcon.substring(0, 30));     // should start with "data:image/png;base64,"
+console.log("closeEyeIcon →", closeEyeIcon.substring(0, 30)); // probably starts with "/static/media/"
 
 const USERS_PER_PAGE = 10;
 const PROJECTS_PER_PAGE = 10;
@@ -438,7 +441,7 @@ const AdminDashboard = ({ activeSection }) => {
                                     onClick={() => setShowAddUserPassword(prev => !prev)}
                                 >
                                     <img
-                                        src={showAddUserPassword ? eyeIcon : hiddenIcon}
+                                        src={showAddUserPassword ? openEyeIcon : closeEyeIcon}
                                         alt={showAddUserPassword ? "Hide" : "Show"}
                                     />
                                 </span>
@@ -460,7 +463,7 @@ const AdminDashboard = ({ activeSection }) => {
                                     onClick={() => setShowAddUserConfirm(prev => !prev)}
                                 >
                                     <img
-                                        src={showAddUserConfirm ? eyeIcon : hiddenIcon}
+                                        src={showAddUserConfirm ? openEyeIcon : closeEyeIcon}
                                         alt={showAddUserConfirm ? "Hide" : "Show"}
                                     />
                                 </span>

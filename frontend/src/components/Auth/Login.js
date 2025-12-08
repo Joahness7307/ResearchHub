@@ -1,6 +1,6 @@
 import React, { useState, useContext } from "react";
-import eyeIcon from "../../assets/eye.png";
-import hiddenIcon from "../../assets/hidden.png";
+import openEyeIcon from "../../assets/openEyeIcon.png";
+import closeEyeIcon from "../../assets/closeEyeIcon.png";
 import axios from "../../api/axios";
 import { AuthContext } from "../../context/AuthContext";
 import { useNavigate, Link } from "react-router-dom";
@@ -70,7 +70,7 @@ const Login = () => {
             onClick={() => setShowPassword(prev => !prev)}
             aria-label={showPassword ? "Hide password" : "Show password"}
           >
-            <img src={showPassword ? hiddenIcon : eyeIcon} alt="" />
+            <img src={showPassword ? openEyeIcon : closeEyeIcon} alt="" />
           </span>
         </div>
         <button type="submit">Login</button>
