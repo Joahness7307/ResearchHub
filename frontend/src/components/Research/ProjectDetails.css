@@ -190,6 +190,14 @@
   color: #374151;
 }
 
+.project-title-description {
+  font-size: 1.15rem;
+  color: #374151;
+  margin-bottom: 1.2rem;
+  line-height: 1.7;
+  text-align: justify;
+}
+
 .reply-content {
   margin: 0.3rem 0;
 }
@@ -708,5 +716,9 @@
   .project-bookmark-icon {
     width: 24px;
     height: 24px;
+  }
+  .project-title-description {
+    font-size: 0.98rem;
+    margin-bottom: 1rem;
   }
 }

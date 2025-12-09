@@ -225,6 +225,13 @@ const ResearchAdviserDashboard = ({ section }) => {
                         onClick={(e) => handleBookmarkToggle(e, project.id, project.bookmarked)}
                         />
                         <div className="repository-title">{project.title}</div>
+                        {project.title_description && (
+                            <div className="repository-title-description adviser-title-desc">
+                                {project.title_description.length > 110 
+                                ? project.title_description.slice(0, 110) + "..." 
+                                : project.title_description}
+                            </div>
+                        )}
                         <div className="repository-meta">
                             <span className="repository-category" style={{ background: categoryColors[project.category] || "#2563eb", color: "#fff" }}>
                                 {project.category}
