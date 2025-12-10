@@ -64,6 +64,13 @@ const ProjectList = ({ projects, navigate, section, handleBookmarkToggle }) => (
           />
 
           <div className="repository-title">{project.title}</div>
+          {project.title_description && (
+            <div className="repository-title-description adviser-title-desc">
+              {project.title_description.length > 110 
+                ? project.title_description.slice(0, 110) + "..." 
+                : project.title_description}
+            </div>
+          )}
 
           <div className="repository-meta">
             <span

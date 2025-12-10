@@ -221,6 +221,13 @@ const GuestDashboard = () => {
                     />
                   </div>
                   <div className="repository-title">{project.title}</div>
+                  {project.title_description && (
+                      <div className="repository-title-description">
+                          {project.title_description.length > 100 
+                          ? project.title_description.slice(0, 100) + "..." 
+                          : project.title_description}
+                      </div>
+                  )}
                   <div className="repository-meta">
                     <span
                       className="repository-category"

@@ -251,6 +251,11 @@ const ProjectDetails = () => {
                     </button>
                 )}
                 </div>
+                {project.title_description && (
+                    <div className="project-title-description">
+                    {project.title_description}
+                    </div>
+                )}
                 <span
                     className="category-badge"
                     style={{
