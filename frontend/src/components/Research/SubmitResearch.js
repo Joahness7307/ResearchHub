@@ -96,7 +96,7 @@ const SubmitResearch = () => {
     } catch (err) {
       // Clear file input on error
       document.querySelector('input[name="document"]').value = null;
-      setError(err.response?.data?.message || "Failed to upload project. Please try again.");
+      setError(err.response?.data?.message || "Please select a PDF file smaller than 5MB.");
     }
   };
 

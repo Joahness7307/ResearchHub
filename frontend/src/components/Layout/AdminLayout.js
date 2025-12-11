@@ -50,7 +50,7 @@ const AdminLayout = ({ children }) => {
         {/* mobile links */}
         {[
           { label: "Dashboard", to: "/admin" },
-          { label: "Notifications", to: "/admin/notifications" },
+          // { label: "Notifications", to: "/admin/notifications" },
           { label: "Manage Users", to: "/admin/manage-users" },
           { label: "Manage Projects", to: "/admin/manage-projects" },
           { label: "My Account", to: "/my-account" },
