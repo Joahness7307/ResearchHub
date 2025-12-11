@@ -20,8 +20,8 @@ const Home = () => {
   const teamMembers = [
     { name: "Jan Niño Caparida", role: "Project Manager", img: caparidaImg },
     { name: "Quennie Hazen Yongco", role: "Assistant Project Manager", img: yongcoImg },
-    { name: "Joahness M. Caparas", role: "Programmer", img: caparasImg },
-    { name: "Kate Montilla", role: "UI/UX Designer", img: montillaImg },
+    { name: "Joahness M. Caparas", role: "Lead Programmer", img: caparasImg },
+    { name: "Kate Montilla", role: "Assistant Programmer", img: montillaImg },
     { name: "Jeremiah Toring", role: "System Analyst", img: toringImg },
     { name: "John Kinon Lapis", role: "Tester", img: lapisImg }
   ];
