@@ -23,12 +23,12 @@ const AdminSideNavbar = () => {
         >
           Dashboard
         </button>
-        <button
+        {/* <button
           className={`side-nav-link${path === "/admin/notifications" ? " active" : ""}`}
           onClick={() => navigate("/admin/notifications")}
         >
           Notifications
-        </button>
+        </button> */}
         <button
           className={`side-nav-link${path === "/admin/manage-users" ? " active" : ""}`}
           onClick={() => navigate("/admin/manage-users")}
