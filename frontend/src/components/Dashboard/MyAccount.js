@@ -7,7 +7,6 @@ import categoryColors from "../../constants/categoryColors";
 import dropdownArrow from "../../assets/dropdownArrow.png";
 import UserAvatar from "../../components/UserAvatar";
 
-// THIS IS THE KEY FIX: Memoized component so inputs don't lose focus
 const AccountInfoColumn = memo(function AccountInfoColumn({
   user,
   editing,
@@ -41,16 +40,36 @@ const AccountInfoColumn = memo(function AccountInfoColumn({
           <span className="detail-label">Email:</span>
           <span className="detail-value">{user?.email}</span>
         </div>
+
+        {/* Only show Department for College users */}
         {user?.department && (
           <div className="account-detail-row">
             <span className="detail-label">Department:</span>
             <span className="detail-value">{user.department}</span>
           </div>
         )}
+
+        {/* Only show Year Level for College STUDENTS */}
+        {user?.role === "student" && user?.department && user?.year_level && (
+          <div className="account-detail-row">
+            <span className="detail-label">Year Level:</span>
+            <span className="detail-value">{user.year_level}</span>
+          </div>
+        )}
+
+        {/* Only show Strand for SHS users */}
         {user?.strand && (
           <div className="account-detail-row">
             <span className="detail-label">Strand:</span>
             <span className="detail-value">{user.strand}</span>
+          </div>
+        )}
+
+        {/* Only show Grade Level for SHS STUDENTS */}
+        {user?.role === "student" && user?.strand && user?.grade_level && (
+          <div className="account-detail-row">
+            <span className="detail-label">Grade Level:</span>
+            <span className="detail-value">Grade {user.grade_level}</span>
           </div>
         )}
       </div>
@@ -132,13 +151,7 @@ const MyAccount = () => {
   const [previewUrl, setPreviewUrl] = useState(null);
   const [editError, setEditError] = useState("");
   const [saving, setSaving] = useState(false);
-  const [openGroups, setOpenGroups] = useState({
-    pending: true,
-    endorsed: false,
-    need_revision: false,
-    approved: false,
-    bookmarked: false,
-  });
+  const [openGroups, setOpenGroups] = useState({ bookmarked: true });
   const [bookmarkedProjects, setBookmarkedProjects] = useState([]);
   const navigate = useNavigate();
 
@@ -155,7 +168,7 @@ const MyAccount = () => {
     }
   }, [user]);
 
-  // Fetch bookmarks
+  // Fetch bookmarks (everyone has watch list)
   useEffect(() => {
     if (!user) return;
     const fetchBookmarks = async () => {
@@ -175,16 +188,19 @@ const MyAccount = () => {
     return () => window.removeEventListener("bookmarks-updated", fetchBookmarks);
   }, [user]);
 
-  // Fetch student projects
+  // Fetch student projects — ONLY for eligible students
   useEffect(() => {
     if (!user || user.role !== "student") {
       setProjects([]);
       return;
     }
+
     const eligible =
-      user.year_level === "3rd" ||
-      user.year_level === "4th" ||
-      user.grade_level === "12";
+      // College 3rd & 4th year
+      (user.department && (user.year_level === "3rd" || user.year_level === "4th")) ||
+      // SHS Grade 12
+      (user.strand && user.grade_level === "12");
+
     if (eligible) {
       axios.get("/users/my-projects")
         .then((res) => setProjects(res.data.projects || []))
@@ -194,11 +210,16 @@ const MyAccount = () => {
     }
   }, [user]);
 
-  const isEligibleStudent = user?.role === "student" &&
-    (user?.year_level === "3rd" || user?.year_level === "4th" || user?.grade_level === "12");
-
-  const isPrivilegedRole = () =>
+  // Determine if user gets two-column layout
+  const useTwoColumnLayout =
+    user?.role === "student" ||  // All students (college + SHS)
     ["admin", "head_admin", "research_adviser", "guest"].includes(user?.role);
+
+  // Determine if user gets full project sections (Pending, etc.)
+  const showProjectSections =
+    user?.role === "student" &&
+    ((user?.department && (user?.year_level === "3rd" || user?.year_level === "4th")) ||
+     (user?.strand && user?.grade_level === "12"));
 
   // Stable avatar object
   const avatarUserProps = useMemo(
@@ -209,7 +230,7 @@ const MyAccount = () => {
     [editForm.full_name, previewUrl, user?.full_name, user?.profile_pic_url]
   );
 
-  // Grouped projects
+  // Grouped projects (only for eligible students)
   const grouped = useMemo(() => {
     const g = { pending: [], endorsed: [], need_revision: [], approved: [] };
     projects.forEach((p) => {
@@ -220,7 +241,7 @@ const MyAccount = () => {
     return g;
   }, [projects]);
 
-  // Handlers
+  // Handlers (same as before)
   const handleFileChange = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -334,7 +355,7 @@ const MyAccount = () => {
   };
 
   // === RENDER ===
-  if (isEligibleStudent) {
+  if (useTwoColumnLayout) {
     return (
       <div className="two-column-layout">
         <AccountInfoColumn
@@ -353,11 +374,15 @@ const MyAccount = () => {
         />
         <div className="account-papers-col">
           <div className="account-papers-section">
-            <h3>My Projects & Bookmarks</h3>
-            {renderGroup("Pending", "pending")}
-            {renderGroup("Endorsed", "endorsed")}
-            {renderGroup("Need Revision", "need_revision")}
-            {renderGroup("Approved", "approved")}
+            <h3>{showProjectSections ? "My Projects & Bookmarks" : "My Watch List"}</h3>
+            {showProjectSections && (
+              <>
+                {renderGroup("Pending", "pending")}
+                {renderGroup("Endorsed", "endorsed")}
+                {renderGroup("Need Revision", "need_revision")}
+                {renderGroup("Approved", "approved")}
+              </>
+            )}
             {renderGroup("My Watch List", "bookmarked", bookmarkedProjects)}
           </div>
         </div>
@@ -365,65 +390,9 @@ const MyAccount = () => {
     );
   }
 
-  if (isPrivilegedRole()) {
-    return (
-      <div className="two-column-layout">
-        <AccountInfoColumn
-          user={user}
-          editing={editing}
-          editForm={editForm}
-          previewUrl={previewUrl}
-          editError={editError}
-          saving={saving}
-          avatarUserProps={avatarUserProps}
-          onFileChange={handleFileChange}
-          onInputChange={handleInputChange}
-          onSave={handleSave}
-          onCancel={handleCancel}
-          onEditStart={handleEditStart}
-        />
-        <div className="account-papers-col">
-          <div className="account-papers-section">
-            <h3>My Watch List</h3>
-            {renderGroup("Bookmarked", "bookmarked", bookmarkedProjects)}
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Default single-column layout
+  // Fallback single-column (for any rare case)
   return (
     <div className="my-account">
-      <div className="account-header">
-        <div className="account-avatar account-avatar-with-pic">
-          <UserAvatar user={user} size={100} fontSize={40} />
-        </div>
-        <div className="account-info">
-          <h2>{user?.full_name}</h2>
-          <span className="account-role">{(user?.role || "").replace("_", " ")}</span>
-        </div>
-      </div>
-
-      <div className="account-details">
-        <div className="account-detail-row">
-          <span className="detail-label">Email:</span>
-          <span className="detail-value">{user?.email}</span>
-        </div>
-        {user?.department && (
-          <div className="account-detail-row">
-            <span className="detail-label">Department:</span>
-            <span className="detail-value">{user.department}</span>
-          </div>
-        )}
-        {user?.strand && (
-          <div className="account-detail-row">
-            <span className="detail-label">Strand:</span>
-            <span className="detail-value">{user.strand}</span>
-          </div>
-        )}
-      </div>
-
       <AccountInfoColumn
         user={user}
         editing={editing}
@@ -438,7 +407,6 @@ const MyAccount = () => {
         onCancel={handleCancel}
         onEditStart={handleEditStart}
       />
-
       <div className="account-papers-section">
         <h3>My Watch List</h3>
         {renderGroup("My Watch List", "bookmarked", bookmarkedProjects)}
