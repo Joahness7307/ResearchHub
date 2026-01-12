@@ -1,7 +1,7 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const multer = require("multer");
-const { User, Project } = require("../models");
+const { User, Project, Department, Block, Major, Strand } = require("../models");
 const { Invitation } = require("../models");
 const crypto = require("crypto");
 const { Op } = require("sequelize");
@@ -13,8 +13,10 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 exports.register = async (req, res) => {
   try {
     const {
-      full_name, username, email, department, year_level, block,
-      password, confirm_password, role, strand, grade_level, major
+      full_name, username, email,
+      department_id, block_id, major_id, strand_id,
+      year_level, grade_level,
+      password, confirm_password, role
     } = req.body;
 
     if (!full_name || !username || !email || !password || !confirm_password) {
@@ -41,19 +43,40 @@ exports.register = async (req, res) => {
       email,
       password: hashedPassword,
       role: userRole,
-      department: department || null,
+      department_id: department_id || null,
+      block_id: block_id || null,
+      major_id: major_id || null,
+      strand_id: strand_id || null,
       year_level: year_level || null,
-      block: block || null,
-      major: major || null,
-      strand: strand || null,
       grade_level: grade_level || null,
-      // public signups must NOT be forced to change password
       force_password_change: false
     };
 
     const newUser = await User.create(userObj);
 
-    return res.status(201).json({ message: "Registration successful", user: { id: newUser.id, email: newUser.email, username: newUser.username, role: newUser.role } });
+    // Optional: Return more details on success (including names via include)
+    const createdUser = await User.findByPk(newUser.id, {
+      include: [
+        { model: Department, attributes: ['name'] },
+        { model: Block, attributes: ['name'] },
+        { model: Major, attributes: ['name'] },
+        { model: Strand, attributes: ['name'] }
+      ]
+    });
+
+    return res.status(201).json({
+      message: "Registration successful",
+      user: {
+        id: createdUser.id,
+        email: createdUser.email,
+        username: createdUser.username,
+        role: createdUser.role,
+        department: createdUser.Department?.name || null,
+        block: createdUser.Block?.name || null,
+        major: createdUser.Major?.name || null,
+        strand: createdUser.Strand?.name || null
+      }
+    });
   } catch (error) {
     console.error("Register error:", error);
     if (error.name === "SequelizeUniqueConstraintError") {
@@ -67,11 +90,24 @@ exports.register = async (req, res) => {
 exports.login = async (req, res) => {
   try {
     const { identifier, password } = req.body;
+
+    // ← Add this guard
+    if (!identifier || !password) {
+      return res.status(400).json({ message: "Identifier (email/username) and password are required." });
+    }
+
     const user = await User.findOne({
       where: {
         [Op.or]: [{ email: identifier }, { username: identifier }]
-      }
+      },
+      include: [
+        { model: Department, attributes: ['id', 'name'] },
+        { model: Block, attributes: ['id', 'name'] },
+        { model: Major, attributes: ['id', 'name'] },
+        { model: Strand, attributes: ['id', 'name'] }
+      ]
     });
+
     if (!user) return res.status(400).json({ message: "Invalid credentials." });
 
     const isMatch = await bcrypt.compare(password, user.password);
@@ -88,17 +124,20 @@ exports.login = async (req, res) => {
         username: user.username,
         email: user.email,
         role: user.role,
-        department: user.department,
+        department: user.Department?.name || null,
+        department_id: user.department_id,
         year_level: user.year_level,
-        block: user.block,
-        major: user.major,
-        strand: user.strand,
+        block: user.Block?.name || null,
+        block_id: user.block_id,
+        major: user.Major?.name || null,
+        major_id: user.major_id,
+        strand: user.Strand?.name || null,
+        strand_id: user.strand_id,
         grade_level: user.grade_level,
-        type: user.type,
         force_password_change: user.force_password_change,
+        profile_pic_url: user.profile_pic_url || '/images/default-pp.png',
         created_at: user.created_at,
-        updated_at: user.updated_at,
-        profile_pic_url: user.profile_pic_url || '/images/default-pp.png'
+        updated_at: user.updated_at
       }
     });
   } catch (error) {
@@ -279,8 +318,15 @@ exports.setupAccount = async (req, res) => {
 
     if (invitation.role === "research_adviser") {
       userObj.type = invitation.type;
-      if (invitation.type === "college") userObj.department = invitation.department;
-      if (invitation.type === "senior_high") userObj.strand = invitation.strand;
+      if (invitation.type === "college") {
+        // Find department by old name (temporary bridge)
+        const dept = await Department.findOne({ where: { name: invitation.department } });
+        userObj.department_id = dept ? dept.id : null;
+      }
+      if (invitation.type === "senior_high") {
+        const strand = await Strand.findOne({ where: { name: invitation.strand } });
+        userObj.strand_id = strand ? strand.id : null;
+      }
     }
 
     await User.create(userObj);
@@ -296,15 +342,15 @@ exports.setupAccount = async (req, res) => {
 // Add User (admin manual add) - keep force_password_change true
 exports.addUser = async (req, res) => {
   try {
-    const { username, full_name, email, password, role, type, department, strand } = req.body;
+    const { username, full_name, email, password, role, type, department_id, strand_id } = req.body;
     const allowedRoles = ["admin", "head_admin", "research_adviser", "student", "guest"];
     if (!allowedRoles.includes(role)) return res.status(400).json({ message: "Invalid role." });
     if (!username || !full_name || !email || !password) return res.status(400).json({ message: "Missing fields." });
 
     if (role === "research_adviser") {
       if (!type) return res.status(400).json({ message: "Adviser type required." });
-      if (type === "college" && !department) return res.status(400).json({ message: "Department required." });
-      if (type === "senior_high" && !strand) return res.status(400).json({ message: "Strand required." });
+      if (type === "college" && !department_id) return res.status(400).json({ message: "Department required." });
+      if (type === "senior_high" && !strand_id) return res.status(400).json({ message: "Strand required." });
     }
 
     const existing = await User.findOne({ where: { [Op.or]: [{ email }, { username }] } });
@@ -322,23 +368,27 @@ exports.addUser = async (req, res) => {
       force_password_change: true,
     };
 
+    // Assign academic affiliation for research advisers
     if (role === "research_adviser") {
-      userObj.type = type;
-      if (type === "college") userObj.department = department;
-      if (type === "senior_high") userObj.strand = strand;
+      if (type === "college" && department_id) {
+        userObj.department_id = department_id;
+      }
+      if (type === "senior_high" && strand_id) {
+        userObj.strand_id = strand_id;
+      }
     }
 
     const newUser = await User.create(userObj);
 
+    // Better response (use the actual IDs, not old string fields)
     const safeUser = {
       id: newUser.id,
       username: newUser.username,
       full_name: newUser.full_name,
       email: newUser.email,
       role: newUser.role,
-      department: newUser.department,
-      strand: newUser.strand,
-      type: newUser.type,
+      department_id: newUser.department_id,
+      strand_id: newUser.strand_id,
       created_at: newUser.created_at
     };
 
@@ -471,41 +521,34 @@ exports.deleteUser = async (req, res) => {
 // Get user profile
 exports.getUserProfile = async (req, res) => {
   if (!req.user || !req.user.id) return res.status(401).json({ message: "Unauthorized" });
+
   try {
-    // Don't request "type" attribute if DB doesn't have that column
     const user = await User.findByPk(req.user.id, {
-      attributes: [
-        "id",
-        "full_name",
-        "username",
-        "email",
-        "role",
-        "department",
-        "year_level",
-        "block",
-        "major",
-        "strand",
-        "grade_level",
-        "force_password_change",
-        "profile_pic_url",
-        "created_at",
-        "updated_at"
+      include: [
+        { model: Department, attributes: ['id', 'name'] },
+        { model: Block, attributes: ['id', 'name'] },
+        { model: Major, attributes: ['id', 'name'] },
+        { model: Strand, attributes: ['id', 'name'] }
       ]
     });
+
     if (!user) return res.status(404).json({ message: "User not found" });
 
-    // Build safeUser response (omit type)
     const safeUser = {
       id: user.id,
       full_name: user.full_name,
       username: user.username,
       email: user.email,
       role: user.role,
-      department: user.department,
+      department: user.Department?.name || null,
+      department_id: user.department_id,
       year_level: user.year_level,
-      block: user.block,
-      major: user.major,
-      strand: user.strand,
+      block: user.Block?.name || null,
+      block_id: user.block_id,
+      major: user.Major?.name || null,
+      major_id: user.major_id,
+      strand: user.Strand?.name || null,
+      strand_id: user.strand_id,
       grade_level: user.grade_level,
       force_password_change: !!user.force_password_change,
       profile_pic_url: user.profile_pic_url || null,

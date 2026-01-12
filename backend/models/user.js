@@ -6,26 +6,35 @@ module.exports = (sequelize, DataTypes) => {
     username: { type: DataTypes.STRING, allowNull: false, unique: true },
     email: { type: DataTypes.STRING, allowNull: false, unique: true },
     password: { type: DataTypes.STRING, allowNull: false },
-    department: { type: DataTypes.ENUM("BSIT", "BSHM", "BSENTREP", "BEED", "BSED", "BPED"), allowNull: true },
     year_level: { type: DataTypes.ENUM("1st", "2nd", "3rd", "4th"), allowNull: true },
-    block: { type: DataTypes.ENUM("A", "B", "C", "D"), allowNull: true },
-    major: { type: DataTypes.ENUM("English", "Math", "Science"), allowNull: true },
-    strand: { type: DataTypes.ENUM("ABM", "HUMSS", "STEM", "TVL"), allowNull: true },
     grade_level: { type: DataTypes.ENUM("11", "12"), allowNull: true },
     role: { type: DataTypes.ENUM("admin", "head_admin", "research_adviser", "student", "guest"), allowNull: false, defaultValue: "guest" },
     force_password_change: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
-    profile_pic_url: { 
-      type: DataTypes.STRING, 
-      allowNull: true,
-      defaultValue: null
-    },
+    profile_pic_url: { type: DataTypes.STRING, allowNull: true, defaultValue: null },
     created_at: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW },
     updated_at: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW },
     resetToken: { type: DataTypes.STRING, allowNull: true },
     resetTokenExpiry: { type: DataTypes.DATE, allowNull: true },
+    department_id: { type: DataTypes.INTEGER, allowNull: true },
+    block_id: { type: DataTypes.INTEGER, allowNull: true },
+    major_id: { type: DataTypes.INTEGER, allowNull: true },
+    strand_id: { type: DataTypes.INTEGER, allowNull: true },
+    // Old fields (to be dropped later) - comment them out to avoid accidental use
+    // department: { type: DataTypes.STRING, allowNull: true },
+    // block: { type: DataTypes.STRING, allowNull: true },
+    // major: { type: DataTypes.STRING, allowNull: true },
+    // strand: { type: DataTypes.STRING, allowNull: true },
   }, {
     tableName: 'Users',
-    timestamps: false // If you use custom created_at/updated_at
+    timestamps: false
   });
+
+  User.associate = (models) => {
+    User.belongsTo(models.Department, { foreignKey: 'department_id' });
+    User.belongsTo(models.Block, { foreignKey: 'block_id' });
+    User.belongsTo(models.Major, { foreignKey: 'major_id' });
+    User.belongsTo(models.Strand, { foreignKey: 'strand_id' });
+  };
+
   return User;
 };
