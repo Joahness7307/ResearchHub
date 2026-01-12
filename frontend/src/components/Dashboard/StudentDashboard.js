@@ -16,6 +16,7 @@ const StudentDashboard = () => {
     const [selectedCard, setSelectedCard] = useState("all");
     const [searchTerm, setSearchTerm] = useState("");
     const [currentPage, setCurrentPage] = useState(1);
+    const [counts, setCounts] = useState({ all: 0, college: 0, senior_high: 0 });
     const projectsPerPage = 10;
     const navigate = useNavigate();
 
@@ -59,27 +60,22 @@ const StudentDashboard = () => {
             });
     }, [user]);
 
+    // Fetch counts on mount
+    useEffect(() => {
+    axios.get("/projects/public/counts")
+        .then(res => setCounts(res.data))
+        .catch(() => setCounts({ all: 0, college: 0, senior_high: 0 }));
+    }, []);
+
     // Only approved projects
     const approvedProjects = projects.filter(project => project.status === "approved");
 
-    // College projects: must have department and year_level, and NOT have strand/grade_level
     const collegeProjects = approvedProjects.filter(
-        project =>
-            project.submitter &&
-            project.submitter.department && // Check if department has a value
-            project.submitter.year_level && // Check if year_level has a value
-            !project.submitter.strand && // Ensure SHS fields are not present
-            !project.submitter.grade_level
+    project => project.strand_id === null || project.strand_id === undefined
     );
 
-    // Senior high projects: must have strand and grade_level, and NOT have department/year_level
     const shsProjects = approvedProjects.filter(
-        project =>
-            project.submitter &&
-            project.submitter.strand && // Check if strand has a value
-            project.submitter.grade_level && // Check if grade_level has a value
-            !project.submitter.department && // Ensure College fields are not present
-            !project.submitter.year_level
+    project => project.strand_id !== null && project.strand_id !== undefined
     );
 
     // Card filters
@@ -163,21 +159,21 @@ const StudentDashboard = () => {
                     onClick={() => setSelectedCard("all")}
                 >
                     <h3>All Projects</h3>
-                    <div className="dashboard-card-count">{allProjects.length}</div>
+                    <div className="dashboard-card-count">{counts.all}</div>
                 </div>
                 <div
                     className={`dashboard-card${selectedCard === "college" ? " active" : ""}`}
                     onClick={() => setSelectedCard("college")}
                 >
                     <h3>College Department</h3>
-                    <div className="dashboard-card-count">{collegeProjects.length}</div>
+                    <div className="dashboard-card-count">{counts.college}</div>
                 </div>
                 <div
                     className={`dashboard-card${selectedCard === "shs" ? " active" : ""}`}
                     onClick={() => setSelectedCard("shs")}
                 >
                     <h3>Senior High Level</h3>
-                    <div className="dashboard-card-count">{shsProjects.length}</div>
+                    <div className="dashboard-card-count">{counts.senior_high}</div>
                 </div>
             </div>
 

@@ -13,6 +13,8 @@ module.exports = (sequelize, DataTypes) => {
     status: { type: DataTypes.ENUM('pending', 'endorsed', 'approved', 'need_revision', 'admin_revision'), defaultValue: 'pending', allowNull: false },
     last_updated_by_role: { type: DataTypes.STRING, allowNull: true },
     rejection_reason: { type: DataTypes.TEXT, allowNull: true },
+    department_id: { type: DataTypes.INTEGER, allowNull: true },
+    strand_id: { type: DataTypes.INTEGER, allowNull: true },
     created_at: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW },
     updated_at: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW }
   }, {

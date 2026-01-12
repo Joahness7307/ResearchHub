@@ -41,15 +41,26 @@ const SubmitResearch = () => {
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
-    if (file && file.type === "application/pdf") {
-      setForm({ ...form, document: file });
-      if (error) setError(''); // Clear error if a valid file is selected
-    } else {
+    if (!file) return;
+
+    const MAX_SIZE = 10 * 1024 * 1024; // 10MB
+    if (file.size > MAX_SIZE) {
+      setError("File is too large. Maximum allowed size is 10 MB.");
+      e.target.value = null;
       setForm({ ...form, document: null });
-      setError("Only PDF files are allowed.");
-      e.target.value = null; // Clear the input field
-    }
-  };
+      return;
+  }
+
+  if (file.type !== "application/pdf") {
+    setError("Only PDF files are allowed.");
+    e.target.value = null;
+    setForm({ ...form, document: null });
+    return;
+  }
+
+  setForm({ ...form, document: file });
+  if (error) setError('');
+};
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -94,9 +105,34 @@ const SubmitResearch = () => {
       });
       e.target.reset(); // Also clear file input
     } catch (err) {
-      // Clear file input on error
-      document.querySelector('input[name="document"]').value = null;
-      setError(err.response?.data?.message || "Please select a PDF file smaller than 5MB.");
+      console.error("Submission error:", err.response?.data, err);
+
+      let errMsg = "Failed to submit project. Please try again.";
+
+      if (err.response) {
+        const status = err.response.status;
+        const backendMsg = err.response.data?.message || "";
+
+        if (status === 413 || backendMsg.toLowerCase().includes("file too large")) {
+          errMsg = "The file is too large. Please upload a PDF smaller than 10 MB.";
+        } else if (status === 400) {
+          if (backendMsg.includes("PDF") || backendMsg.includes("file type")) {
+            errMsg = "Only PDF files are allowed. Please select a .pdf document.";
+          } else {
+            errMsg = backendMsg || "Please check all required fields and try again.";
+          }
+        } else if (status === 500) {
+          errMsg = "Something went wrong on our server. Please try again in a moment.";
+        }
+      } else if (err.message.includes("timeout")) {
+        errMsg = "Upload is taking too long. Try a smaller file or check your internet connection.";
+      }
+
+      setError(errMsg);
+
+      // Always clear file input on error
+      const fileInput = document.querySelector('input[name="document"]');
+      if (fileInput) fileInput.value = null;
     }
   };
 
@@ -158,6 +194,9 @@ const SubmitResearch = () => {
         </select>
 
         <label htmlFor="document">Project PDF</label>
+        <small style={{ color: '#666', display: 'block', marginTop: '4px' }}>
+          Max file size: 10 MB • PDF format only
+        </small>
         <input 
             id="document" 
             type="file" 
