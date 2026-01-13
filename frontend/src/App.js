@@ -120,6 +120,16 @@ function App() {
             }
           />
           <Route
+            path="/admin/academic"
+            element={
+              <ProtectedRoute allowedRoles={["admin"]}>
+                <AdminLayout>
+                  <AdminDashboard activeSection="academic" />
+                </AdminLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/admin/projects/:id"
             element={
               <ProtectedRoute allowedRoles={["admin"]}>

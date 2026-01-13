@@ -41,6 +41,12 @@ const AdminSideNavbar = () => {
        >
          Manage Projects
        </button>
+       <button
+          className={`side-nav-link${path === "/admin/academic" ? " active" : ""}`}
+          onClick={() => navigate("/admin/academic")}
+        >
+          Academic Settings
+        </button>
       </div>
       <button className="side-nav-link logout-link" onClick={handleLogout}>
         Logout

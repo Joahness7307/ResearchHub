@@ -6,6 +6,7 @@ const { Project, User } = require("../models");
 const authMiddleware = require("../middlewares/authMiddleware");
 const upload = require("../config/multer");
 const axios = require("axios");
+const { Op } = require("sequelize");  // ← ADD THIS LINE near top
 const router = express.Router();
 
 // Dynamic categories endpoint
@@ -21,6 +22,38 @@ router.get("/", getAllProjects);
 
 router.get("/counts", authMiddleware(["admin"]), getProjectCounts);
 
+// Public counts for Student/Guest dashboard cards
+router.get("/public/counts", async (req, res) => {
+  try {
+    const totalApproved = await Project.count({
+      where: { status: "approved" }
+    });
+
+    const collegeApproved = await Project.count({
+      where: {
+        status: "approved",
+        strand_id: { [Op.is]: null }  // college projects have no strand
+      }
+    });
+
+    const shsApproved = await Project.count({
+      where: {
+        status: "approved",
+        strand_id: { [Op.not]: null }  // senior high have strand
+      }
+    });
+
+    res.json({
+      all: totalApproved,
+      college: collegeApproved,
+      senior_high: shsApproved
+    });
+  } catch (error) {
+    console.error("Public counts error:", error);
+    res.status(500).json({ error: "Failed to fetch counts" });
+  }
+});
+
 // Get sinlge research project
 router.get("/:id", authMiddleware(["student", "admin", "head_admin", "research_adviser", "guest"]), async (req, res) => {
   try {
@@ -35,15 +68,39 @@ router.get("/:id", authMiddleware(["student", "admin", "head_admin", "research_a
   }
 });
 
-// Get all projects assigned to this adviser (including pending)
+// Get all projects visible to this adviser (pending in their strand/department)
 router.get("/adviser/all", authMiddleware(["research_adviser"]), async (req, res) => {
   try {
+    const user = req.user;
+
+    // Build query based on adviser's affiliation
+    const where = {
+      status: { [Op.in]: ["pending", "approved", "need_revision", "endorsed", "admin_revision"] } // add statuses you want visible
+    };
+
+    if (user.department_id) {
+      where.department_id = user.department_id;
+    } else if (user.strand_id) {
+      where.strand_id = user.strand_id;
+    } else {
+      return res.status(403).json({ message: "Adviser not assigned to any department or strand" });
+    }
+
     const projects = await Project.findAll({
-      where: { adviser_id: req.user.id },
+      where,
+      include: [
+        { 
+          model: User, 
+          as: "submitter", 
+          attributes: ["id", "full_name", "email", "grade_level", "year_level"] 
+        }
+      ],
       order: [["created_at", "DESC"]]
     });
+
     res.json(projects);
   } catch (error) {
+    console.error("Adviser projects error:", error);
     res.status(500).json({ error: error.message });
   }
 });
