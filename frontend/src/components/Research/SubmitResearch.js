@@ -43,9 +43,9 @@ const SubmitResearch = () => {
     const file = e.target.files[0];
     if (!file) return;
 
-    const MAX_SIZE = 10 * 1024 * 1024; // 10MB
+    const MAX_SIZE = 20 * 1024 * 1024; // 20MB
     if (file.size > MAX_SIZE) {
-      setError("File is too large. Maximum allowed size is 10 MB.");
+      setError("File is too large. Maximum allowed size is 20 MB.");
       e.target.value = null;
       setForm({ ...form, document: null });
       return;
@@ -114,7 +114,7 @@ const SubmitResearch = () => {
         const backendMsg = err.response.data?.message || "";
 
         if (status === 413 || backendMsg.toLowerCase().includes("file too large")) {
-          errMsg = "The file is too large. Please upload a PDF smaller than 10 MB.";
+          errMsg = "The file is too large. Please upload a PDF smaller than 20 MB.";
         } else if (status === 400) {
           if (backendMsg.includes("PDF") || backendMsg.includes("file type")) {
             errMsg = "Only PDF files are allowed. Please select a .pdf document.";
