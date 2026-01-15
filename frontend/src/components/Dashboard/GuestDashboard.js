@@ -19,6 +19,7 @@ const GuestDashboard = () => {
   const [selectedCard, setSelectedCard] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [counts, setCounts] = useState({ all: 0, college: 0, senior_high: 0 });
   const projectsPerPage = 10;
   const navigate = useNavigate();
 
@@ -62,28 +63,23 @@ const GuestDashboard = () => {
       });
   }, [user]);
 
-  // Only approved projects
-  const approvedProjects = projects.filter(project => project.status === "approved");
+  // Fetch counts on mount
+    useEffect(() => {
+    axios.get("/projects/public/counts")
+        .then(res => setCounts(res.data))
+        .catch(() => setCounts({ all: 0, college: 0, senior_high: 0 }));
+    }, []);
 
-  // College projects: must have department and year_level, and NOT have strand/grade_level
-  const collegeProjects = approvedProjects.filter(
-    project =>
-      project.submitter &&
-      project.submitter.department && // Check if department has a value
-      project.submitter.year_level && // Check if year_level has a value
-      !project.submitter.strand && // Ensure SHS fields are not present
-      !project.submitter.grade_level
-  );
+    // Only approved projects
+    const approvedProjects = projects.filter(project => project.status === "approved");
 
-  // Senior high projects: must have strand and grade_level, and NOT have department/year_level
-  const shsProjects = approvedProjects.filter(
-    project =>
-      project.submitter &&
-      project.submitter.strand && // Check if strand has a value
-      project.submitter.grade_level && // Check if grade_level has a value
-      !project.submitter.department && // Ensure College fields are not present
-      !project.submitter.year_level
-  );
+    const collegeProjects = approvedProjects.filter(
+    project => project.strand_id === null || project.strand_id === undefined
+    );
+
+    const shsProjects = approvedProjects.filter(
+    project => project.strand_id !== null && project.strand_id !== undefined
+    );
 
   // Card filters
   const allProjects = approvedProjects;
