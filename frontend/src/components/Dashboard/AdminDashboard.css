@@ -669,3 +669,130 @@
         padding-right: 2.6rem;
     }
 }
+
+.add-academic-bar {
+  background: var(--bg-light);
+  padding: 1rem;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  margin-bottom: 2rem;
+}
+
+.add-academic-bar form {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: nowrap;
+  width: 100%;
+}
+
+.add-academic-bar input[type="text"] {
+  flex: 1;
+  min-width: 180px;           /* prevent shrinking too much */
+  padding: 0.8rem 1rem;
+  font-size: 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+}
+
+.add-academic-bar label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  white-space: nowrap;
+  font-size: 0.95rem;
+  color: var(--secondary-color);
+  user-select: none;
+}
+
+.add-academic-bar input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--primary-color);
+  cursor: pointer;
+}
+
+.add-academic-bar button {
+  white-space: nowrap;
+  padding: 0.8rem 1.4rem;
+  font-size: 0.95rem;
+}
+
+/* ── RESPONSIVE BREAKPOINTS ── */
+
+/* Medium tablets & smaller laptops */
+@media (max-width: 1024px) {
+  .add-academic-bar {
+    padding: 0.9rem;
+  }
+  .add-academic-bar form {
+    gap: 0.9rem;
+  }
+  .add-academic-bar input[type="text"] {
+    padding: 0.75rem 0.9rem;
+  }
+  .add-academic-bar button {
+    padding: 0.75rem 1.2rem;
+  }
+}
+
+/* Tablets & small laptops → phones (stack vertically below ~768px) */
+@media (max-width: 768px) {
+  .add-academic-bar form {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+  }
+
+  .add-academic-bar input[type="text"] {
+    width: 100%;
+    min-width: unset;
+  }
+
+  /* Checkboxes + labels become a horizontal row on their own line */
+  .add-academic-bar .checkbox-group {
+    display: flex;
+    justify-content: flex-start;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+  }
+
+  .add-academic-bar button {
+    width: 100%;
+    padding: 0.9rem;
+    font-size: 1rem;
+  }
+}
+
+/* Very small phones */
+@media (max-width: 480px) {
+  .add-academic-bar {
+    padding: 0.8rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .add-academic-bar form {
+    gap: 0.9rem;
+  }
+
+  .add-academic-bar input[type="text"],
+  .add-academic-bar button {
+    font-size: 0.95rem;
+    padding: 0.85rem;
+  }
+
+  .add-academic-bar label {
+    font-size: 0.9rem;
+  }
+
+  .add-academic-bar input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+  }
+
+  .add-academic-bar .checkbox-group {
+    flex-direction: column;
+    gap: 0.8rem;
+  }
+}

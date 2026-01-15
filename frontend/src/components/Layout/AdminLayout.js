@@ -53,6 +53,7 @@ const AdminLayout = ({ children }) => {
           // { label: "Notifications", to: "/admin/notifications" },
           { label: "Manage Users", to: "/admin/manage-users" },
           { label: "Manage Projects", to: "/admin/manage-projects" },
+          { label: "Academic Settings", to: "/admin/academic" },
           { label: "My Account", to: "/my-account" },
         ].map(link => (
           <button key={link.label} className={`mobile-sidebar-link${location.pathname === link.to ? " active" : ""}`} onClick={() => handleNav(link.to)}>

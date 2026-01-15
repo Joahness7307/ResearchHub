@@ -32,7 +32,7 @@ const storage = new CloudinaryStorage({
 const upload = multer({
   storage,
   limits: {
-    fileSize: 20 * 1024 * 1024, // 20MB max file size
+    fileSize: 10 * 1024 * 1024, // 10MB max file size
   },
   fileFilter: (req, file, cb) => {
     if (file.mimetype === "application/pdf") {
