@@ -936,15 +936,17 @@ const AdminDashboard = ({ activeSection }) => {
 
           {/* Departments Tab */}
           {activeAcademicTab === "departments" && (
-            <>
-              <form onSubmit={handleCreateDepartment} className="admin-form" style={{ marginBottom: '2rem' }}>
+          <>
+            <div className="add-academic-bar">
+              <form onSubmit={handleCreateDepartment} style={{ display: 'flex', alignItems: 'center', gap: '1rem', width: '100%' }}>
                 <input
                   placeholder="Department Name (e.g. BSIT)"
                   value={newDept.name}
                   onChange={e => setNewDept({ ...newDept, name: e.target.value })}
                   required
+                  style={{ flex: 1, minWidth: '200px', padding: '1rem', borderRadius: '6px', border: '1px solid var(--border-color)' }}
                 />
-                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', whiteSpace: 'nowrap' }}>
                   <input
                     type="checkbox"
                     checked={newDept.has_blocks}
@@ -952,7 +954,7 @@ const AdminDashboard = ({ activeSection }) => {
                   />
                   Has Blocks
                 </label>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', whiteSpace: 'nowrap' }}>
                   <input
                     type="checkbox"
                     checked={newDept.has_majors}
@@ -962,90 +964,91 @@ const AdminDashboard = ({ activeSection }) => {
                 </label>
                 <button type="submit" className="admin-btn">Add Department</button>
               </form>
+            </div>
 
-              <div className="admin-list-wrapper">
-                <table className="admin-table">
-                  <thead>
-                    <tr>
-                      <th>Name</th>
-                      <th>Has Blocks</th>
-                      <th>Has Majors</th>
-                      <th>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {departments.length === 0 ? (
-                      <tr><td colSpan="4" style={{ textAlign: "center" }}>No departments found</td></tr>
-                    ) : (
-                      departments.map(d => (
-                        <tr key={d.id}>
-                          <td>{d.name}</td>
-                          <td>{d.has_blocks ? "Yes" : "No"}</td>
-                          <td>{d.has_majors ? "Yes" : "No"}</td>
-                          <td>
-                            <button
-                              className="admin-btn edit-btn"
-                              onClick={() => {
-                                setEditDeptId(d.id);
-                                setEditDeptForm({ name: d.name, has_blocks: d.has_blocks, has_majors: d.has_majors });
-                              }}
-                            >
-                              Edit
-                            </button>
-                            <button
-                              className="admin-btn delete-btn"
-                              onClick={() => handleDeleteDepartment(d.id)}
-                            >
-                              Delete
-                            </button>
-                          </td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
+            <div className="admin-list-wrapper">
+              <table className="admin-table">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Has Blocks</th>
+                    <th>Has Majors</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {departments.length === 0 ? (
+                    <tr><td colSpan="4" style={{ textAlign: "center" }}>No departments found</td></tr>
+                  ) : (
+                    departments.map(d => (
+                      <tr key={d.id}>
+                        <td>{d.name}</td>
+                        <td>{d.has_blocks ? "Yes" : "No"}</td>
+                        <td>{d.has_majors ? "Yes" : "No"}</td>
+                        <td>
+                          <button
+                            className="admin-btn edit-btn"
+                            onClick={() => {
+                              setEditDeptId(d.id);
+                              setEditDeptForm({ name: d.name, has_blocks: d.has_blocks, has_majors: d.has_majors });
+                            }}
+                          >
+                            Edit
+                          </button>
+                          <button
+                            className="admin-btn delete-btn"
+                            onClick={() => handleDeleteDepartment(d.id)}
+                          >
+                            Delete
+                          </button>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
 
-              {editDeptId && (
-                <div className="admin-edit-modal">
-                  <form onSubmit={handleUpdateDepartment} className="admin-edit-form">
-                    <h4>Edit Department</h4>
+            {editDeptId && (
+              <div className="admin-edit-modal">
+                <form onSubmit={handleUpdateDepartment} className="admin-edit-form">
+                  <h4>Edit Department</h4>
+                  <input
+                    value={editDeptForm.name}
+                    onChange={e => setEditDeptForm({ ...editDeptForm, name: e.target.value })}
+                    required
+                  />
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     <input
-                      value={editDeptForm.name}
-                      onChange={e => setEditDeptForm({ ...editDeptForm, name: e.target.value })}
-                      required
+                      type="checkbox"
+                      checked={editDeptForm.has_blocks}
+                      onChange={e => setEditDeptForm({ ...editDeptForm, has_blocks: e.target.checked })}
                     />
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <input
-                        type="checkbox"
-                        checked={editDeptForm.has_blocks}
-                        onChange={e => setEditDeptForm({ ...editDeptForm, has_blocks: e.target.checked })}
-                      />
-                      Has Blocks
-                    </label>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <input
-                        type="checkbox"
-                        checked={editDeptForm.has_majors}
-                        onChange={e => setEditDeptForm({ ...editDeptForm, has_majors: e.target.checked })}
-                      />
-                      Has Majors
-                    </label>
-                    <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
-                      <button type="submit" className="admin-btn edit-btn">Save</button>
-                      <button
-                        type="button"
-                        className="admin-btn cancel-btn"
-                        onClick={() => setEditDeptId(null)}
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  </form>
-                </div>
-              )}
-            </>
-          )}
+                    Has Blocks
+                  </label>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <input
+                      type="checkbox"
+                      checked={editDeptForm.has_majors}
+                      onChange={e => setEditDeptForm({ ...editDeptForm, has_majors: e.target.checked })}
+                    />
+                    Has Majors
+                  </label>
+                  <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
+                    <button type="submit" className="admin-btn edit-btn">Save</button>
+                    <button
+                      type="button"
+                      className="admin-btn cancel-btn"
+                      onClick={() => setEditDeptId(null)}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </form>
+              </div>
+            )}
+          </>
+        )}
 
           {/* Blocks Tab */}
           {activeAcademicTab === "blocks" && (
