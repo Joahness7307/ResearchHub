@@ -30,8 +30,11 @@ import RedirectIfAuthenticated from "./components/RedirectIfAuthenticated";
 const ProtectedRoute = ({ children, allowedRoles }) => {
   const { user, loading } = React.useContext(AuthContext);
   if (loading) return <div>Loading authentication...</div>;
-  if (!user) return <Navigate to="/login" />;
-  if (allowedRoles && !allowedRoles.includes(user.role)) return <Navigate to="/" />;
+  if (!user) return <Navigate to="/login" replace />;
+  if (allowedRoles && !allowedRoles.includes(user.role)) {
+    // Redirect to home or a "403 Forbidden" page — home is safest
+    return <Navigate to="/" replace />;
+  }
   return children;
 };
 
@@ -115,6 +118,16 @@ function App() {
               <ProtectedRoute allowedRoles={["admin"]}>
                 <AdminLayout>
                   <AdminDashboard activeSection="projects" />
+                </AdminLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/academic"
+            element={
+              <ProtectedRoute allowedRoles={["admin"]}>
+                <AdminLayout>
+                  <AdminDashboard activeSection="academic" />
                 </AdminLayout>
               </ProtectedRoute>
             }
@@ -308,6 +321,7 @@ function App() {
           <Route path="/setup-account" element={<SetupAccount />} />
           
           <Route path="/adviser/*" element={
+            <ProtectedRoute allowedRoles={["research_adviser"]}>
             <ResearchAdviserLayout>
               <Routes>
                 <Route path="" element={<ResearchAdviserDashboard section="dashboard" />} />
@@ -322,6 +336,7 @@ function App() {
                 <Route path="projects/:id" element={<ProjectDetails />} />
               </Routes>         
             </ResearchAdviserLayout>
+            </ProtectedRoute>
           } />
 
           <Route path="*" element={<Navigate to="/login" />} />

@@ -2,17 +2,23 @@ const { Project, User, Notification, Comment } = require("../models");
 const path = require("path");
 const fs = require("fs");
 const cloudinary = require("../config/cloudinary");
+const { Op } = require("sequelize");  // ← ADD THIS LINE
 
 // Upload final research paper
 exports.submitProject = async (req, res) => {
   try {
     const user = req.user;
-      if (
-        (user.year_level && !["3rd", "4th"].includes(user.year_level)) ||
-        (user.grade_level && user.grade_level !== "12")
-      ) {
-        return res.status(403).json({ message: "You are not eligible to submit a research project." });
-      }
+
+    // Eligibility check (keep this)
+    if (
+      (user.year_level && !["3rd", "4th"].includes(user.year_level)) ||
+      (user.grade_level && user.grade_level !== "12")
+    ) {
+      return res.status(403).json({
+        message: "You are not eligible to submit a research project."
+      });
+    }
+
     const {
       title,
       title_description,
@@ -20,52 +26,51 @@ exports.submitProject = async (req, res) => {
       category
     } = req.body;
 
-    const documentUrl = req.file?.path || req.file?.secure_url; // ✅ safer cloudinary URL
-    
-    console.log("📄 Uploaded PDF URL:", req.file?.path);
+    const documentUrl = req.file?.path || req.file?.secure_url;
 
-    // Validate required fields for all
+    console.log("📄 Uploaded PDF URL:", documentUrl);
+
+    // Validate required fields
     if (!title || !title_description || !abstract || !category) {
       return res.status(400).json({ message: "Missing required fields." });
     }
     if (!req.file) {
       return res.status(400).json({ message: "Project PDF is required." });
     }
-    
-    // Use full_name for authors
-    const authors = user.full_name || user.username || "Unknown";
 
-     // Find adviser
-    let adviser;
-    if (user.year_level) {
-      adviser = await User.findOne({ where: { role: "research_adviser", department: user.department } });
-    } else if (user.grade_level) {
-      adviser = await User.findOne({ where: { role: "research_adviser", strand: user.strand } });
-    }
-    const adviserId = adviser ? adviser.id : null;
+    // ───────────────────────────────────────────────────────────────
+    //              IMPORTANT CHANGES START HERE
+    // ───────────────────────────────────────────────────────────────
 
-    // Create project
+    // 1. NO MORE adviser check → students can submit without adviser
+    // 2. We save department_id / strand_id so future advisers can see it
+
     const project = await Project.create({
       title,
       title_description,
       abstract,
       category,
       documentPath: documentUrl,
-      authors: user.full_name,
+      authors: user.full_name || user.username || "Unknown",
       submitted_by: user.id,
-      adviser_id: adviserId,
+
+      // ── These two new fields are very important ──
+      department_id: user.department_id || null,
+      strand_id: user.strand_id || null,
+
+      // No adviser yet → will be assigned later when adviser claims/endorses
+      adviser_id: null,
       status: "pending"
     });
 
-    // Notify student of their own submission
+    // ── Student notification (keep this) ──
     await Notification.create({
       projectId: project.id,
       studentId: user.id,
       isRead: false,
-      reason: `You submitted the project "${project.title}".`,
+      reason: `You submitted the project "${project.title}".`
     });
 
-    // Emit socket event to student for real-time notification
     const io = req.app.get("io");
     if (io) {
       io.emit(`student_notify_${user.id}`, {
@@ -74,30 +79,51 @@ exports.submitProject = async (req, res) => {
       });
     }
 
-    // Create notification for adviser
-    if (adviserId) {
-      await Notification.create({
-        projectId: project.id,
-        adviserId,
-        isRead: false,
-        reason: `${user.full_name} submitted a research project entitled "${project.title}".`,
+    // Optional: Notify ALL current advisers in the same strand/department
+    // (you can remove this block if you want advisers to discover projects manually)
+    if (user.department_id || user.strand_id) {
+      const possibleAdvisers = await User.findAll({
+        where: {
+          role: "research_adviser",
+          [Op.or]: [
+            user.department_id ? { department_id: user.department_id } : {},
+            user.strand_id ? { strand_id: user.strand_id } : {}
+          ]
+        }
       });
-    } 
 
-      // Real-time notification via socket.io
-      if (io) {
-        io.emit(`adviser_notify_${adviserId}`, {          
-          title,
-          student: user.full_name,
-          time: new Date().toLocaleString(),
-          message: `${user.full_name} submitted a research project entitled "${project.title}".`
+      for (const adv of possibleAdvisers) {
+        await Notification.create({
+          projectId: project.id,
+          adviserId: adv.id,
+          isRead: false,
+          reason: `New pending project in your ${user.strand_id ? "strand" : "department"}: "${project.title}" by ${user.full_name}`
         });
-      }
 
-    res.status(201).json({ message: "Project submitted successfully!", Project });
+        if (io) {
+          io.emit(`adviser_notify_${adv.id}`, {
+            type: "new_submission",
+            title: project.title,
+            student: user.full_name,
+            time: new Date().toLocaleString(),
+            message: `New project waiting in ${user.strand_id ? "strand" : "department"}`
+          });
+        }
+      }
+    }
+
+    // Success response
+    res.status(201).json({
+      message: "Project submitted successfully! It will be visible to advisers of your strand/department once assigned.",
+      project
+    });
+
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Failed to submit project.", error: error.message });
+    console.error("Submit project error:", error);
+    res.status(500).json({
+      message: "Something went wrong on our server. Please try again later.",
+      error: error.message
+    });
   }
 };
 
@@ -213,55 +239,98 @@ exports.getAllProjects = async (req, res) => {
 // Research adviser endorses project to admin
 exports.endorseProject = async (req, res) => {
   try {
-    const project = await Project.findByPk(req.params.id);
+    const project = await Project.findByPk(req.params.id, {
+      include: [{ model: User, as: 'submitter' }]
+    });
     if (!project) return res.status(404).json({ message: "Project not found" });
     if (project.status !== "pending") return res.status(400).json({ message: "Project is not pending" });
 
     await project.update({
       status: "endorsed",
-      last_updated_by_role: req.user.role // <-- Set who endorsed
+      last_updated_by_role: req.user.role
     });
 
-    // Notify student
+    const io = req.app.get("io");
+
+    // 1. Notify student
     await Notification.create({
       projectId: project.id,
       studentId: project.submitted_by,
       isRead: false,
       reason: `Your project "${project.title}" was endorsed for admin's approval.`,
     });
+    if (io) {
+      io.emit(`student_notify_${project.submitted_by}`, {
+        type: "status_update",
+        projectId: project.id,
+        title: project.title,
+        newStatus: "endorsed"
+      });
+    }
 
-    // Notify adviser
-    await Notification.create({
-      projectId: project.id,
-      adviserId: req.user.id,
-      isRead: false,
-      reason: `You endorsed a project "${project.title}" for admin's approval.`,
+    // 2. Notify ALL advisers in the same strand/department (including self)
+    const advisers = await User.findAll({
+      where: {
+        role: "research_adviser",
+        [Op.or]: [
+          project.department_id ? { department_id: project.department_id } : {},
+          project.strand_id ? { strand_id: project.strand_id } : {}
+        ]
+      }
     });
 
-    // Notify head admin(s)
-    const headAdmins = await User.findAll({ where: { role: "head_admin" } });
-    for (const headAdmin of headAdmins) {
+    for (const adv of advisers) {
       await Notification.create({
         projectId: project.id,
-        adminId: headAdmin.id,
+        adviserId: adv.id,
         isRead: false,
-        reason: `A project "${project.title}" has been reviewed and endorsed by the research adviser "${req.user.full_name}".`
+        reason: `Project "${project.title}" endorsed by ${req.user.full_name} — now awaiting admin approval.`
+      });
+
+      if (io) {
+        io.emit(`adviser_notify_${adv.id}`, {
+          type: "status_update",
+          projectId: project.id,
+          title: project.title,
+          student: project.submitter?.full_name,
+          newStatus: "endorsed",
+          updatedBy: req.user.full_name,
+          time: new Date().toLocaleString()
+        });
+      }
+    }
+
+    // 3. Notify head admins
+    const headAdmins = await User.findAll({ where: { role: "head_admin" } });
+    for (const head of headAdmins) {
+      await Notification.create({
+        projectId: project.id,
+        adminId: head.id,
+        isRead: false,
+        reason: `Project "${project.title}" endorsed by adviser "${req.user.full_name}".`
       });
     }
 
     res.json({ message: "Project endorsed to admin for approval." });
   } catch (error) {
+    console.error("Endorse project error:", error);
     res.status(500).json({ message: "Failed to endorse project.", error: error.message });
   }
 };
 
+// Adviser or Admin requests revision
 exports.needRevision = async (req, res) => {
   try {
     const user = req.user;
     const { reason } = req.body;
     const { id } = req.params;
-    const project = await Project.findByPk(id);
+
+    const project = await Project.findByPk(id, {
+      include: [{ model: User, as: 'submitter' }]
+    });
     if (!project) return res.status(404).json({ message: "Project not found" });
+
+    const io = req.app.get("io");
 
     if (user.role === "head_admin" || user.role === "admin") {
       await project.update({
@@ -269,13 +338,39 @@ exports.needRevision = async (req, res) => {
         rejection_reason: reason,
         last_updated_by_role: user.role
       });
-      await Notification.create({
-        projectId: project.id,
-        adviserId: project.adviser_id,
-        isRead: false,
-        reason: `The project "${project.title}" you endorsed requires revision. Reason: ${reason}`,
+
+      // Notify ALL advisers in same strand/dept
+      const advisers = await User.findAll({
+        where: {
+          role: "research_adviser",
+          [Op.or]: [
+            project.department_id ? { department_id: project.department_id } : {},
+            project.strand_id ? { strand_id: project.strand_id } : {}
+          ]
+        }
       });
-      return res.json({ message: "Adviser notified for revision." });
+
+      for (const adv of advisers) {
+        await Notification.create({
+          projectId: project.id,
+          adviserId: adv.id,
+          isRead: false,
+          reason: `Project "${project.title}" requires admin revision. Reason: ${reason}`
+        });
+
+        if (io) {
+          io.emit(`adviser_notify_${adv.id}`, {
+            type: "status_update",
+            projectId: project.id,
+            title: project.title,
+            newStatus: "admin_revision",
+            reason,
+            updatedBy: user.full_name
+          });
+        }
+      }
+
+      return res.json({ message: "Advisers notified for revision." });
     }
 
     if (user.role === "research_adviser") {
@@ -284,12 +379,25 @@ exports.needRevision = async (req, res) => {
         rejection_reason: reason,
         last_updated_by_role: user.role
       });
+
+      // Notify student
       await Notification.create({
         projectId: project.id,
         studentId: project.submitted_by,
         isRead: false,
-        reason: `Your project "${project.title}" requires revision. Reason: ${reason}`,
+        reason: `Your project "${project.title}" requires revision. Reason: ${reason}`
       });
+
+      if (io) {
+        io.emit(`student_notify_${project.submitted_by}`, {
+          type: "status_update",
+          projectId: project.id,
+          title: project.title,
+          newStatus: "need_revision",
+          reason
+        });
+      }
+
       return res.json({ message: "Student notified for revision." });
     }
 
@@ -332,38 +440,95 @@ exports.reuploadProjectDocument = async (req, res) => {
   }
 };
 
+// Approve project (admin / head admin)
 exports.approveProject = async (req, res) => {
-  await Project.update(
-    { status: "approved", last_updated_by_role: req.user.role }, // <-- Add this
-    { where: { id: req.params.id } }
-  );
-  const project = await Project.findByPk(req.params.id);
+  try {
+    const project = await Project.findByPk(req.params.id, {
+      include: [{ model: User, as: 'submitter' }]
+    });
+    if (!project) return res.status(404).json({ message: "Project not found" });
 
-  // Notify head admin (self)
-  await Notification.create({
-    projectId: project.id,
-    adminId: req.user.id,
-    isRead: false,
-    reason: `You uploaded a project "${project.title}" in the repository..`,
-  });
+    await project.update({
+      status: "approved",
+      last_updated_by_role: req.user.role
+    });
 
-  // Notify student
-  await Notification.create({
-    projectId: project.id,
-    studentId: project.submitted_by,
-    isRead: false,
-    reason: `Your submitted project "${project.title}" has been approved, and it's already stored in the repository.`,
-  });
+    const io = req.app.get("io");
 
-  // Notify adviser
-  await Notification.create({
-    projectId: project.id,
-    adviserId: project.adviser_id,
-    isRead: false,
-    reason: `The project "${project.title}" that you endorsed has been approved, and it's already stored in the repository.`,
-  });
+    // Notify ALL advisers in same strand/dept
+    const advisers = await User.findAll({
+      where: {
+        role: "research_adviser",
+        [Op.or]: [
+          project.department_id ? { department_id: project.department_id } : {},
+          project.strand_id ? { strand_id: project.strand_id } : {}
+        ]
+      }
+    });
 
-  res.status(200).json({ message: "Research project approved" });
+    for (const adv of advisers) {
+      await Notification.create({
+        projectId: project.id,
+        adviserId: adv.id,
+        isRead: false,
+        reason: `Project "${project.title}" approved and added to repository!`
+      });
+
+      if (io) {
+        io.emit(`adviser_notify_${adv.id}`, {
+          type: "status_update",
+          projectId: project.id,
+          title: project.title,
+          newStatus: "approved",
+          updatedBy: req.user.full_name
+        });
+      }
+    }
+
+    // Notify student
+    await Notification.create({
+      projectId: project.id,
+      studentId: project.submitted_by,
+      isRead: false,
+      reason: `Your project "${project.title}" has been approved and is now in the repository.`
+    });
+
+    if (io) {
+      io.emit(`student_notify_${project.submitted_by}`, {
+        type: "status_update",
+        projectId: project.id,
+        title: project.title,
+        newStatus: "approved"
+      });
+    }
+
+    // Notify ALL head admins (including self) about the approval
+    const headAdmins = await User.findAll({ where: { role: "head_admin" } });
+    for (const head of headAdmins) {
+      await Notification.create({
+        projectId: project.id,
+        adminId: head.id,
+        isRead: false,
+        reason: `Project "${project.title}" has been approved and added to the repository by ${req.user.full_name}.`
+      });
+
+      if (io) {
+        io.emit(`admin_notify_${head.id}`, {
+          type: "status_update",
+          projectId: project.id,
+          title: project.title,
+          newStatus: "approved",
+          updatedBy: req.user.full_name,
+          time: new Date().toLocaleString()
+        });
+      }
+    }
+
+    res.status(200).json({ message: "Research project approved" });
+  } catch (error) {
+    console.error("Approve project error:", error);
+    res.status(500).json({ message: "Failed to approve project.", error: error.message });
+  }
 };
 
 exports.getAllProjectsAdmin = async (req, res) => {
