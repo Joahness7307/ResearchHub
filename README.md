@@ -4,7 +4,7 @@ ResearchHub is a web-based Platform for Managing and Archiving Research Manuscri
 
 ## Project Description
 
-The system allows students to submit research proposals, teachers to review and provide feedback, and administrators to manage and publish approved research projects.
+The system allows students to submit research proposals, teachers to review and provide feedback, and administrators to manage and publish approved research projects in the public repository.
 
 ## Features
 
@@ -79,7 +79,6 @@ README.md
 ## Developers
 
 - Joahness M. Caparas
-- (Add your group members)
 
 ## School
 

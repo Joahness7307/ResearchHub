@@ -1,4 +1,4 @@
-const { Project, User, Notification, Comment } = require("../models");
+const { Project, User, Notification, Comment, sequelize } = require("../models");
 const path = require("path");
 const fs = require("fs");
 const cloudinary = require("../config/cloudinary");
@@ -6,6 +6,7 @@ const { Op } = require("sequelize");  // ← ADD THIS LINE
 
 // Upload final research paper
 exports.submitProject = async (req, res) => {
+  const transaction = await sequelize.transaction();
   try {
     const user = req.user;
 
@@ -61,7 +62,7 @@ exports.submitProject = async (req, res) => {
       // No adviser yet → will be assigned later when adviser claims/endorses
       adviser_id: null,
       status: "pending"
-    });
+    }, { transaction: transaction });
 
     // ── Student notification (keep this) ──
     await Notification.create({
@@ -69,27 +70,32 @@ exports.submitProject = async (req, res) => {
       studentId: user.id,
       isRead: false,
       reason: `You submitted the project "${project.title}".`
-    });
+    }, { transaction: transaction });
 
-    const io = req.app.get("io");
-    if (io) {
-      io.emit(`student_notify_${user.id}`, {
-        type: "submission",
-        message: `You submitted the project "${project.title}".`
-      });
-    }
-
-    // Optional: Notify ALL current advisers in the same strand/department
-    // (you can remove this block if you want advisers to discover projects manually)
+    // Notify advisers in the same department/strand inside transaction
+    // NEW - safe adviser query with proper warning
     if (user.department_id || user.strand_id) {
+
+      // Build where condition safely - never pass empty {} into Op.or
+      const adviserWhere = { role: "research_adviser" };
+
+      if (user.department_id && user.strand_id) {
+        // Student has both - match either
+        adviserWhere[Op.or] = [
+          { department_id: user.department_id },
+          { strand_id: user.strand_id }
+        ];
+      } else if (user.department_id) {
+        // College student - match by department only
+        adviserWhere.department_id = user.department_id;
+      } else if (user.strand_id) {
+        // SHS student - match by strand only
+        adviserWhere.strand_id = user.strand_id;
+      }
+
       const possibleAdvisers = await User.findAll({
-        where: {
-          role: "research_adviser",
-          [Op.or]: [
-            user.department_id ? { department_id: user.department_id } : {},
-            user.strand_id ? { strand_id: user.strand_id } : {}
-          ]
-        }
+        where: adviserWhere,
+        transaction: transaction
       });
 
       for (const adv of possibleAdvisers) {
@@ -97,20 +103,56 @@ exports.submitProject = async (req, res) => {
           projectId: project.id,
           adviserId: adv.id,
           isRead: false,
-          reason: `New pending project in your ${user.strand_id ? "strand" : "department"}: "${project.title}" by ${user.full_name}`
+          reason: `New pending project in your ${
+            user.strand_id ? "strand" : "department"
+          }: "${project.title}" by ${user.full_name}`
+        }, { transaction: transaction });
+      }
+
+    } else {
+      // Student has no department or strand - warn in logs
+      console.warn(
+        `WARNING: Student id=${user.id} (${user.full_name}) submitted project ` +
+        `"${project.title}" but has no department_id or strand_id. ` +
+        `No adviser was notified. Update this user's academic info.`
+      );
+    }
+
+    // All database operations succeeded - commit everything
+    await transaction.commit();
+
+    // Socket.io notifications AFTER commit
+    // (these are real-time only, not database - no transaction needed)
+    const io = req.app.get("io");
+    if (io) {
+      io.emit(`student_notify_${user.id}`, {
+        type: "submission",
+        message: `You submitted the project "${project.title}".`
+      });
+    
+
+      if (user.department_id || user.strand_id) {
+        const possibleAdvisers = await User.findAll({
+          where: {
+            role: "research_adviser",
+            [Op.or]: [
+              user.department_id ? { department_id: user.department_id } : {},
+              user.strand_id ? { strand_id: user.strand_id } : {}
+            ]
+          }
         });
 
-        if (io) {
-          io.emit(`adviser_notify_${adv.id}`, {
-            type: "new_submission",
-            title: project.title,
-            student: user.full_name,
-            time: new Date().toLocaleString(),
-            message: `New project waiting in ${user.strand_id ? "strand" : "department"}`
-          });
+          for (const adv of possibleAdvisers) {
+            io.emit(`adviser_notify_${adv.id}`, {
+              type: "new_submission",
+              title: project.title,
+              student: user.full_name,
+              time: new Date().toLocaleString(),
+              message: `New project waiting in ${user.strand_id ? "strand" : "department"}`
+            });
+          }
         }
       }
-    }
 
     // Success response
     res.status(201).json({
@@ -119,8 +161,9 @@ exports.submitProject = async (req, res) => {
     });
 
   } catch (error) {
+    await transaction.rollback();
     console.error("Submit project error:", error);
-    res.status(500).json({
+    return res.status(500).json({
       message: "Something went wrong on our server. Please try again later.",
       error: error.message
     });

@@ -1,12 +1,9 @@
 {
-  "development": {
-    "username": "postgres",
-    "password": "0postgresql",
-    "database": "researchhub_db",
-    "host": "127.0.0.1",
-    "dialect": "postgres",
-    "schema": "public"
-  },
+"development": {
+  "use_env_variable": "DATABASE_URL",
+  "dialect": "postgres",
+  "dialectOptions": {}
+},
   "production": {
     "use_env_variable": "DATABASE_URL",
     "dialect": "postgres",
