@@ -47,7 +47,7 @@ const AdminDashboard = ({ activeSection }) => {
   const [editUserId, setEditUserId] = useState(null);
   const [editForm, setEditForm] = useState({ full_name: "", email: "", role: "", password: "" });
   const [message, setMessage] = useState("");
-  const [error, setError] = useState("");
+  const [setError] = useState("");
 
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -55,7 +55,6 @@ const AdminDashboard = ({ activeSection }) => {
   const [projectPage, setProjectPage] = useState(1);
   const [loadingProjects, setLoadingProjects] = useState(false);
   const [projectsError, setProjectsError] = useState("");
-  const [bookmarkLoading, setBookmarkLoading] = useState({});
 
   // ── Shared Academic Data (used in both Academic Settings & Manage Users) ──
   const [departments, setDepartments] = useState([]);
@@ -361,28 +360,6 @@ const AdminDashboard = ({ activeSection }) => {
     axios.get("/users/all")
       .then(res => setUsers(res.data.users || []))
       .catch(() => setUsers([]));
-  };
-
-  const handleBookmarkToggle = async (e, projectId, bookmarked) => {
-    e.stopPropagation();
-    if (!user) {
-      alert("You must be logged in to bookmark projects.");
-      return;
-    }
-    setBookmarkLoading(prev => ({ ...prev, [projectId]: true }));
-    try {
-      if (bookmarked) {
-        await axios.delete(`/bookmarks/${projectId}`);
-      } else {
-        await axios.post(`/bookmarks/${projectId}`);
-      }
-      setProjects(prev => prev.map(p =>
-        p.id === projectId ? { ...p, bookmarked: !bookmarked } : p
-      ));
-    } catch (err) {
-      alert("Failed to update bookmark. Please try again.");
-    }
-    setBookmarkLoading(prev => ({ ...prev, [projectId]: false }));
   };
 
   useEffect(() => {

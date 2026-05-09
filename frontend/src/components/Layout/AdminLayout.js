@@ -14,7 +14,6 @@ const AdminLayout = ({ children }) => {
   const { isOpen: sidebarOpen, setOpen } = useSidebar("admin");
 
   const handleCloseSidebar = () => setOpen(false);
-  const handleToggleSidebar = () => setOpen(!sidebarOpen);
 
   const handleLogout = () => {
     logout();

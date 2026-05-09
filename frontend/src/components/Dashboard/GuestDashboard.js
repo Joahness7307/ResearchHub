@@ -19,7 +19,7 @@ const GuestDashboard = () => {
   const [selectedCard, setSelectedCard] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const [counts, setCounts] = useState({ all: 0, college: 0, senior_high: 0 });
+  const [setCounts] = useState({ all: 0, college: 0, senior_high: 0 });
   const projectsPerPage = 10;
   const navigate = useNavigate();
 
@@ -68,7 +68,7 @@ const GuestDashboard = () => {
     axios.get("/projects/public/counts")
         .then(res => setCounts(res.data))
         .catch(() => setCounts({ all: 0, college: 0, senior_high: 0 }));
-    }, []);
+    }, [setCounts]);
 
     // Only approved projects
     const approvedProjects = projects.filter(project => project.status === "approved");

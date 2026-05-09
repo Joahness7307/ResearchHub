@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo, useCallback, useContext } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import axios from "../../api/axios";
 import NotificationPage from "./NotificationPage";
 import "./AdminDashboard.css";
@@ -131,7 +131,7 @@ const HeadAdminDashboard = ({ section }) => {
   const [projects, setProjects] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const [bookmarkedProjects, setBookmarkedProjects] = useState([]); // Track bookmarked project IDs
+  const [_bookmarkedProjects, setBookmarkedProjects] = useState([]);
 
   const selectedCard = section || "dashboard";
 

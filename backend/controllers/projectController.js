@@ -2,7 +2,7 @@ const { Project, User, Notification, Comment, sequelize } = require("../models")
 const path = require("path");
 const fs = require("fs");
 const cloudinary = require("../config/cloudinary");
-const { Op } = require("sequelize");  // ← ADD THIS LINE
+const { Op } = require("sequelize");
 
 // Upload final research paper
 exports.submitProject = async (req, res) => {
@@ -327,7 +327,7 @@ exports.endorseProject = async (req, res) => {
         projectId: project.id,
         adviserId: adv.id,
         isRead: false,
-        reason: `Project "${project.title}" endorsed by ${req.user.full_name} — now awaiting admin approval.`
+        reason: `You endorsed the "${project.title}" project — now awaiting admin approval.`
       });
 
       if (io) {
@@ -350,8 +350,18 @@ exports.endorseProject = async (req, res) => {
         projectId: project.id,
         adminId: head.id,
         isRead: false,
-        reason: `Project "${project.title}" endorsed by adviser "${req.user.full_name}".`
+        reason: `Project "${project.title}" was endorsed by research adviser "${req.user.full_name}".`
       });
+
+      // ADD THIS BLOCK BELOW TO FIX REAL-TIME UPDATES FOR HEAD ADMIN
+      if (io) {
+        io.emit(`admin_notify_${head.id}`, {
+          type: "new_pending",
+          projectId: project.id,
+          title: project.title,
+          message: `New endorsed project from ${req.user.full_name}`
+        });
+      }
     }
 
     res.json({ message: "Project endorsed to admin for approval." });
@@ -428,7 +438,7 @@ exports.needRevision = async (req, res) => {
         projectId: project.id,
         studentId: project.submitted_by,
         isRead: false,
-        reason: `Your project "${project.title}" requires revision. Reason: ${reason}`
+        reason: `Your "${project.title}" project requires revision. Reason: ${reason}`
       });
 
       if (io) {
@@ -462,7 +472,7 @@ exports.informStudentOfRevision = async (req, res) => {
       projectId: project.id,
       studentId: project.submitted_by,
       isRead: false,
-      reason: `Your project "${project.title}" requires revision. Please reupload your updated document.`,
+      reason: `Your "${project.title}" project requires revision. Please reupload your updated document.`,
     });
     res.json({ message: "Student notified of revision." });
   } catch (error) {
@@ -514,7 +524,7 @@ exports.approveProject = async (req, res) => {
         projectId: project.id,
         adviserId: adv.id,
         isRead: false,
-        reason: `Project "${project.title}" approved and added to repository!`
+        reason: `Project "${project.title}" has been approved and added to the repository!`
       });
 
       if (io) {
@@ -533,7 +543,7 @@ exports.approveProject = async (req, res) => {
       projectId: project.id,
       studentId: project.submitted_by,
       isRead: false,
-      reason: `Your project "${project.title}" has been approved and is now in the repository.`
+      reason: `Your project "${project.title}" has been approved and added to the repository.`
     });
 
     if (io) {
@@ -552,7 +562,7 @@ exports.approveProject = async (req, res) => {
         projectId: project.id,
         adminId: head.id,
         isRead: false,
-        reason: `Project "${project.title}" has been approved and added to the repository by ${req.user.full_name}.`
+        reason: `You approved the "${project.title}" project and added to the repository.`
       });
 
       if (io) {

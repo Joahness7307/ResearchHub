@@ -1,6 +1,5 @@
-import React, { useState, useContext } from "react";
+import React, { useState } from "react";
 import axios from "../../api/axios";
-import { AuthContext } from "../../context/AuthContext";
 import SuccessModal from "../SuccessModal";
 import "./SubmitResearch.css";
 // NOTE: PDFDocument is imported but unused; I've removed it in the final file.
@@ -21,7 +20,6 @@ const categories = [
 ];
 
 const SubmitResearch = () => {
-  const { user } = useContext(AuthContext);
   const [form, setForm] = useState({
     title: "",
     title_description: "",
@@ -29,7 +27,6 @@ const SubmitResearch = () => {
     category: "",
     document: null,
   });
-  const [message, setMessage] = useState('');
   const [showSuccess, setShowSuccess] = useState(false);
   const [error, setError] = useState('');
 
@@ -64,7 +61,6 @@ const SubmitResearch = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setMessage('');
     setError('');
 
     // Validation
@@ -85,14 +81,13 @@ const SubmitResearch = () => {
       // The API endpoint for submission might require the user's ID/submitter info, 
       // which is usually handled by the server using the JWT token or explicitly sent here.
       // Assuming the backend handles submitter association via the token.
-      const res = await axios.post("/projects/submit", formData, {
+      await axios.post("/projects/submit", formData, {
         headers: { 
             'Content-Type': 'multipart/form-data', 
             'Authorization': `Bearer ${token}` 
         }
       });
-      
-      setMessage(res.data.message || "Project submitted successfully!");
+
       setShowSuccess(true);
       
       // Reset form fields

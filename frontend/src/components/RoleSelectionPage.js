@@ -41,14 +41,13 @@ const RoleSelection = () => {
           </>
         ) : (
           <>
-            <p style={{ marginBottom: 16 }}>Are you a College or Senior High student?</p>
             <button className="role-btn" onClick={() => handleStudentType("college")}>
               College Student
             </button>
             <button className="role-btn" onClick={() => handleStudentType("seniorhigh")}>
               Senior High Student
             </button>
-            <div style={{ marginTop: 20 }}>
+            <div>
               <button 
                 type="button" 
                 onClick={() => setStudentPrompt(false)} 
@@ -56,6 +55,9 @@ const RoleSelection = () => {
               >
                 Back
               </button>
+              <div className="auth-switch" style={{ marginTop: '20px' }}>
+              Already have an account? <Link to="/login">Login</Link>
+            </div>
             </div>
           </>
         )}

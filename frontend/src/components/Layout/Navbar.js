@@ -31,7 +31,7 @@ const Navbar = ({
   // Sidebar context hook for admin/adviser/head_admin roles.
   // Sidebar context hook for admin/adviser/head_admin roles.
   const roleName = user?.role || "";
-  const { isOpen: adminIsOpen, toggle: adminToggle, setOpen: adminSetOpen } = useSidebar(roleName);
+  const { isOpen: adminIsOpen, toggle: adminToggle } = useSidebar(roleName);
 
   // User role checks (always boolean)
   const isUnauthenticated = !user;

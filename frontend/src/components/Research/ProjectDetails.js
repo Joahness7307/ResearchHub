@@ -27,34 +27,6 @@ const ProjectDetails = () => {
 
     const navigate = useNavigate();
 
-    const [editFields, setEditFields] = useState({
-        title: "",
-        title_description: "",
-        abstract: "",
-        category: ""
-    });
-
-    // Example handler for opening the edit modal
-    const openEditModal = () => {
-        setEditFields({
-            title: project.title,
-            title_description: project.title_description,
-            abstract: project.abstract,
-            category: project.category
-        });
-        // setShowEditModal(true); // If you use a modal
-    };
-
-    const handleEditMetadata = async () => {
-        try {
-            await axios.put(`/projects/admin/edit/${project.id}`, editFields);
-            // Optionally refresh project details
-            alert("Project metadata updated!");
-        } catch (err) {
-            alert("Failed to update project metadata.");
-        }
-    };
-
     useEffect(() => {
         const fetchProject = async () => {
             try {
@@ -144,16 +116,6 @@ const ProjectDetails = () => {
             alert("Failed to mark as need revision.");
         }
         setActionLoading(false);
-    };
-
-    const handleHideProject = async () => {
-        await axios.patch(`/projects/admin/hide/${project.id}`);
-        // Refresh project list
-    };
-
-    const handleDeleteProject = async () => {
-        await axios.delete(`/projects/admin/delete/${project.id}`);
-        // Redirect or refresh
     };
 
     const handleInformStudent = async () => {

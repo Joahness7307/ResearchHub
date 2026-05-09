@@ -1,4 +1,3 @@
-// src/api/research.js
 import axios from 'axios';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL + '/api/project'; // Base URL for research API
@@ -18,17 +17,3 @@ export const submitProject = async (formData, token) => {
     throw error;
   }
 };
-
-// You can add more functions here for other research-related API calls:
-// export const getResearchProposals = async (token) => {
-//   try {
-//     const response = await axios.get(`${API_URL}/`, {
-//       headers: {
-//         'Authorization': `Bearer ${token}`,
-//       },
-//     });
-//     return response.data;
-//   } catch (error) {
-//     throw error;
-//   }
-// };

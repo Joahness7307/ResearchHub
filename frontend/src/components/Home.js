@@ -1,6 +1,5 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { useLocation, Link, useNavigate } from "react-router-dom";
-import axios from "../api/axios";
 import "./Home.css";
 import caparidaImg from "../assets/caparida.png";
 import yongcoImg from "../assets/yongco2.jpeg";
@@ -12,10 +11,6 @@ import lapisImg from "../assets/lapis.jpeg";
 const Home = () => {
   const location = useLocation();
   const navigate = useNavigate();
-
-  const [email, setEmail] = useState("");
-  const [message, setMessage] = useState("");
-  const [feedback, setFeedback] = useState("");
 
   const teamMembers = [
     { name: "Jan Niño Caparida", role: "Project Manager", img: caparidaImg },
@@ -37,22 +32,6 @@ const Home = () => {
       }
     }
   }, [location]);
-
-  // Submit contact form
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setFeedback("");
-
-    try {
-      const res = await axios.post("/contact", { email, message });
-      setFeedback(res.data.message || "Message sent successfully!");
-      setEmail("");
-      setMessage("");
-    } catch (err) {
-      console.error(err);
-      setFeedback("Failed to send message. Please try again.");
-    }
-  };
 
   return (
     <div className="home-root">

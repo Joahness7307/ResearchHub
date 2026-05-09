@@ -13,7 +13,6 @@ const ResearchAdviserLayout = ({ children }) => {
   const { isOpen: sidebarOpen, setOpen } = useSidebar("research_adviser");
 
   const handleCloseSidebar = () => setOpen(false);
-  const handleToggleSidebar = () => setOpen(!sidebarOpen);
 
   const handleLogout = () => {
     logout();
