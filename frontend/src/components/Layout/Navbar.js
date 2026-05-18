@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState, useContext } from "react";
+import React, { useRef, useEffect, useState, useContext, useCallback } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { AuthContext } from "../../context/AuthContext";
 import { useSidebar } from "../../context/SidebarContext";
@@ -6,8 +6,12 @@ import appLogo from '../../assets/appLogo.png';
 import fallbackLogo from '../../assets/logo192.png';
 import notifIcon from "../../assets/notification.png";
 import axios from "../../api/axios";
+import { API_ROUTES } from "../../api/apiRoutes";
 import { io } from "socket.io-client";
-import "./Navbar.css";
+import { notificationIsUnread } from "../../context/DashboardNotificationsUnreadContext";
+import './Navbar.css';
+
+const STUDENT_NOTIFICATIONS_PATH = "/notifications";
 
 const Navbar = ({
   onHamburgerClick = () => {},
@@ -39,31 +43,36 @@ const Navbar = ({
   const isAdminRole = !!user && (user.role === "admin" || user.role === "head_admin" || user.role === "research_adviser");
 
   // Notification fetch for student
-  const fetchStudentNotifications = async () => {
+  const fetchStudentNotifications = useCallback(async () => {
     try {
-      const res = await axios.get("/notifications/student/notifications");
-      setStudentNotifications(res.data.notifications);
-      setStudentNotifCount(
-        res.data.notifications.filter(n => !n.isRead).length
-      );
+      const res = await axios.get(API_ROUTES.notifications.student);
+      const list = res.data.notifications ?? [];
+      setStudentNotifications(list);
+      setStudentNotifCount(list.filter(notificationIsUnread).length);
     } catch (err) {
       setStudentNotifications([]);
       setStudentNotifCount(0);
     }
-  };
+  }, []);
 
+  // Real-time updates (socket only; refetch is tied to route in the next effect)
   useEffect(() => {
-    if (user && user.role === "student") {
+    if (!user || user.role !== "student") return undefined;
+    socketRef.current = io(process.env.REACT_APP_BACKEND_URL);
+    socketRef.current.on(`student_notify_${user.id}`, () => {
       fetchStudentNotifications();
-      socketRef.current = io(process.env.REACT_APP_BACKEND_URL);
-      socketRef.current.on(`student_notify_${user.id}`, () => {
-        fetchStudentNotifications();
-      });
-      return () => {
-        if (socketRef.current) socketRef.current.disconnect();
-      };
-    }
-  }, [user]);
+    });
+    return () => {
+      if (socketRef.current) socketRef.current.disconnect();
+      socketRef.current = null;
+    };
+  }, [user?.id, user?.role, fetchStudentNotifications]);
+
+  // Load / refresh list + unread count on mount and when navigation changes
+  useEffect(() => {
+    if (user?.role !== "student") return;
+    fetchStudentNotifications();
+  }, [user?.id, user?.role, location.pathname, fetchStudentNotifications]);
 
   useEffect(() => {
     function handleClickOutside(event) {
@@ -94,7 +103,7 @@ const Navbar = ({
 
   // Unified sidebar toggle used by Navbar:
   const toggleSidebar = (openState) => {
-    console.log("Navbar.toggleSidebar", { roleName, isStudentOrGuest, isAdminRole, isUnauthenticated, openState, adminIsOpen });
+    // console.log("Navbar.toggleSidebar", { roleName, isStudentOrGuest, isAdminRole, isUnauthenticated, openState, adminIsOpen });
     // Public (unauthenticated) pages: use Navbar's own sidebar
     if (isUnauthenticated) {
       setIsSidebarOpen(openState);
@@ -121,7 +130,7 @@ const Navbar = ({
   // Hamburger sidebar links for student/guest
   const sidebarLinks = [
     ...(user && user.role === "student" && (user.year_level === "3rd" || user.year_level === "4th" || user.grade_level === "12")
-      ? [{ label: "Upload Project", to: "/submit-research" }]
+      ? [{ label: "Upload Project", to: "/upload-project" }]
       : []),
     { label: "My Account", to: "/my-account" },
     { label: "Notifications", to: "/notifications" },
@@ -130,11 +139,11 @@ const Navbar = ({
 
   let logoLink = "/";
   if (user) {
-    if (user.role === "student") logoLink = "/projects";
+    if (user.role === "student") logoLink = "/dashboard";
     else if (user.role === "admin") logoLink = "/admin";
     else if (user.role === "head_admin") logoLink = "/head-admin";
     else if (user.role === "research_adviser") logoLink = "/adviser";
-    else if (user.role === "guest") logoLink = "/guest";
+    else if (user.role === "guest") logoLink = "/dashboard";
   }
 
   // Unauthenticated navbar links
@@ -238,7 +247,7 @@ const Navbar = ({
         <>
           <div className="navbar-right desktop-nav student-nav-links">
             {user.role === "student" && (user.year_level === "3rd" || user.year_level === "4th" || user.grade_level === "12") && (
-              <Link to="/submit-research" className="nav-link nav-btn primary-btn">Upload Project</Link>
+              <Link to="/upload-project" className="nav-link nav-btn primary-btn">Upload Project</Link>
             )}
             <Link to="/my-account" className="nav-link">My Account</Link>
             <span style={{ position: "relative" }}>
@@ -264,10 +273,10 @@ const Navbar = ({
                           className={`projects-dropdown-item ${notif.isRead ? "read" : "unread"}`}
                           onClick={async () => {
                             setShowStudentDropdown(false);
-                            await axios.patch(`/notifications/student/notifications/${notif.id}/read`);
-                            setStudentNotifications(prev =>
-                              prev.map(n => n.id === notif.id ? { ...n, isRead: true } : n)
+                            await axios.patch(
+                              `${API_ROUTES.notifications.student}/${notif.id}/read`
                             );
+                            await fetchStudentNotifications();
                             navigate(`/notifications/${notif.id}`);
                           }}
                         >
@@ -310,12 +319,27 @@ const Navbar = ({
             </button>
             {sidebarLinks.map((link) =>
               link.action ? (
-                <button key={link.label} className="sidebar-link" onClick={() => { link.action(); toggleSidebar(false); }}>
+                <button key={link.label} className="sidebar-link" type="button" onClick={() => { link.action(); toggleSidebar(false); }}>
                   {link.label}
                 </button>
               ) : (
-                <Link key={link.label} to={link.to} className="sidebar-link" onClick={() => toggleSidebar(false)}>
-                  {link.label}
+                <Link
+                  key={link.label}
+                  to={link.to}
+                  className={`sidebar-link${link.to === STUDENT_NOTIFICATIONS_PATH ? " sidebar-link-row" : ""}`}
+                  onClick={() => toggleSidebar(false)}
+                >
+                  <span className="sidebar-link-text">{link.label}</span>
+                  {user.role === "student" &&
+                    link.to === STUDENT_NOTIFICATIONS_PATH &&
+                    studentNotifCount > 0 && (
+                      <span
+                        className="navbar-sidebar-unread-badge"
+                        aria-label={`${studentNotifCount} unread`}
+                      >
+                        {studentNotifCount > 99 ? "99+" : studentNotifCount}
+                      </span>
+                    )}
                 </Link>
               )
             )}

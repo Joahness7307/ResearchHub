@@ -1,7 +1,9 @@
 import React, { useEffect, useState, useContext } from "react";
 import axios from "../../api/axios";
+import { API_ROUTES } from "../../api/apiRoutes";
 import { useParams, useNavigate } from "react-router-dom";
 import { AuthContext } from "../../context/AuthContext";
+import { useDashboardNotificationsUnread } from "../../context/DashboardNotificationsUnreadContext";
 
 const NotificationDetails = () => {
   const { id } = useParams();
@@ -9,18 +11,21 @@ const NotificationDetails = () => {
   const [notification, setNotification] = useState(null);
   const [projectId, setProjectId] = useState(null);
   const navigate = useNavigate();
+  const { refreshUnreadCount } = useDashboardNotificationsUnread();
 
   useEffect(() => {
     if (!id || !user) return;
     let notifUrl = "";
     if (user.role === "student") {
-      notifUrl = "/notifications/student/notifications";
+      notifUrl = API_ROUTES.notifications.student;
     } else if (user.role === "research_adviser") {
-      notifUrl = `/notifications/adviser/${user.id}`;
-    } else if (user.role === "admin" || user.role === "head_admin") {
-      notifUrl = "/notifications/admin/notifications";
+      notifUrl = API_ROUTES.notifications.adviserById(user.id);
+    } else if (user.role === "head_admin") {
+      notifUrl = API_ROUTES.notifications.headAdminById(user.id);
+    } else if (user.role === "admin") {
+      notifUrl = API_ROUTES.notifications.adminById(user.id);
     } else {
-      notifUrl = "/notifications/student/notifications"; // fallback for guest
+      notifUrl = API_ROUTES.notifications.student; // fallback for guest
     }
     axios.get(notifUrl)
       .then(res => {
@@ -31,16 +36,24 @@ const NotificationDetails = () => {
         if (notif && !notif.isRead) {
           let patchUrl = "";
           if (user.role === "student") {
-            patchUrl = `/notifications/student/notifications/${id}/read`;
+            patchUrl = API_ROUTES.notifications.studentMarkAsRead(id);
           } else if (user.role === "research_adviser") {
-            patchUrl = `/notifications/adviser/${id}/read`;
-          } else if (user.role === "admin" || user.role === "head_admin") {
-            patchUrl = `/notifications/admin/notifications/${id}/read`;
+            patchUrl = API_ROUTES.notifications.adviserMarkAsRead(id);
+          } else if (user.role === "head_admin") {
+            patchUrl = API_ROUTES.notifications.headAdminMarkAsRead(id);
+          } else if (user.role === "admin") {
+            patchUrl = API_ROUTES.notifications.adminMarkAsRead(id);
           }
-          if (patchUrl) axios.patch(patchUrl);
+          if (patchUrl) {
+            axios.patch(patchUrl).then(() => {
+              if (user.role === "head_admin" || user.role === "research_adviser") {
+                refreshUnreadCount();
+              }
+            });
+          }
         }
       });
-  }, [id, user]);
+  }, [id, user, refreshUnreadCount]);
 
   if (!notification) return <div style={{ margin: "120px auto", textAlign: "center" }}>Loading notification...</div>;
 

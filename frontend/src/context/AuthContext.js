@@ -1,5 +1,6 @@
 import React, { createContext, useState, useEffect } from "react";
 import axios from "../api/axios";
+import { API_ROUTES } from "../api/apiRoutes";
 
 export const AuthContext = createContext();
 
@@ -40,7 +41,7 @@ export const AuthProvider = ({ children }) => {
     // keep cached user visible while revalidating in background
     const revalidate = async () => {
       try {
-        const res = await axios.get("/users/profile"); // axios will include token via request interceptor
+        const res = await axios.get(API_ROUTES.auth.profile); // axios will include token via request interceptor
         if (!mounted) return;
         if (res?.data?.user) {
           setUser(res.data.user);

@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useContext } from "react";
 import axios from "../../api/axios";
+import { API_ROUTES } from "../../api/apiRoutes";
 import { AuthContext } from "../../context/AuthContext";
 import { useNavigate } from "react-router-dom"; 
 import "./NotificationPage.css";
@@ -11,15 +12,19 @@ const NotificationPage = () => {
 
   useEffect(() => {
     if (user && user.role === "research_adviser") {
-      axios.get(`/notifications/adviser/${user.id}`)
+      axios.get(API_ROUTES.notifications.adviserById(user.id))
         .then(res => setNotifications(res.data.notifications))
         .catch(() => setNotifications([]));
     } else if (user && user.role === "student") {
-      axios.get("/notifications/student/notifications")
+      axios.get(API_ROUTES.notifications.student)
         .then(res => setNotifications(res.data.notifications))
         .catch(() => setNotifications([]));
-    } else if (user && (user.role === "admin" || user.role === "head_admin")) {
-      axios.get("/notifications/admin/notifications")
+    } else if (user && (user.role === "head_admin")) {
+      axios.get(API_ROUTES.notifications.headAdminById(user.id))
+        .then(res => setNotifications(res.data.notifications))
+        .catch(() => setNotifications([]));
+    } else if (user.role === "admin" ) {
+      axios.get(API_ROUTES.notifications.adminById(user.id))
         .then(res => setNotifications(res.data.notifications))
         .catch(() => setNotifications([]));
     }

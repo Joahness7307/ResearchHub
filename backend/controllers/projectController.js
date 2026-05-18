@@ -170,7 +170,7 @@ exports.submitProject = async (req, res) => {
   }
 };
 
-exports.getAdminNotifications = async (req, res) => {
+exports.getHeadAdminNotifications = async (req, res) => {
   try {
     const notifications = await Notification.findAll({
       where: { adminId: req.user.id },
@@ -227,7 +227,7 @@ exports.markStudentNotificationRead = async (req, res) => {
 exports.getProjectCounts = async (req, res) => {
   try {
     // 1. Fetch counts grouped by status
-    const counts = await Project.findAll({
+    const counts = await Project.findAll({  
       attributes: [
         'status',
         [Project.sequelize.fn('COUNT', Project.sequelize.col('id')), 'count']

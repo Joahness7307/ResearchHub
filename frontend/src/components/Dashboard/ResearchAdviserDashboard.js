@@ -1,6 +1,7 @@
 import React, { useContext, useEffect, useState, useRef } from "react";
 import { AuthContext } from "../../context/AuthContext";
 import axios from "../../api/axios";
+import { API_ROUTES } from "../../api/apiRoutes";
 import { useNavigate } from "react-router-dom";
 import { io } from "socket.io-client";
 import "./ResearchAdviserPage.css";
@@ -41,9 +42,9 @@ const ResearchAdviserDashboard = ({ section }) => {
         setBookmarkLoading(prev => ({ ...prev, [projectId]: true }));
         try {
             if (bookmarked) {
-                await axios.delete(`/bookmarks/${projectId}`);
+                await axios.delete(API_ROUTES.bookmarks.toggleBookmark(projectId));
             } else {
-                await axios.post(`/bookmarks/${projectId}`);
+                await axios.post(API_ROUTES.bookmarks.toggleBookmark(projectId));
             }
             setProjects(prev => prev.map(p =>
                 p.id === projectId ? { ...p, bookmarked: !bookmarked } : p
@@ -103,7 +104,7 @@ const ResearchAdviserDashboard = ({ section }) => {
                 // 2. Fetch bookmark status (THIS WAS MISSING!)
                 const bookmarkPromises = user
                     ? projectsData.map(project =>
-                        axios.get(`/bookmarks/is-bookmarked/${project.id}`)
+                        axios.get(API_ROUTES.bookmarks.getBookmarkState(project.id))
                             .then(r => r.data.bookmarked)
                             .catch(() => false)
                       )

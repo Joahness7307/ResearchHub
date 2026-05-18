@@ -30,6 +30,8 @@
 
   padding: 2rem;
 
+  /* Clear fixed App-level Navbar (see Navbar.css --navbar-height) */
+  padding-top: var(--navbar-height, 5.5rem);
 
 }
 
@@ -57,7 +59,7 @@
 
   z-index: 1200;
 
-  padding: 4rem 1.5rem;
+  padding: 7rem 1.5rem;
 
   transition: right 0.35s ease-in-out;
 
@@ -74,6 +76,11 @@
 
 
 .mobile-sidebar-link {
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
 
   color: #fff;
 
@@ -95,7 +102,30 @@
 
   transition: background 0.2s;
 
+  position: relative;
+
 }
+
+.mobile-sidebar-link-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.mobile-sidebar-unread-badge {
+  flex-shrink: 0;
+  min-width: 1.5rem;
+  height: 1.5rem;
+  padding: 0 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #e53e3e;
+  color: #fff;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
 
 
 
@@ -131,18 +161,7 @@
 
 }
 
-/* Ensures the icon/close symbol is correctly sized */
-.navbar-hamburger {
-    font-size: 2.2rem; /* Should be large enough to see */
-    color: var(--text-light); /* Should be white/light */
-    z-index: 1300; /* Must be high enough to overlay content */
-}
-
-/* Ensures the two symbols sit correctly within the button area */
-.hamburger-close, .hamburger-icon {
-    line-height: 1; 
-    display: block;
-}
+/* Navbar hamburger styles live only in Navbar.css — do not duplicate here */
 
 
 
@@ -189,6 +208,10 @@
 
   }
 
+  .mobile-sidebar {
+    padding-top: 6rem;
+  }
+
 
 
   .dashboard-content {
@@ -228,17 +251,4 @@
     padding: 0;
     line-height: 1;
     z-index: 10; /* Ensure it's above content inside the sidebar */
-}
-
-/* Optional: Basic style to hide the 'My Account' link on mobile, 
-   since the links are duplicated in the sidebar */
-@media (max-width: 768px) {
-    .desktop-sidebar {
-        display: none;
-    }
-    
-    .navbar-right .desktop-nav {
-        /* This hides the desktop 'My Account' link in the Navbar */
-        display: none;
-    }
 }

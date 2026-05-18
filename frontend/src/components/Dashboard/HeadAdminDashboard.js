@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useMemo, useCallback, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "../../api/axios";
+import { API_ROUTES } from "../../api/apiRoutes";
 import NotificationPage from "./NotificationPage";
 import "./AdminDashboard.css";
 import categoryColors from "../../constants/categoryColors";
@@ -142,11 +143,11 @@ const HeadAdminDashboard = ({ section }) => {
     try {
         if (isBookmarked) {
         // Remove bookmark
-        await axios.delete(`/bookmarks/${projectId}`);  // ← Fixed
+        await axios.delete(API_ROUTES.bookmarks.toggleBookmark(projectId));  // ← Fixed
         setBookmarkedProjects((prev) => prev.filter((id) => id !== projectId));
         } else {
         // Add bookmark
-        await axios.post(`/bookmarks/${projectId}`);   // ← Fixed (no body needed)
+        await axios.post(API_ROUTES.bookmarks.toggleBookmark(projectId));   // ← Fixed (no body needed)
         setBookmarkedProjects((prev) => [...prev, projectId]);
         }
 
@@ -184,11 +185,11 @@ const HeadAdminDashboard = ({ section }) => {
   useEffect(() => {
     const fetchProjects = async () => {
       try {
-        const res = await axios.get("/projects/admin/all");
+        const res = await axios.get(API_ROUTES.head_admin.getAllProjects);
         const data = res.data;
 
         // Also fetch current user's bookmarks to mark correctly
-        const bookmarkRes = await axios.get("/bookmarks/my");
+        const bookmarkRes = await axios.get(API_ROUTES.bookmarks.getMyBookmarks);
         const bookmarkedIds = bookmarkRes.data.map((project) => project.id); // ← direct access
 
         const projectsWithBookmarkStatus = data.map((project) => ({

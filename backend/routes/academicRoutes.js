@@ -9,7 +9,7 @@ const {
 } = require('../controllers/academicController');
 
 // Public routes for signup dropdowns
-router.get('/departments', getDepartments);  // Fetch all depts with flags
+router.get('/departments', getDepartments);
 router.get('/departments/:deptId/blocks', getBlocksByDept);
 router.get('/departments/:deptId/majors', getMajorsByDept);
 router.get('/strands', getStrands);

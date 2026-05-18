@@ -1,11 +1,11 @@
 import React, { useContext } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../../context/AuthContext";
-import "./AdminSideNavbar.css";
+import SidebarNavigation from "../common/Sidebar/SidebarNavigation";
+import { getSidebarLinks } from "../../config/sidebarLinks";
 
 const AdminSideNavbar = () => {
   const navigate = useNavigate();
-  const location = useLocation();
   const { logout } = useContext(AuthContext);
 
   const handleLogout = () => {
@@ -13,44 +13,9 @@ const AdminSideNavbar = () => {
     navigate("/login");
   };
 
-  const path = location.pathname;
   return (
     <aside className="side-navbar">
-      <div className="side-nav-links">
-        <button
-          className={`side-nav-link${path === "/admin" ? " active" : ""}`}
-          onClick={() => navigate("/admin")}
-        >
-          Dashboard
-        </button>
-        {/* <button
-          className={`side-nav-link${path === "/admin/notifications" ? " active" : ""}`}
-          onClick={() => navigate("/admin/notifications")}
-        >
-          Notifications
-        </button> */}
-        <button
-          className={`side-nav-link${path === "/admin/manage-users" ? " active" : ""}`}
-          onClick={() => navigate("/admin/manage-users")}
-        >
-          Manage Users
-        </button>
-        <button
-         className={`side-nav-link${path === "/admin/manage-projects" ? " active" : ""}`}
-         onClick={() => navigate("/admin/manage-projects")}
-       >
-         Manage Projects
-       </button>
-       <button
-          className={`side-nav-link${path === "/admin/academic" ? " active" : ""}`}
-          onClick={() => navigate("/admin/academic")}
-        >
-          Academic Settings
-        </button>
-      </div>
-      <button className="side-nav-link logout-link" onClick={handleLogout}>
-        Logout
-      </button>
+      <SidebarNavigation links={getSidebarLinks("admin")} logout={handleLogout} />
     </aside>
   );
 };

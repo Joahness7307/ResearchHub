@@ -500,6 +500,7 @@ exports.updateUser = async (req, res) => {
     res.status(200).json({ message: "User updated successfully" });
   } catch (error) {
     console.error("Update user error:", error);
+    console.error(error.errors);
     res.status(500).json({ error: error.message, message: "Failed to update user." });
   }
 };

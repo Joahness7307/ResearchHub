@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "../../api/axios";
+import { API_ROUTES } from "../../api/apiRoutes";
 import openEyeIcon from "../../assets/openEyeIcon.png";
 import closeEyeIcon from "../../assets/closeEyeIcon.png";
 import { useNavigate, Link } from "react-router-dom";
@@ -31,7 +32,7 @@ const CollegeSignup = () => {
 
   // Fetch departments on mount
   useEffect(() => {
-    axios.get("/academic/departments")
+    axios.get(API_ROUTES.academic.departments)
       .then(res => {
         setDepartments(res.data);
         setLoading(false);
@@ -58,7 +59,7 @@ const CollegeSignup = () => {
 
     // Fetch blocks if department has them
     if (dept.has_blocks) {
-      axios.get(`/academic/departments/${selectedDeptId}/blocks`)
+      axios.get(API_ROUTES.academic.blocks(selectedDeptId))
         .then(res => setBlocks(res.data))
         .catch(err => console.error("Failed to load blocks:", err));
     } else {
@@ -68,7 +69,7 @@ const CollegeSignup = () => {
 
     // Fetch majors if department has them
     if (dept.has_majors) {
-      axios.get(`/academic/departments/${selectedDeptId}/majors`)
+      axios.get(API_ROUTES.academic.majors(selectedDeptId))
         .then(res => setMajors(res.data))
         .catch(err => console.error("Failed to load majors:", err));
     } else {
@@ -116,7 +117,7 @@ const CollegeSignup = () => {
     };
 
     try {
-      await axios.post("/users/register", payload);
+      await axios.post(API_ROUTES.auth.register, payload);
       navigate("/login");
     } catch (err) {
       setError(err.response?.data?.message || "Registration failed. Please try again.");

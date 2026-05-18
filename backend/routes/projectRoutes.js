@@ -1,6 +1,6 @@
 const express = require("express");
 const path = require("path");
-const { submitProject, getAdminNotifications, markNotificationRead, getStudentNotifications, getAllProjects, getProjectCounts, endorseProject, needRevision, approveProject, getAllProjectsAdmin, editProjectMetadata, hideProject, deleteProject, informStudentOfRevision, reuploadProjectDocument  } = require("../controllers/projectController");
+const { submitProject, getHeadAdminNotifications, markNotificationRead, getStudentNotifications, getAllProjects, getProjectCounts, endorseProject, needRevision, approveProject, getAllProjectsAdmin, editProjectMetadata, hideProject, deleteProject, informStudentOfRevision, reuploadProjectDocument  } = require("../controllers/projectController");
 const categories = require("../config/categories");
 const { Project, User } = require("../models");
 const authMiddleware = require("../middlewares/authMiddleware");
@@ -19,8 +19,6 @@ router.post("/submit", authMiddleware(["student"]), upload.single("document"), s
 
 // Anyone logged in can view repository
 router.get("/", getAllProjects);
-
-router.get("/counts", authMiddleware(["admin"]), getProjectCounts);
 
 // Public counts for Student/Guest dashboard cards
 router.get("/public/counts", async (req, res) => {
@@ -135,10 +133,17 @@ router.post("/adviser/endorse/:id", authMiddleware(["research_adviser"]), endors
 router.post("/adviser/need-revision/:id", authMiddleware(["research_adviser"]), needRevision);
 router.post("/admin/need-revision/:id", authMiddleware(["admin", "head_admin"]), needRevision);
 
-// <Admins></Admins>
-router.get("/admin/all", authMiddleware(["admin", "head_admin"]), getAllProjectsAdmin);
-router.get("/admin/notifications", authMiddleware(["admin"]), getAdminNotifications);
-router.patch("/admin/notifications/:id/read", authMiddleware(["admin"]), markNotificationRead);
+// Head Admin Management
+router.get("/head-admin/all", authMiddleware(["head_admin"]), getAllProjectsAdmin);
+router.get("/head-admin/notifications", authMiddleware(["head_admin"]), getHeadAdminNotifications);
+router.patch("/head-admin/notifications/:id/read", authMiddleware(["head_admin"]), markNotificationRead);
+
+// Admin Management
+router.get("/admin/all", authMiddleware(["admin"]), getAllProjectsAdmin);
+router.get("/admin/counts", authMiddleware(["admin"]), getProjectCounts);
+// router.get("/admin/notifications", authMiddleware(["admin"]), getAdminNotifications);
+// router.patch("/admin/notifications/:id/read", authMiddleware(["admin"]), markNotificationRead);
+
 router.get("/student/notifications", authMiddleware(["student"]), getStudentNotifications);
 router.post("/admin/approve/:id", authMiddleware(["admin", "head_admin"]), approveProject);
 

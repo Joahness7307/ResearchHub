@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "../../api/axios";
+import { API_ROUTES } from "../../api/apiRoutes";
 import commentIcon from "../../assets/commentIcon.png";
 import bookmarkIcon from "../../assets/bookmarkIcon.png";
 import bookmarkedIcon from "../../assets/bookmarkedIcon.png";
@@ -19,7 +20,7 @@ const GuestDashboard = () => {
   const [selectedCard, setSelectedCard] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const [setCounts] = useState({ all: 0, college: 0, senior_high: 0 });
+  const [counts, setCounts] = useState({ all: 0, college: 0, senior_high: 0 });
   const projectsPerPage = 10;
   const navigate = useNavigate();
 
@@ -65,7 +66,7 @@ const GuestDashboard = () => {
 
   // Fetch counts on mount
     useEffect(() => {
-    axios.get("/projects/public/counts")
+    axios.get(API_ROUTES.student.projectCount)
         .then(res => setCounts(res.data))
         .catch(() => setCounts({ all: 0, college: 0, senior_high: 0 }));
     }, [setCounts]);

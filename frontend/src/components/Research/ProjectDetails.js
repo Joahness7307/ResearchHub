@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useContext } from "react";
 import axios from "../../api/axios";
+import { API_ROUTES } from "../../api/apiRoutes";
 import { useParams, useNavigate } from "react-router-dom";
 import { AuthContext } from "../../context/AuthContext";
 import RevisionReasonModal from "../RevisionReasonModal";
@@ -30,7 +31,7 @@ const ProjectDetails = () => {
     useEffect(() => {
         const fetchProject = async () => {
             try {
-                const res = await axios.get(`/projects/${id}`);
+                const res = await axios.get(API_ROUTES.projects.getProject(id));
                 setProject(res.data);
             } catch {
                 setProject(null);
@@ -47,7 +48,7 @@ const ProjectDetails = () => {
                 return;
             }
             try {
-                const res = await axios.get(`/bookmarks/is-bookmarked/${id}`);
+                const res = await axios.get(API_ROUTES.bookmarks.getBookmarkState(id));
                 setIsBookmarked(!!res.data.bookmarked);
             } catch (err) {
                 setIsBookmarked(false);
@@ -65,10 +66,10 @@ const ProjectDetails = () => {
         setBookmarkLoading(true);
         try {
             if (isBookmarked) {
-                await axios.delete(`/bookmarks/${id}`);
+                await axios.delete(API_ROUTES.bookmarks.toggleBookmark(id));
                 setIsBookmarked(false);
             } else {
-                await axios.post(`/bookmarks/${id}`);
+                await axios.post(API_ROUTES.bookmarks.toggleBookmark(id));
                 setIsBookmarked(true);
             }
             // This helps MyAccount page refresh bookmarks
@@ -83,7 +84,7 @@ const ProjectDetails = () => {
     const handleEndorse = async () => {
         setActionLoading(true);
         try {
-            await axios.post(`/projects/adviser/endorse/${id}`);
+            await axios.post(API_ROUTES.projects.adviserEndorse(id));
             setProject({ ...project, status: "endorsed" });
             alert("Project endorsed to admin for approval.");
             navigate("/adviser");
@@ -102,9 +103,9 @@ const ProjectDetails = () => {
         try {
             let url = "";
             if (user?.role === "research_adviser") { // FIX 1: Add optional chaining
-                url = `/projects/adviser/need-revision/${id}`;
-            } else if (user?.role === "head_admin" || user?.role === "admin") { // FIX 2: Add optional chaining
-                url = `/projects/admin/need-revision/${id}`;
+                url = API_ROUTES.projects.needRevision.adviser(id);
+            } else if (user?.role === "head_admin") { // FIX 2: Add optional chaining
+                url = API_ROUTES.projects.needRevision.admin(id);
             }
             await axios.post(url, { reason });
             setProject({ ...project, status: "need_revision", rejectionReason: reason });
@@ -119,14 +120,14 @@ const ProjectDetails = () => {
     };
 
     const handleInformStudent = async () => {
-        await axios.post(`/projects/adviser/inform-student/${project.id}`);
+        await axios.post(API_ROUTES.projects.informStudent(project.id));
         alert("Student has been notified!");
     };
 
     const handleReupload = async () => {
         const formData = new FormData();
         formData.append("document", reuploadFile);
-        await axios.put(`/projects/reupload/${project.id}`, formData, {
+        await axios.put(API_ROUTES.projects.reupload(project.id), formData, {
             headers: { "Content-Type": "multipart/form-data" }
         });
         alert("Project reuploaded!");
@@ -147,7 +148,7 @@ const ProjectDetails = () => {
     // Fetch comments
     useEffect(() => {
     if (project?.status === "approved") {
-        axios.get(`/comments/${project.id}`)
+        axios.get(API_ROUTES.comments.getByProject(project.id))
         .then(res => setComments(res.data || []))
         .catch(err => {
             console.error("Failed to load comments:", err);
@@ -163,9 +164,9 @@ const ProjectDetails = () => {
     const handleAddComment = async () => {
         if (!commentInput.trim()) return;
         try {
-            await axios.post(`/comments/${project.id}`, { content: commentInput });
+            await axios.post(API_ROUTES.comments.getByProject(project.id), { content: commentInput });
             setCommentInput("");
-            const res = await axios.get(`/comments/${project.id}`);
+            const res = await axios.get(API_ROUTES.comments.getByProject(project.id));
             setComments(res.data);
         } catch (err) {
             alert("Failed to add comment.");
@@ -177,10 +178,10 @@ const ProjectDetails = () => {
         const reply = replyInputs[parentId];
         if (!reply || !reply.trim()) return;
         try {
-            await axios.post(`/comments/${project.id}`, { content: reply, parentId });
+            await axios.post(API_ROUTES.comments.getByProject(project.id), { content: reply, parentId });
             setReplyInputs(prev => ({ ...prev, [parentId]: "" }));
             // Re-fetch comments
-            const res = await axios.get(`/comments/${project.id}`);
+            const res = await axios.get(API_ROUTES.comments.getByProject(project.id));
             setComments(res.data);
         } catch (err) {
             alert("Failed to add reply.");
@@ -384,7 +385,7 @@ const ProjectDetails = () => {
                                 onClick={async () => {
                                     setActionLoading(true);
                                     try {
-                                        await axios.post(`/projects/admin/approve/${project.id}`);
+                                        await axios.post(API_ROUTES.projects.approve(project.id));
                                         setProject({ ...project, status: "approved" });
                                         alert("Project approved and moved to repository.");
                                         navigate("/head-admin/approved-projects");

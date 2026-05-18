@@ -10,17 +10,19 @@ const router = express.Router();
 router.post("/register", register);
 router.post("/login", login);
 
+// Protected routes - authMiddleware checks for valid token
 router.post("/force-change-password", authMiddleware(), forceChangePassword);
 
+// Not yet implemented
 router.post("/forgot-password", forgotPassword);
 router.post("/reset-password/:token", resetPassword);
 
-// Invite and setup routes
+// Invite and setup routes. Not yet implemented
 router.post("/invite-user", authMiddleware(["admin"]), inviteUser); 
 router.get("/invitation-info", getInvitationInfo);
 router.post("/setup-account", setupAccount);
 
-// Admin-only routes for user management (list, count, add, update, delete)
+// Admin-only (CRUD Operations)
 router.get("/all", authMiddleware(["admin"]), getAllUsers);
 router.get("/count", authMiddleware(["admin"]), getUserCount);
 router.post("/add", authMiddleware(["admin"]), addUser);
@@ -28,7 +30,8 @@ router.put("/update/:id", authMiddleware(["admin"]), updateUser);
 router.delete("/delete/:id", authMiddleware(["admin"]), deleteUser);
 
 // Protected route to get user profile
-router.get("/profile", authMiddleware(), getUserProfile); 
+router.get("/profile", authMiddleware(), getUserProfile);
+
 // Update profile: auth runs first so req.user is available to multer-profile params
 router.put(
   "/profile/update",

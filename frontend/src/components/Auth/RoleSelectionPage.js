@@ -1,14 +1,14 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import "./Auth/AuthForm.css";
+import "./AuthForm.css";
 
 const RoleSelection = () => {
   const navigate = useNavigate();
   const [studentPrompt, setStudentPrompt] = useState(false);
 
   const handleSelect = (role) => {
-    if (role === "user") {
-      navigate("/register-user");
+    if (role === "guest") {
+      navigate("/guest-signup");
     } else if (role === "student") {
       setStudentPrompt(true);
     }
@@ -16,9 +16,9 @@ const RoleSelection = () => {
 
   const handleStudentType = (type) => {
     if (type === "college") {
-      navigate("/register");
+      navigate("/college-signup");
     } else if (type === "seniorhigh") {
-      navigate("/register-seniorhigh");
+      navigate("/senior-high-signup");
     }
   };
 
@@ -32,7 +32,7 @@ const RoleSelection = () => {
             <button className="role-btn" onClick={() => handleSelect("student")}>
               Signup as Student
             </button>
-            <button className="role-btn" onClick={() => handleSelect("user")}>
+            <button className="role-btn" onClick={() => handleSelect("guest")}>
               Signup as Guest 
             </button>
             <div className="auth-switch" style={{ marginTop: '20px' }}>

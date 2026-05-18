@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const { Notification } = require("../models");
 
-const { getAdminNotifications, markNotificationRead, getStudentNotifications, markStudentNotificationRead } = require("../controllers/projectController");
+const { getHeadAdminNotifications, markNotificationRead, getStudentNotifications, markStudentNotificationRead } = require("../controllers/projectController");
 const authMiddleware = require("../middlewares/authMiddleware");
 
 router.get("/adviser/:id", authMiddleware(["research_adviser"]), async (req, res) => {
@@ -21,14 +21,17 @@ router.patch("/adviser/:id/read", authMiddleware(["research_adviser"]), async (r
   await notif.save();
   res.json({ message: "Notification marked as read" });
 });
-router.get("/admin/notifications", authMiddleware(["admin", "head_admin"]), getAdminNotifications);
-router.patch("/admin/notifications/:id/read", authMiddleware(["admin", "head_admin"]), markNotificationRead);
+router.get("/head-admin/:id", authMiddleware(["head_admin"]), getHeadAdminNotifications);
+router.patch("/head-admin/:id/read", authMiddleware(["head_admin"]), markNotificationRead);
 
-router.get("/student/notifications", authMiddleware(["student"]), getStudentNotifications);
-router.patch("/student/notifications/mark-all-read", authMiddleware(["student"]), async (req, res) => {
+// router.get("/admin/notifications", authMiddleware(["admin"]), getAdminNotifications);
+// router.patch("/admin/notifications/:id/read", authMiddleware(["admin"]), markNotificationRead);
+
+router.get("/student", authMiddleware(["student"]), getStudentNotifications);
+router.patch("/student/mark-all-read", authMiddleware(["student"]), async (req, res) => {
   await Notification.update({ isRead: true }, { where: { studentId: req.user.id, isRead: false } });
   res.json({ message: "All notifications marked as read" });
 });
-router.patch("/student/notifications/:id/read", authMiddleware(["student"]), markStudentNotificationRead);
+router.patch("/student/:id/read", authMiddleware(["student"]), markStudentNotificationRead);
 
 module.exports = router;

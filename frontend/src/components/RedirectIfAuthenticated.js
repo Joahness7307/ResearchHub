@@ -15,9 +15,9 @@ const RedirectIfAuthenticated = ({ children }) => {
       case "research_adviser":
         return <Navigate to="/adviser" />;
       case "student":
-        return <Navigate to="/projects" />;
+        return <Navigate to="/dashboard" />;
       case "guest":
-        return <Navigate to="/guest" />;
+        return <Navigate to="/dashboard" />;
       default:
         return <Navigate to="/" />;
     }

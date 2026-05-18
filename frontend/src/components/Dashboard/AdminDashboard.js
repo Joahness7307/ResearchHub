@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useMemo, useCallback, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "../../api/axios";
+import { API_ROUTES } from "../../api/apiRoutes";
 import openEyeIcon from "../../assets/openEyeIcon.png";
 import closeEyeIcon from "../../assets/closeEyeIcon.png";
 import "./AdminDashboard.css";
@@ -47,7 +48,7 @@ const AdminDashboard = ({ activeSection }) => {
   const [editUserId, setEditUserId] = useState(null);
   const [editForm, setEditForm] = useState({ full_name: "", email: "", role: "", password: "" });
   const [message, setMessage] = useState("");
-  const [setError] = useState("");
+  const [error, setError] = useState("");
 
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -93,7 +94,7 @@ const AdminDashboard = ({ activeSection }) => {
   // ── Fetch Shared Academic Data ──
   const fetchDepartments = useCallback(async () => {
     try {
-      const res = await axios.get("/academic/departments");
+      const res = await axios.get(API_ROUTES.academic.departments);
       setDepartments(res.data);
     } catch (err) {
       console.error("Failed to load departments:", err);
@@ -103,7 +104,7 @@ const AdminDashboard = ({ activeSection }) => {
 
   const fetchStrands = useCallback(async () => {
     try {
-      const res = await axios.get("/academic/strands");
+      const res = await axios.get(API_ROUTES.academic.strands);
       setStrands(res.data);
     } catch (err) {
       console.error("Failed to load strands:", err);
@@ -122,7 +123,7 @@ const AdminDashboard = ({ activeSection }) => {
     if (!deptId) return;
     setAcademicLoading(true);
     try {
-      const res = await axios.get(`/academic/departments/${deptId}/blocks`);
+      const res = await axios.get(API_ROUTES.academic.blocks(deptId));
       setBlocks(res.data);
     } catch (err) {
       setAcademicError("Failed to load blocks");
@@ -135,7 +136,7 @@ const AdminDashboard = ({ activeSection }) => {
     if (!deptId) return;
     setAcademicLoading(true);
     try {
-      const res = await axios.get(`/academic/departments/${deptId}/majors`);
+      const res = await axios.get(API_ROUTES.academic.majors(deptId));
       setMajors(res.data);
     } catch (err) {
       setAcademicError("Failed to load majors");
@@ -148,7 +149,7 @@ const AdminDashboard = ({ activeSection }) => {
   const handleCreateDepartment = async (e) => {
     e.preventDefault();
     try {
-      const res = await axios.post("/academic/admin/departments", newDept);
+      const res = await axios.post(API_ROUTES.academic.createDepartment, newDept);
       setDepartments([...departments, res.data]); // Real-time update
       setNewDept({ name: "", has_blocks: false, has_majors: false });
     } catch (err) {
@@ -159,7 +160,7 @@ const AdminDashboard = ({ activeSection }) => {
   const handleUpdateDepartment = async (e) => {
     e.preventDefault();
     try {
-      const res = await axios.put(`/academic/admin/departments/${editDeptId}`, editDeptForm);
+      const res = await axios.put(API_ROUTES.academic.updateDepartment(editDeptId), editDeptForm);
       setDepartments(departments.map(d => d.id === editDeptId ? res.data : d));
       setEditDeptId(null);
     } catch (err) {
@@ -170,7 +171,7 @@ const AdminDashboard = ({ activeSection }) => {
   const handleDeleteDepartment = async (id) => {
     if (!window.confirm("Delete this department? This cannot be undone and may affect users.")) return;
     try {
-      await axios.delete(`/academic/admin/departments/${id}`);
+      await axios.delete(API_ROUTES.academic.deleteDepartment(id));
       setDepartments(departments.filter(d => d.id !== id));
     } catch (err) {
       setAcademicError(err.response?.data?.message || "Cannot delete - users may be linked");
@@ -182,7 +183,7 @@ const AdminDashboard = ({ activeSection }) => {
     e.preventDefault();
     if (!selectedDeptForBlocks) return setAcademicError("Please select a department first");
     try {
-      const res = await axios.post(`/academic/admin/departments/${selectedDeptForBlocks}/blocks`, newBlock);
+      const res = await axios.post(API_ROUTES.academic.createBlock(selectedDeptForBlocks), newBlock);
       setBlocks([...blocks, res.data]);
       setNewBlock({ name: "" });
     } catch (err) {
@@ -193,7 +194,7 @@ const AdminDashboard = ({ activeSection }) => {
   const handleUpdateBlock = async (e) => {
     e.preventDefault();
     try {
-      const res = await axios.put(`/academic/admin/blocks/${editBlockId}`, editBlockForm);
+      const res = await axios.put(API_ROUTES.academic.updateBlock(editBlockId), editBlockForm);
       setBlocks(blocks.map(b => b.id === editBlockId ? res.data : b));
       setEditBlockId(null);
     } catch (err) {
@@ -204,7 +205,7 @@ const AdminDashboard = ({ activeSection }) => {
   const handleDeleteBlock = async (id) => {
     if (!window.confirm("Delete this block? This cannot be undone and may affect users.")) return;
     try {
-      await axios.delete(`/academic/admin/blocks/${id}`);
+      await axios.delete(API_ROUTES.academic.deleteBlock(id));
       setBlocks(blocks.filter(b => b.id !== id));
     } catch (err) {
       setAcademicError(err.response?.data?.message || "Cannot delete - users may be linked");
@@ -216,7 +217,7 @@ const AdminDashboard = ({ activeSection }) => {
     e.preventDefault();
     if (!selectedDeptForMajors) return setAcademicError("Please select a department first");
     try {
-      const res = await axios.post(`/academic/admin/departments/${selectedDeptForMajors}/majors`, newMajor);
+      const res = await axios.post(API_ROUTES.academic.createMajor(selectedDeptForMajors), newMajor);
       setMajors([...majors, res.data]);
       setNewMajor({ name: "" });
     } catch (err) {
@@ -227,7 +228,7 @@ const AdminDashboard = ({ activeSection }) => {
   const handleUpdateMajor = async (e) => {
     e.preventDefault();
     try {
-      const res = await axios.put(`/academic/admin/majors/${editMajorId}`, editMajorForm);
+      const res = await axios.put(API_ROUTES.academic.updateMajor(editMajorId), editMajorForm);
       setMajors(majors.map(m => m.id === editMajorId ? res.data : m));
       setEditMajorId(null);
     } catch (err) {
@@ -238,7 +239,7 @@ const AdminDashboard = ({ activeSection }) => {
   const handleDeleteMajor = async (id) => {
     if (!window.confirm("Delete this major? This cannot be undone and may affect users.")) return;
     try {
-      await axios.delete(`/academic/admin/majors/${id}`);
+      await axios.delete(API_ROUTES.academic.deleteMajor(id));
       setMajors(majors.filter(m => m.id !== id));
     } catch (err) {
       setAcademicError(err.response?.data?.message || "Cannot delete - users may be linked");
@@ -249,7 +250,7 @@ const AdminDashboard = ({ activeSection }) => {
   const handleCreateStrand = async (e) => {
     e.preventDefault();
     try {
-      const res = await axios.post("/academic/admin/strands", newStrand);
+      const res = await axios.post(API_ROUTES.academic.createStrand, newStrand);
       setStrands([...strands, res.data]); // Real-time update
       setNewStrand({ name: "" });
     } catch (err) {
@@ -260,7 +261,7 @@ const AdminDashboard = ({ activeSection }) => {
   const handleUpdateStrand = async (e) => {
     e.preventDefault();
     try {
-      const res = await axios.put(`/academic/admin/strands/${editStrandId}`, editStrandForm);
+      const res = await axios.put(API_ROUTES.academic.updateStrand(editStrandId), editStrandForm);
       setStrands(strands.map(s => s.id === editStrandId ? res.data : s));
       setEditStrandId(null);
     } catch (err) {
@@ -271,7 +272,7 @@ const AdminDashboard = ({ activeSection }) => {
   const handleDeleteStrand = async (id) => {
     if (!window.confirm("Delete this strand? This cannot be undone and may affect users.")) return;
     try {
-      await axios.delete(`/academic/admin/strands/${id}`);
+      await axios.delete(API_ROUTES.academic.deleteStrand(id));
       setStrands(strands.filter(s => s.id !== id));
     } catch (err) {
       setAcademicError(err.response?.data?.message || "Cannot delete - users may be linked");
@@ -317,7 +318,7 @@ const AdminDashboard = ({ activeSection }) => {
         if (addUserForm.type === "senior_high") payload.strand_id = addUserForm.strand_id;
       }
 
-      await axios.post("/users/add", payload);
+      await axios.post(API_ROUTES.admin.addUser, payload);
       setAddUserMessage("User added successfully with temporary password");
       setAddUserForm({
         username: "", full_name: "", email: "", role: "admin", type: "",
@@ -333,7 +334,7 @@ const AdminDashboard = ({ activeSection }) => {
     setLoadingProjects(true);
     setProjectsError("");
     try {
-      const res = await axios.get("/projects/admin/all");
+      const res = await axios.get(API_ROUTES.admin.getAllProjects);
       setProjects(Array.isArray(res.data) ? res.data : res.data.projects || []);
     } catch (err) {
       setProjectsError("Failed to load projects.");
@@ -346,9 +347,9 @@ const AdminDashboard = ({ activeSection }) => {
   const handleDeleteProject = async (id) => {
     if (!window.confirm("Delete this project? This action cannot be undone.")) return;
     try {
-      await axios.delete(`/projects/admin/delete/${id}`);
+      await axios.delete(API_ROUTES.admin.deleteProject(id));
       setProjects(prev => prev.filter(p => p.id !== id));
-      axios.get("/projects/counts")
+      axios.get(API_ROUTES.admin.projectCount)
         .then(res => setCounts(prev => ({ ...prev, ...res.data })))
         .catch(err => console.error("Failed to fetch project counts:", err));
     } catch (err) {
@@ -357,7 +358,7 @@ const AdminDashboard = ({ activeSection }) => {
   };
 
   const fetchUsers = () => {
-    axios.get("/users/all")
+    axios.get(API_ROUTES.admin.allUsers)
       .then(res => setUsers(res.data.users || []))
       .catch(() => setUsers([]));
   };
@@ -370,17 +371,17 @@ const AdminDashboard = ({ activeSection }) => {
 
   useEffect(() => {
     if (activeSection === "dashboard" || activeSection === undefined) {
-      axios.get("/projects/admin/all")
+      axios.get(API_ROUTES.admin.getAllProjects)
         .then(res => setProjects(res.data.projects || []))
         .catch(() => setProjects([]));
 
       fetchProjects();
 
-      axios.get("/users/count")
+      axios.get(API_ROUTES.admin.userCount)
         .then(res => setCounts(prev => ({ ...prev, totalUsers: res.data.totalUsers || 0 })))
         .catch(err => console.error("Failed to fetch user count:", err));
 
-      axios.get("/projects/counts")
+      axios.get(API_ROUTES.admin.projectCount)
         .then(res => setCounts(prev => ({ ...prev, ...res.data })))
         .catch(err => console.error("Failed to fetch project counts:", err));
 
@@ -412,7 +413,8 @@ const AdminDashboard = ({ activeSection }) => {
       if (editForm.password) {
         updatePayload.password = editForm.password;
       }
-      await axios.put(`/users/update/${editUserId}`, updatePayload);
+
+      await axios.put(API_ROUTES.admin.updateUser(editUserId), updatePayload);
       setMessage("User updated successfully!");
       setEditUserId(null);
       fetchUsers();
@@ -426,7 +428,7 @@ const AdminDashboard = ({ activeSection }) => {
     setMessage("");
     setError("");
     try {
-      await axios.delete(`/users/delete/${id}`);
+      await axios.delete(API_ROUTES.admin.deleteUser(id));
       setMessage("User deleted successfully!");
       fetchUsers();
       if (filteredUsersOnPage.length === 1 && currentPage > 1) {

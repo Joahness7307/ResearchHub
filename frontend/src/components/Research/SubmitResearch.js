@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import axios from "../../api/axios";
+import { API_ROUTES } from "../../api/apiRoutes";
 import SuccessModal from "../SuccessModal";
 import "./SubmitResearch.css";
 // NOTE: PDFDocument is imported but unused; I've removed it in the final file.
@@ -81,7 +82,7 @@ const SubmitResearch = () => {
       // The API endpoint for submission might require the user's ID/submitter info, 
       // which is usually handled by the server using the JWT token or explicitly sent here.
       // Assuming the backend handles submitter association via the token.
-      await axios.post("/projects/submit", formData, {
+      await axios.post(API_ROUTES.projects.submit, formData, {
         headers: { 
             'Content-Type': 'multipart/form-data', 
             'Authorization': `Bearer ${token}` 

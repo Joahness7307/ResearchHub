@@ -2,6 +2,7 @@ import React, { useState, useContext } from "react";
 import openEyeIcon from "../../assets/openEyeIcon.png";
 import closeEyeIcon from "../../assets/closeEyeIcon.png";
 import axios from "../../api/axios";
+import { API_ROUTES } from "../../api/apiRoutes";
 import { AuthContext } from "../../context/AuthContext";
 import { useNavigate, Link } from "react-router-dom";
 import "./AuthForm.css";
@@ -19,7 +20,7 @@ const Login = () => {
     e.preventDefault();
     setError("");
     try {
-      const res = await axios.post("/users/login", { identifier, password });
+      const res = await axios.post(API_ROUTES.auth.login, { identifier, password });
       const { token, user } = res.data;
       login(user, token);
 
@@ -31,9 +32,9 @@ const Login = () => {
       switch (user.role) {
         case "admin": navigate("/admin"); break;
         case "head_admin": navigate("/head-admin"); break;
-        case "guest": navigate("/guest"); break;
+        case "guest": navigate("/dashboard"); break;
         case "research_adviser": navigate("/adviser"); break;
-        default: navigate("/projects");
+        default: navigate("/dashboard"); break;
       }
     } catch (err) {
       setError(err.response?.data?.message || "Login failed");

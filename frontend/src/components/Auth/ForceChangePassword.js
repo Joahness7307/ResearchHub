@@ -1,5 +1,6 @@
 import React, { useState, useContext } from "react";
 import axios from "../../api/axios";
+import { API_ROUTES } from "../../api/apiRoutes";
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../../context/AuthContext";
 import openEyeIcon from "../../assets/openEyeIcon.png";
@@ -41,7 +42,7 @@ const ForceChangePassword = () => {
     if (password !== confirm_password) return setError("Passwords do not match.");
 
     try {
-      await axios.post("/users/force-change-password", { password, confirm_password });
+      await axios.post(API_ROUTES.auth.forceChangePassword, { password, confirm_password });
       setMsg("Password changed successfully! Redirecting...");
       setTimeout(() => { 
         logout(); 

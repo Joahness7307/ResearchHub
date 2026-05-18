@@ -3,10 +3,12 @@
   padding-bottom: 0.5rem;
   margin-bottom: 2rem;
 }
-/* Global Variables (Suggested) */
-:root {
-  --primary-color: #2563eb;     
-  --secondary-color: #3a3e92;   
+/* Dashboard-scoped tokens — do NOT use :root; that overrides Navbar.css globally */
+.dashboard-content,
+.head-admin-dashboard-wrapper,
+.adviser-dashboard-container {
+  --primary-color: #2563eb;
+  --secondary-color: #3a3e92;
   --success-color: #10b981;
   --warning-color: #f59e0b;
   --danger-color: #ef4444;

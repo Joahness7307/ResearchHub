@@ -1,14 +1,17 @@
+/* Navbar-scoped tokens — never use generic --primary-color here so dashboard
+   stylesheets cannot override the top bar via :root. */
 :root {
-  --primary-color: #3a3e92;
-  --secondary-color: #2563eb;
-  --text-light: #fff;
-  --text-dark: #222;
-  --text-muted: #888;
-  --hover-color: rgba(211, 211, 211, 0.699);
-  --notification-badge-color: #b33834;
-  --sidebar-bg: var(--primary-color);
-  --sidebar-hover: #b3b3ff;
-  --dropdown-bg: #fff;
+  --navbar-bg: #3a3e92;
+  --navbar-text: #fff;
+  --navbar-text-dark: #222;
+  --navbar-text-muted: #888;
+  --navbar-hover: rgba(211, 211, 211, 0.699);
+  --navbar-notification-badge: #b33834;
+  --navbar-sidebar-bg: #3a3e92;
+  --navbar-sidebar-hover: #b3b3ff;
+  --navbar-dropdown-bg: #fff;
+  --navbar-accent-btn: #2563eb;
+  --navbar-height: 5.5rem;
 }
 
 /* Base Navbar Styles */
@@ -21,9 +24,9 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: var(--primary-color);
+  background: var(--navbar-bg);
   padding: 1.5rem 2rem;
-  color: var(--text-light);
+  color: var(--navbar-text);
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
 }
 
@@ -52,7 +55,7 @@
 .nav-link,
 .logout-btn,
 .navbar-unauth-links a {
-  color: var(--text-light);
+  color: var(--navbar-text);
   text-decoration: none;
   background: none;
   border: none;
@@ -70,7 +73,7 @@
 .nav-link:hover,
 .logout-btn:hover,
 .navbar-unauth-links a:hover {
-  color: var(--hover-color);
+  color: var(--navbar-hover);
 }
 
 .app-logo {
@@ -113,8 +116,8 @@
   position: absolute;
   top: -7px;
   right: -7px;
-  background: var(--notification-badge-color);
-  color: var(--text-light);
+  background: var(--navbar-notification-badge);
+  color: var(--navbar-text);
   border-radius: 50%;
   font-size: 12px;
   padding: 2px 7px;
@@ -126,8 +129,8 @@
   position: absolute;
   top: 40px;
   right: 0;
-  background: var(--dropdown-bg);
-  color: var(--text-dark);
+  background: var(--navbar-dropdown-bg);
+  color: var(--navbar-text-dark);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   border-radius: 10px;
   min-width: 380px;
@@ -151,7 +154,7 @@
 
 .projects-dropdown-empty {
   padding: 1.5rem;
-  color: var(--text-muted);
+  color: var(--navbar-text-muted);
   font-size: 1rem;
   text-align: center;
 }
@@ -171,7 +174,7 @@
 }
 
 .projects-dropdown-item.unread {
-  color: var(--text-dark);
+  color: var(--navbar-text-dark);
   font-weight: 700;
   background: #f8f8ff;
 }
@@ -187,15 +190,15 @@
 
 .projects-dropdown-date {
   font-size: 0.75rem;
-  color: var(--text-muted);
+  color: var(--navbar-text-muted);
   margin-top: 4px;
 }
 
 .dropdown-see-all-btn {
   margin: 10px 18px 10px 18px;
   padding: 0.8rem;
-  background: var(--secondary-color);
-  color: var(--text-light);
+  background: var(--navbar-accent-btn);
+  color: var(--navbar-text);
   border: none;
   border-radius: 8px;
   font-weight: 600;
@@ -216,7 +219,7 @@
   right: 0.9rem;
   background: transparent;
   border: none;
-  color: var(--text-light);
+  color: var(--navbar-text);
   font-size: 1.8rem;
   cursor: pointer;
   z-index: 3300;
@@ -242,7 +245,7 @@
   display: none;
   cursor: pointer;
   font-size: 2.2rem;
-  color: var(--text-light);
+  color: var(--navbar-text);
   margin-left: 2rem;
   z-index: 3100;
 }
@@ -264,7 +267,7 @@
   right: 0;
   width: 280px;
   height: 100vh;
-  background: var(--sidebar-bg);
+  background: var(--navbar-sidebar-bg);
   box-shadow: -4px 0 15px rgba(0, 0, 0, 0.2);
   z-index: 3200;
   padding: 5rem 2rem 2rem 2rem;
@@ -278,7 +281,7 @@
 }
 
 .navbar-sidebar .sidebar-link {
-  color: var(--text-light);
+  color: var(--navbar-text);
   text-decoration: none;
   font-size: 1.1rem;
   padding: 0.5rem 0;
@@ -286,7 +289,7 @@
 }
 
 .navbar-sidebar .sidebar-link:hover {
-  color: var(--sidebar-hover);
+  color: var(--navbar-sidebar-hover);
 }
 
 .navbar-sidebar button.sidebar-link {
@@ -294,10 +297,38 @@
   text-align: left;
   background: none;
   border: none;
-  color: var(--text-light);
+  color: var(--navbar-text);
   font-size: 1.1rem;
   padding: 0.5rem 0;
   cursor: pointer;
+}
+
+.navbar-sidebar .sidebar-link-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.navbar-sidebar .sidebar-link-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.navbar-sidebar-unread-badge {
+  flex-shrink: 0;
+  min-width: 1.5rem;
+  height: 1.5rem;
+  padding: 0 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #e53e3e;
+  color: #fff;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1;
 }
 
 .navbar-overlay {

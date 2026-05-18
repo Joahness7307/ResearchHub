@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "../../api/axios";
+import { API_ROUTES } from "../../api/apiRoutes";
 import openEyeIcon from "../../assets/openEyeIcon.png";
 import closeEyeIcon from "../../assets/closeEyeIcon.png";
 import { useNavigate, Link } from "react-router-dom";
@@ -27,7 +28,7 @@ const SeniorHighSignup = () => {
 
   // Fetch strands on mount
   useEffect(() => {
-    axios.get("/academic/strands")
+    axios.get(API_ROUTES.academic.strands)
       .then(res => {
         setStrands(res.data);
         setLoading(false);
@@ -70,7 +71,7 @@ const SeniorHighSignup = () => {
     };
 
     try {
-      await axios.post("/users/register", payload);
+      await axios.post(API_ROUTES.auth.register, payload);
       navigate("/login");
     } catch (err) {
       setError(err.response?.data?.message || "Registration failed");

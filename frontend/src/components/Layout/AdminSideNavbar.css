@@ -21,8 +21,13 @@
 }
 
 .side-nav-link {
-  display: block;
+  position: relative; /* Anchor absolute-positioned unread badges */
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
   padding: 1rem;
+  padding-right: 3rem;
   color: #e0e0e0;
   text-decoration: none;
   font-size: 1.1rem;
@@ -41,6 +46,30 @@
   background: #e0e7ff;
   border-radius: 8px;
   color: #2563eb;
+}
+
+.side-nav-link-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.side-nav-unread-badge {
+  position: absolute;
+  top: 50%;
+  right: 10px;
+  transform: translateY(-50%);
+  min-width: 1.5rem;
+  height: 1.5rem;
+  padding: 0 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #e53e3e;
+  color: #fff;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1;
 }
 
 .logout-link {
