@@ -1,4 +1,4 @@
-import React, { useContext, useState, useEffect, useMemo, memo } from "react";
+import React, { useContext, useState, useEffect, useMemo, useCallback, memo } from "react";
 import { AuthContext } from "../../context/AuthContext";
 import "./MyAccount.css";
 import axios from "../../api/axios";
@@ -6,6 +6,8 @@ import { useNavigate } from "react-router-dom";
 import categoryColors from "../../constants/categoryColors";
 import dropdownArrow from "../../assets/dropdownArrow.png";
 import UserAvatar from "../../components/UserAvatar";
+import { WORKFLOW_PROJECTS_UPDATED } from "../../utils/workflowEvents";
+import { isEligibleResearchStudent } from "../../utils/studentEligibility";
 
 const AccountInfoColumn = memo(function AccountInfoColumn({
   user,
@@ -188,21 +190,15 @@ const MyAccount = () => {
     return () => window.removeEventListener("bookmarks-updated", fetchBookmarks);
   }, [user]);
 
-  // Fetch student projects — ONLY for eligible students
-  useEffect(() => {
+  const fetchMyProjects = useCallback(() => {
     if (!user || user.role !== "student") {
       setProjects([]);
       return;
     }
 
-    const eligible =
-      // College 3rd & 4th year
-      (user.department && (user.year_level === "3rd" || user.year_level === "4th")) ||
-      // SHS Grade 12
-      (user.strand && user.grade_level === "12");
-
-    if (eligible) {
-      axios.get("/users/my-projects")
+    if (isEligibleResearchStudent(user)) {
+      axios
+        .get("/users/my-projects")
         .then((res) => setProjects(res.data.projects || []))
         .catch(() => setProjects([]));
     } else {
@@ -210,16 +206,24 @@ const MyAccount = () => {
     }
   }, [user]);
 
+  useEffect(() => {
+    fetchMyProjects();
+  }, [fetchMyProjects]);
+
+  useEffect(() => {
+    const onWorkflow = () => fetchMyProjects();
+    window.addEventListener(WORKFLOW_PROJECTS_UPDATED, onWorkflow);
+    return () =>
+      window.removeEventListener(WORKFLOW_PROJECTS_UPDATED, onWorkflow);
+  }, [fetchMyProjects]);
+
   // Determine if user gets two-column layout
   const useTwoColumnLayout =
     user?.role === "student" ||  // All students (college + SHS)
     ["admin", "head_admin", "research_adviser", "guest"].includes(user?.role);
 
   // Determine if user gets full project sections (Pending, etc.)
-  const showProjectSections =
-    user?.role === "student" &&
-    ((user?.department && (user?.year_level === "3rd" || user?.year_level === "4th")) ||
-     (user?.strand && user?.grade_level === "12"));
+  const showProjectSections = isEligibleResearchStudent(user);
 
   // Stable avatar object
   const avatarUserProps = useMemo(
@@ -234,8 +238,7 @@ const MyAccount = () => {
   const grouped = useMemo(() => {
     const g = { pending: [], endorsed: [], need_revision: [], approved: [] };
     projects.forEach((p) => {
-      let status = p.status;
-      if (status === "admin_revision") status = "need_revision";
+      const status = p.status;
       if (g[status]) g[status].push(p);
     });
     return g;

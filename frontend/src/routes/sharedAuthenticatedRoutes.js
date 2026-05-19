@@ -1,5 +1,5 @@
 import React from "react";
-import { Route } from "react-router-dom";
+import { Navigate, Route } from "react-router-dom";
 import SubmitResearch from "../components/Research/SubmitResearch";
 import MyAccount from "../components/Dashboard/MyAccount";
 import ProjectDetails from "../components/Research/ProjectDetails";
@@ -12,6 +12,19 @@ import SetupAccount from "../components/Dashboard/SetupAccount";
 import ForceChangePassword from "../components/Auth/ForceChangePassword";
 import { AuthContext } from "../context/AuthContext";
 import ProtectedRoute from "./ProtectedRoute";
+import { isEligibleResearchStudent } from "../utils/studentEligibility";
+
+const NotificationAccessGuard = ({ children }) => (
+  <AuthContext.Consumer>
+    {({ user }) => {
+      if (user?.role === "student" && !isEligibleResearchStudent(user)) {
+        return <Navigate to="/dashboard" replace />;
+      }
+
+      return children;
+    }}
+  </AuthContext.Consumer>
+);
 
 const sharedAuthenticatedRoutes = (
   <>
@@ -54,7 +67,7 @@ const sharedAuthenticatedRoutes = (
           <AuthContext.Consumer>
             {({ user }) =>
               user &&
-              ((user.year_level === "3rd" || user.year_level === "4th") || user.grade_level === "12") ? (
+              isEligibleResearchStudent(user) ? (
                 <SubmitResearch />
               ) : (
                 <div style={{ padding: "8rem", textAlign: "center", color: "#b33834" }}>
@@ -79,8 +92,10 @@ const sharedAuthenticatedRoutes = (
     <Route
       path="/notifications/:id"
       element={
-        <ProtectedRoute allowedRoles={["student", "admin", "head_admin", "research_adviser", "guest"]}>
-          <NotificationDetails />
+        <ProtectedRoute allowedRoles={["student", "admin", "head_admin", "research_adviser"]}>
+          <NotificationAccessGuard>
+            <NotificationDetails />
+          </NotificationAccessGuard>
         </ProtectedRoute>
       }
     />
@@ -88,8 +103,10 @@ const sharedAuthenticatedRoutes = (
     <Route
       path="/notifications"
       element={
-        <ProtectedRoute allowedRoles={["student", "admin", "guest"]}>
-          <NotificationPage />
+        <ProtectedRoute allowedRoles={["student", "admin"]}>
+          <NotificationAccessGuard>
+            <NotificationPage />
+          </NotificationAccessGuard>
         </ProtectedRoute>
       }
     />

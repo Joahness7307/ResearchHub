@@ -2,7 +2,6 @@ import React from "react";
 import { Route } from "react-router-dom";
 import ResearchAdviserDashboard from "../components/Dashboard/ResearchAdviserDashboard";
 import ProjectDetails from "../components/Research/ProjectDetails";
-import MyAccount from "../components/Dashboard/MyAccount";
 import NotificationPage from "../components/Dashboard/NotificationPage";
 import NotificationDetails from "../components/Dashboard/NotificationDetails";
 

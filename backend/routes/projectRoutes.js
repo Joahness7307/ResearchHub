@@ -9,6 +9,25 @@ const axios = require("axios");
 const { Op } = require("sequelize");  // ← ADD THIS LINE near top
 const router = express.Router();
 
+const STUDENT_INTERNAL_STATUS_MAP = {
+  admin_revision: "endorsed",
+};
+
+function serializeProjectForRole(project, role) {
+  const data = typeof project.toJSON === "function" ? project.toJSON() : { ...project };
+
+  if (role === "student" && STUDENT_INTERNAL_STATUS_MAP[data.status]) {
+    return {
+      ...data,
+      status: STUDENT_INTERNAL_STATUS_MAP[data.status],
+      internal_status: data.status,
+      rejection_reason: null,
+    };
+  }
+
+  return data;
+}
+
 // Dynamic categories endpoint
 router.get("/categories", (req, res) => {
   res.json({ categories });
@@ -60,7 +79,7 @@ router.get("/:id", authMiddleware(["student", "admin", "head_admin", "research_a
       include: [{ model: User, as: "submitter", attributes: ["id", "full_name", "email", "role"] }]
     });
     if (!project) return res.status(404).json({ message: "Project not found" });
-    res.json(project);
+    res.json(serializeProjectForRole(project, req.user.role));
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -161,4 +180,4 @@ router.patch("/admin/hide/:id", authMiddleware(["admin", "head_admin"]), hidePro
 router.delete("/admin/delete/:id", authMiddleware(["admin", "head_admin"]), deleteProject);
 
 
-module.exports = router;  
+module.exports = router;

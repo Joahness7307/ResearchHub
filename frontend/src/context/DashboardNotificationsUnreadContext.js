@@ -10,6 +10,7 @@ import { useLocation } from "react-router-dom";
 import { AuthContext } from "./AuthContext";
 import axios from "../api/axios";
 import { API_ROUTES } from "../api/apiRoutes";
+import { WORKFLOW_NOTIFICATIONS_UPDATED } from "../utils/workflowEvents";
 
 /** Normalize Sequelize / snake_case payloads */
 export function notificationIsUnread(n) {
@@ -74,6 +75,19 @@ export function DashboardNotificationsUnreadProvider({ role, children }) {
       cancelled = true;
     };
   }, [user?.id, role, location.pathname, refreshNonce]);
+
+  useEffect(() => {
+    const onWorkflowNotifications = () => setRefreshNonce((n) => n + 1);
+    window.addEventListener(
+      WORKFLOW_NOTIFICATIONS_UPDATED,
+      onWorkflowNotifications
+    );
+    return () =>
+      window.removeEventListener(
+        WORKFLOW_NOTIFICATIONS_UPDATED,
+        onWorkflowNotifications
+      );
+  }, []);
 
   const value = useMemo(
     () => ({

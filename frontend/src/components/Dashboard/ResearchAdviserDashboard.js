@@ -1,9 +1,10 @@
-import React, { useContext, useEffect, useState, useRef } from "react";
+import React, { useContext, useEffect, useState, useCallback } from "react";
 import { AuthContext } from "../../context/AuthContext";
 import axios from "../../api/axios";
 import { API_ROUTES } from "../../api/apiRoutes";
 import { useNavigate } from "react-router-dom";
-import { io } from "socket.io-client";
+import { useWorkflowRefresh } from "../../hooks/useWorkflowRefresh";
+import { useDashboardNotificationsUnread } from "../../context/DashboardNotificationsUnreadContext";
 import "./ResearchAdviserPage.css";
 import categoryColors from "../../constants/categoryColors";
 
@@ -31,7 +32,7 @@ const ResearchAdviserDashboard = ({ section }) => {
     const [currentPage, setCurrentPage] = useState(1);
     const [bookmarkLoading, setBookmarkLoading] = useState({});
     const navigate = useNavigate();
-    const socketRef = useRef(null);
+    const { refreshUnreadCount } = useDashboardNotificationsUnread();
 
     const handleBookmarkToggle = async (e, projectId, bookmarked) => {
         e.stopPropagation();
@@ -74,76 +75,67 @@ const ResearchAdviserDashboard = ({ section }) => {
         setSearchTerm("");
     }, [section, selectedRevisionCard]);
 
-    // FETCH PROJECTS + COMMENT COUNTS (FIXED!) + BOOKMARK STATUS
-        useEffect(() => {
+    const fetchProjects = useCallback(async () => {
         if (!user) return;
-
-        const fetchProjects = async () => {
-            try {
-                let res;
-                if (section === "repository") {
-                    res = await axios.get("/projects");
-                } else {
-                    res = await axios.get("/projects/adviser/all");
-                }
-
-                const projectsData = res.data;
-
-                // 1. Fetch comment counts
-                const commentPromises = projectsData.map(project =>
-                    axios.get(`/comments/${project.id}`)
-                        .then(r => {
-                            if (!Array.isArray(r.data)) return 0;
-                            return r.data.reduce((total, comment) => {
-                                return total + 1 + (comment.replies?.length || 0);
-                            }, 0);
-                        })
-                        .catch(() => 0)
-                );
-
-                // 2. Fetch bookmark status (THIS WAS MISSING!)
-                const bookmarkPromises = user
-                    ? projectsData.map(project =>
-                        axios.get(API_ROUTES.bookmarks.getBookmarkState(project.id))
-                            .then(r => r.data.bookmarked)
-                            .catch(() => false)
-                      )
-                    : projectsData.map(() => false);
-
-                // 3. Run both in parallel
-                const [commentCounts, bookmarkStates] = await Promise.all([
-                    Promise.all(commentPromises),
-                    Promise.all(bookmarkPromises)
-                ]);
-
-                // 4. Attach BOTH comment count AND bookmark status
-                const projectsWithData = projectsData.map((project, idx) => ({
-                    ...project,
-                    comment_count: commentCounts[idx],
-                    bookmarked: bookmarkStates[idx]   // ← NOW IT WORKS PERFECTLY
-                }));
-
-                setProjects(projectsWithData);
-            } catch (err) {
-                console.error("Error fetching projects:", err);
-                setProjects([]);
+        try {
+            let res;
+            if (section === "repository") {
+                res = await axios.get("/projects");
+            } else {
+                res = await axios.get("/projects/adviser/all");
             }
-        };
 
-        fetchProjects();
+            const projectsData = res.data;
+
+            const commentPromises = projectsData.map((project) =>
+                axios
+                    .get(`/comments/${project.id}`)
+                    .then((r) => {
+                        if (!Array.isArray(r.data)) return 0;
+                        return r.data.reduce(
+                            (total, comment) =>
+                                total + 1 + (comment.replies?.length || 0),
+                            0
+                        );
+                    })
+                    .catch(() => 0)
+            );
+
+            const bookmarkPromises = projectsData.map((project) =>
+                axios
+                    .get(API_ROUTES.bookmarks.getBookmarkState(project.id))
+                    .then((r) => r.data.bookmarked)
+                    .catch(() => false)
+            );
+
+            const [commentCounts, bookmarkStates] = await Promise.all([
+                Promise.all(commentPromises),
+                Promise.all(bookmarkPromises),
+            ]);
+
+            const projectsWithData = projectsData.map((project, idx) => ({
+                ...project,
+                comment_count: commentCounts[idx],
+                bookmarked: bookmarkStates[idx],
+            }));
+
+            setProjects(projectsWithData);
+        } catch (err) {
+            console.error("Error fetching projects:", err);
+            setProjects([]);
+        }
     }, [user, section]);
 
-    // Socket setup (unchanged)
     useEffect(() => {
-        if (!user || !process.env.REACT_APP_BACKEND_URL) return;
-        socketRef.current = io(process.env.REACT_APP_BACKEND_URL);
-        socketRef.current.on(`adviser_notify_${user.id}`, (data) => {
-            alert(`${data.message}`);
-        });
-        return () => {
-            if (socketRef.current) socketRef.current.disconnect();
-        };
-    }, [user]);
+        fetchProjects();
+    }, [fetchProjects]);
+
+    useWorkflowRefresh({
+        onProjectsRefresh: fetchProjects,
+        onNotificationsRefresh: refreshUnreadCount,
+        socketChannel: user?.id ? `adviser_notify_${user.id}` : undefined,
+        workflowSocketEvents: ["workflow_refresh_adviser"],
+    });
 
     // Filtering logic (unchanged)
     const pending = projects.filter(p => p.status === "pending");

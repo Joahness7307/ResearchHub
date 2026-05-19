@@ -4,6 +4,7 @@ import { API_ROUTES } from "../../api/apiRoutes";
 import { useParams, useNavigate } from "react-router-dom";
 import { AuthContext } from "../../context/AuthContext";
 import { useDashboardNotificationsUnread } from "../../context/DashboardNotificationsUnreadContext";
+import { isEligibleResearchStudent } from "../../utils/studentEligibility";
 
 const NotificationDetails = () => {
   const { id } = useParams();
@@ -15,8 +16,13 @@ const NotificationDetails = () => {
 
   useEffect(() => {
     if (!id || !user) return;
+    if (user.role === "student" && !isEligibleResearchStudent(user)) {
+      navigate("/dashboard", { replace: true });
+      return;
+    }
+
     let notifUrl = "";
-    if (user.role === "student") {
+    if (isEligibleResearchStudent(user)) {
       notifUrl = API_ROUTES.notifications.student;
     } else if (user.role === "research_adviser") {
       notifUrl = API_ROUTES.notifications.adviserById(user.id);
@@ -24,9 +30,10 @@ const NotificationDetails = () => {
       notifUrl = API_ROUTES.notifications.headAdminById(user.id);
     } else if (user.role === "admin") {
       notifUrl = API_ROUTES.notifications.adminById(user.id);
-    } else {
-      notifUrl = API_ROUTES.notifications.student; // fallback for guest
     }
+
+    if (!notifUrl) return;
+
     axios.get(notifUrl)
       .then(res => {
         const notif = res.data.notifications.find(n => n.id === parseInt(id));
@@ -35,7 +42,7 @@ const NotificationDetails = () => {
         // Mark as read if not already
         if (notif && !notif.isRead) {
           let patchUrl = "";
-          if (user.role === "student") {
+          if (isEligibleResearchStudent(user)) {
             patchUrl = API_ROUTES.notifications.studentMarkAsRead(id);
           } else if (user.role === "research_adviser") {
             patchUrl = API_ROUTES.notifications.adviserMarkAsRead(id);
@@ -53,7 +60,7 @@ const NotificationDetails = () => {
           }
         }
       });
-  }, [id, user, refreshUnreadCount]);
+  }, [id, user, navigate, refreshUnreadCount]);
 
   if (!notification) return <div style={{ margin: "120px auto", textAlign: "center" }}>Loading notification...</div>;
 

@@ -3,6 +3,7 @@ import axios from "../../api/axios";
 import { API_ROUTES } from "../../api/apiRoutes";
 import { useParams, useNavigate } from "react-router-dom";
 import { AuthContext } from "../../context/AuthContext";
+import { dispatchWorkflowRefresh } from "../../utils/workflowEvents";
 import RevisionReasonModal from "../RevisionReasonModal";
 import "./ProjectDetails.css";
 import categoryColors from "../../constants/categoryColors";
@@ -84,10 +85,11 @@ const ProjectDetails = () => {
     const handleEndorse = async () => {
         setActionLoading(true);
         try {
-            await axios.post(API_ROUTES.projects.adviserEndorse(id));
-            setProject({ ...project, status: "endorsed" });
+            const res = await axios.post(API_ROUTES.projects.adviserEndorse(id));
+            const updated = res.data?.project || { ...project, status: "endorsed" };
+            setProject(updated);
+            dispatchWorkflowRefresh({ projectId: id, status: "endorsed" });
             alert("Project endorsed to admin for approval.");
-            navigate("/adviser");
         } catch {
             alert("Failed to endorse project.");
         }
@@ -107,12 +109,19 @@ const ProjectDetails = () => {
             } else if (user?.role === "head_admin") { // FIX 2: Add optional chaining
                 url = API_ROUTES.projects.needRevision.admin(id);
             }
-            await axios.post(url, { reason });
-            setProject({ ...project, status: "need_revision", rejectionReason: reason });
+            const res = await axios.post(url, { reason });
+            const newStatus =
+                user?.role === "head_admin" ? "admin_revision" : "need_revision";
+            const updated =
+                res.data?.project || {
+                    ...project,
+                    status: newStatus,
+                    rejection_reason: reason,
+                };
+            setProject(updated);
+            dispatchWorkflowRefresh({ projectId: id, status: newStatus });
             alert("Project marked as need revision.");
             setShowRevisionModal(false);
-            if (user?.role === "research_adviser") navigate("/adviser"); // FIX 3: Add optional chaining
-            else navigate("/head-admin/request-for-revision");
         } catch {
             alert("Failed to mark as need revision.");
         }
@@ -120,18 +129,53 @@ const ProjectDetails = () => {
     };
 
     const handleInformStudent = async () => {
-        await axios.post(API_ROUTES.projects.informStudent(project.id));
-        alert("Student has been notified!");
+        setActionLoading(true);
+        try {
+            const res = await axios.post(API_ROUTES.projects.informStudent(project.id));
+            const updated =
+                res.data?.project || { ...project, status: "need_revision" };
+            setProject(updated);
+            dispatchWorkflowRefresh({ projectId: project.id, status: "need_revision" });
+            alert("Student has been notified!");
+        } catch (err) {
+            const msg =
+                err.response?.data?.message || "Failed to notify student.";
+            alert(msg);
+        }
+        setActionLoading(false);
     };
 
     const handleReupload = async () => {
-        const formData = new FormData();
-        formData.append("document", reuploadFile);
-        await axios.put(API_ROUTES.projects.reupload(project.id), formData, {
-            headers: { "Content-Type": "multipart/form-data" }
-        });
-        alert("Project reuploaded!");
-        setShowReuploadModal(false);
+        if (!reuploadFile) {
+            alert("Please select a PDF file to upload.");
+            return;
+        }
+        setActionLoading(true);
+        try {
+            const formData = new FormData();
+            formData.append("document", reuploadFile);
+            const res = await axios.put(
+                API_ROUTES.projects.reupload(project.id),
+                formData,
+                { headers: { "Content-Type": "multipart/form-data" } }
+            );
+            const updated =
+                res.data?.project || {
+                    ...project,
+                    status: "pending",
+                    rejection_reason: null,
+                };
+            setProject(updated);
+            dispatchWorkflowRefresh({ projectId: project.id, status: "pending" });
+            alert("Project reuploaded and is now pending adviser review.");
+            setShowReuploadModal(false);
+            setReuploadFile(null);
+        } catch (err) {
+            const msg =
+                err.response?.data?.message || "Failed to reupload project.";
+            alert(msg);
+        }
+        setActionLoading(false);
     };
 
     // Handler for file input change
@@ -238,7 +282,10 @@ const ProjectDetails = () => {
                     </div>
                 )}
 
-                {project.status === "admin_revision" && project.rejection_reason && (
+                {project.status === "admin_revision" &&
+                    project.rejection_reason &&
+                    user?.role !== "student" &&
+                    user?.role !== "guest" && (
                     <div className="revision-required" style={{ background: "#fff8f0", border: "1px solid #fbbf24", color: "#b33834", margin: "1rem 0", padding: "1rem", borderRadius: "8px" }}>
                         <b>Head Admin Revision Reason:</b> {project.rejection_reason}
                     </div>
@@ -385,10 +432,20 @@ const ProjectDetails = () => {
                                 onClick={async () => {
                                     setActionLoading(true);
                                     try {
-                                        await axios.post(API_ROUTES.projects.approve(project.id));
-                                        setProject({ ...project, status: "approved" });
+                                        const res = await axios.post(
+                                            API_ROUTES.projects.approve(project.id)
+                                        );
+                                        const updated =
+                                            res.data?.project || {
+                                                ...project,
+                                                status: "approved",
+                                            };
+                                        setProject(updated);
+                                        dispatchWorkflowRefresh({
+                                            projectId: project.id,
+                                            status: "approved",
+                                        });
                                         alert("Project approved and moved to repository.");
-                                        navigate("/head-admin/approved-projects");
                                     } catch {
                                         alert("Failed to approve project.");
                                     }

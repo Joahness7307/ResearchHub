@@ -3,6 +3,14 @@ const path = require("path");
 const fs = require("fs");
 const cloudinary = require("../config/cloudinary");
 const { Op } = require("sequelize");
+const {
+  PROJECT_STATUS,
+  notifyStudent,
+  notifyProjectAdvisers,
+  notifyHeadAdmins,
+  emitWorkflowRefresh,
+} = require("../services/notificationService");
+const { isEligibleResearchStudent } = require("../utils/studentEligibility");
 
 // Upload final research paper
 exports.submitProject = async (req, res) => {
@@ -11,10 +19,7 @@ exports.submitProject = async (req, res) => {
     const user = req.user;
 
     // Eligibility check (keep this)
-    if (
-      (user.year_level && !["3rd", "4th"].includes(user.year_level)) ||
-      (user.grade_level && user.grade_level !== "12")
-    ) {
+    if (!isEligibleResearchStudent(user)) {
       return res.status(403).json({
         message: "You are not eligible to submit a research project."
       });
@@ -199,6 +204,12 @@ exports.markNotificationRead = async (req, res) => {
 
 exports.getStudentNotifications = async (req, res) => {
   try {
+    if (!isEligibleResearchStudent(req.user)) {
+      return res.status(403).json({
+        message: "Notifications are only available to eligible research students.",
+      });
+    }
+
     // Make sure req.user.id is available (authMiddleware must be used)
     const notifications = await Notification.findAll({
       where: { studentId: req.user.id },
@@ -212,6 +223,12 @@ exports.getStudentNotifications = async (req, res) => {
 
 exports.markStudentNotificationRead = async (req, res) => {
   try {
+    if (!isEligibleResearchStudent(req.user)) {
+      return res.status(403).json({
+        message: "Notifications are only available to eligible research students.",
+      });
+    }
+
     const notif = await Notification.findOne({
       where: { id: req.params.id, studentId: req.user.id }
     });
@@ -295,20 +312,22 @@ exports.endorseProject = async (req, res) => {
 
     const io = req.app.get("io");
 
-    // 1. Notify student
-    await Notification.create({
-      projectId: project.id,
-      studentId: project.submitted_by,
-      isRead: false,
-      reason: `Your project "${project.title}" was endorsed for admin's approval.`,
-    });
-    if (io) {
-      io.emit(`student_notify_${project.submitted_by}`, {
-        type: "status_update",
+    // 1. Notify eligible research student
+    if (isEligibleResearchStudent(project.submitter)) {
+      await Notification.create({
         projectId: project.id,
-        title: project.title,
-        newStatus: "endorsed"
+        studentId: project.submitted_by,
+        isRead: false,
+        reason: `Your project "${project.title}" was endorsed for admin's approval.`,
       });
+      if (io) {
+        io.emit(`student_notify_${project.submitted_by}`, {
+          type: "status_update",
+          projectId: project.id,
+          title: project.title,
+          newStatus: "endorsed"
+        });
+      }
     }
 
     // 2. Notify ALL advisers in the same strand/department (including self)
@@ -364,94 +383,114 @@ exports.endorseProject = async (req, res) => {
       }
     }
 
-    res.json({ message: "Project endorsed to admin for approval." });
+    emitWorkflowRefresh(io, ["student", "research_adviser", "head_admin"]);
+
+    res.json({
+      message: "Project endorsed to admin for approval.",
+      project: await project.reload(),
+    });
   } catch (error) {
     console.error("Endorse project error:", error);
     res.status(500).json({ message: "Failed to endorse project.", error: error.message });
   }
 };
 
-// Adviser or Admin requests revision
+// Adviser or Head Admin requests revision
 exports.needRevision = async (req, res) => {
   try {
     const user = req.user;
     const { reason } = req.body;
     const { id } = req.params;
 
+    if (!reason || !String(reason).trim()) {
+      return res.status(400).json({ message: "Revision reason is required." });
+    }
+
     const project = await Project.findByPk(id, {
-      include: [{ model: User, as: 'submitter' }]
+      include: [{ model: User, as: "submitter" }],
     });
     if (!project) return res.status(404).json({ message: "Project not found" });
 
     const io = req.app.get("io");
 
+    // Head Admin: endorsed → admin_revision (student NOT notified yet)
     if (user.role === "head_admin" || user.role === "admin") {
-      await project.update({
-        status: "admin_revision",
-        rejection_reason: reason,
-        last_updated_by_role: user.role
-      });
-
-      // Notify ALL advisers in same strand/dept
-      const advisers = await User.findAll({
-        where: {
-          role: "research_adviser",
-          [Op.or]: [
-            project.department_id ? { department_id: project.department_id } : {},
-            project.strand_id ? { strand_id: project.strand_id } : {}
-          ]
-        }
-      });
-
-      for (const adv of advisers) {
-        await Notification.create({
-          projectId: project.id,
-          adviserId: adv.id,
-          isRead: false,
-          reason: `Project "${project.title}" requires admin revision. Reason: ${reason}`
+      if (project.status !== PROJECT_STATUS.ENDORSED) {
+        return res.status(400).json({
+          message: "Only endorsed projects can be sent back for admin revision.",
+          currentStatus: project.status,
         });
-
-        if (io) {
-          io.emit(`adviser_notify_${adv.id}`, {
-            type: "status_update",
-            projectId: project.id,
-            title: project.title,
-            newStatus: "admin_revision",
-            reason,
-            updatedBy: user.full_name
-          });
-        }
       }
 
-      return res.json({ message: "Advisers notified for revision." });
+      await project.update({
+        status: PROJECT_STATUS.ADMIN_REVISION,
+        rejection_reason: reason,
+        last_updated_by_role: user.role,
+      });
+
+      await notifyProjectAdvisers(
+        io,
+        project,
+        `Project "${project.title}" requires revision from Head Admin. Reason: ${reason}`,
+        { newStatus: PROJECT_STATUS.ADMIN_REVISION, reason, updatedBy: user.full_name }
+      );
+
+      await notifyHeadAdmins(
+        io,
+        project,
+        `You requested revision for "${project.title}". Reason: ${reason}`,
+        { newStatus: PROJECT_STATUS.ADMIN_REVISION, reason, updatedBy: user.full_name }
+      );
+
+      emitWorkflowRefresh(io, ["research_adviser", "head_admin"]);
+
+      return res.json({
+        message: "Advisers notified for revision.",
+        project: await project.reload(),
+      });
     }
 
+    // Research Adviser: pending → need_revision (student + advisers notified)
     if (user.role === "research_adviser") {
+      if (project.status !== PROJECT_STATUS.PENDING) {
+        return res.status(400).json({
+          message: "Only pending projects can be marked for adviser revision.",
+          currentStatus: project.status,
+        });
+      }
+
       await project.update({
-        status: "need_revision",
+        status: PROJECT_STATUS.NEED_REVISION,
         rejection_reason: reason,
-        last_updated_by_role: user.role
+        last_updated_by_role: user.role,
       });
 
-      // Notify student
-      await Notification.create({
-        projectId: project.id,
-        studentId: project.submitted_by,
-        isRead: false,
-        reason: `Your "${project.title}" project requires revision. Reason: ${reason}`
-      });
-
-      if (io) {
-        io.emit(`student_notify_${project.submitted_by}`, {
+      const studentReason = `Your "${project.title}" project requires revision. Reason: ${reason}`;
+      await notifyStudent(io, {
+        project,
+        reason: studentReason,
+        payload: {
           type: "status_update",
           projectId: project.id,
           title: project.title,
-          newStatus: "need_revision",
-          reason
-        });
-      }
+          newStatus: PROJECT_STATUS.NEED_REVISION,
+          reason,
+        },
+      });
 
-      return res.json({ message: "Student notified for revision." });
+      await notifyProjectAdvisers(
+        io,
+        project,
+        `Project "${project.title}" was marked for revision. Reason: ${reason}`,
+        { newStatus: PROJECT_STATUS.NEED_REVISION, reason, updatedBy: user.full_name }
+      );
+
+      emitWorkflowRefresh(io, ["student", "research_adviser"]);
+
+      return res.json({
+        message: "Student and advisers notified for revision.",
+        project: await project.reload(),
+      });
     }
 
     res.status(403).json({ message: "Unauthorized" });
@@ -461,20 +500,60 @@ exports.needRevision = async (req, res) => {
   }
 };
 
+// Adviser informs student after Head Admin requested revision (admin_revision → need_revision)
 exports.informStudentOfRevision = async (req, res) => {
   try {
     const project = await Project.findByPk(req.params.id);
     if (!project) return res.status(404).json({ message: "Project not found" });
 
-    await project.update({ status: "need_revision", last_updated_by_role: "research_adviser" });
+    if (project.status !== PROJECT_STATUS.ADMIN_REVISION) {
+      return res.status(400).json({
+        message: "Student can only be informed when project is awaiting adviser action (admin revision).",
+        currentStatus: project.status,
+      });
+    }
 
-    await Notification.create({
-      projectId: project.id,
-      studentId: project.submitted_by,
-      isRead: false,
-      reason: `Your "${project.title}" project requires revision. Please reupload your updated document.`,
+    const io = req.app.get("io");
+    const adminReason = project.rejection_reason
+      ? ` Reason from Head Admin: ${project.rejection_reason}`
+      : "";
+
+    await project.update({
+      status: PROJECT_STATUS.NEED_REVISION,
+      last_updated_by_role: "research_adviser",
     });
-    res.json({ message: "Student notified of revision." });
+
+    const studentReason = `Your "${project.title}" project requires revision. Please reupload your updated document.${adminReason}`;
+
+    await notifyStudent(io, {
+      project,
+      reason: studentReason,
+      payload: {
+        type: "status_update",
+        projectId: project.id,
+        title: project.title,
+        newStatus: PROJECT_STATUS.NEED_REVISION,
+        reason: project.rejection_reason,
+      },
+    });
+
+    await notifyProjectAdvisers(
+      io,
+      project,
+      `Research adviser "${req.user.full_name}" informed the student about revision for "${project.title}".`,
+      {
+        newStatus: PROJECT_STATUS.NEED_REVISION,
+        reason: project.rejection_reason,
+        updatedBy: req.user.full_name,
+      }
+    );
+
+    emitWorkflowRefresh(io, ["student", "research_adviser", "head_admin"]);
+
+    res.json({
+      message: "Student notified of revision.",
+      project: await project.reload(),
+    });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -484,10 +563,55 @@ exports.reuploadProjectDocument = async (req, res) => {
   try {
     const project = await Project.findByPk(req.params.id);
     if (!project) return res.status(404).json({ message: "Project not found" });
-    if (project.submitted_by !== req.user.id) return res.status(403).json({ message: "Not your project" });
+    if (project.submitted_by !== req.user.id) {
+      return res.status(403).json({ message: "Not your project" });
+    }
+    if (project.status !== PROJECT_STATUS.NEED_REVISION) {
+      return res.status(400).json({
+        message: "Only projects marked for revision can be reuploaded.",
+        currentStatus: project.status,
+      });
+    }
+
     const documentUrl = req.file?.path || req.file?.secure_url;
-    await project.update({ documentPath: documentUrl, status: "pending" });
-    res.json({ message: "Project reuploaded and set to pending." });
+    if (!documentUrl) {
+      return res.status(400).json({ message: "Project PDF is required." });
+    }
+
+    const io = req.app.get("io");
+
+    await project.update({
+      documentPath: documentUrl,
+      status: PROJECT_STATUS.PENDING,
+      rejection_reason: null,
+      last_updated_by_role: "student",
+    });
+
+    const studentReason = `Your revised project "${project.title}" was reuploaded and is pending adviser review.`;
+    await notifyStudent(io, {
+      project,
+      reason: studentReason,
+      payload: {
+        type: "status_update",
+        projectId: project.id,
+        title: project.title,
+        newStatus: PROJECT_STATUS.PENDING,
+      },
+    });
+
+    await notifyProjectAdvisers(
+      io,
+      project,
+      `Student reuploaded revised project "${project.title}". It is now pending your review.`,
+      { newStatus: PROJECT_STATUS.PENDING }
+    );
+
+    emitWorkflowRefresh(io, ["student", "research_adviser"]);
+
+    res.json({
+      message: "Project reuploaded and set to pending.",
+      project: await project.reload(),
+    });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -538,21 +662,23 @@ exports.approveProject = async (req, res) => {
       }
     }
 
-    // Notify student
-    await Notification.create({
-      projectId: project.id,
-      studentId: project.submitted_by,
-      isRead: false,
-      reason: `Your project "${project.title}" has been approved and added to the repository.`
-    });
-
-    if (io) {
-      io.emit(`student_notify_${project.submitted_by}`, {
-        type: "status_update",
+    // Notify eligible research student
+    if (isEligibleResearchStudent(project.submitter)) {
+      await Notification.create({
         projectId: project.id,
-        title: project.title,
-        newStatus: "approved"
+        studentId: project.submitted_by,
+        isRead: false,
+        reason: `Your project "${project.title}" has been approved and added to the repository.`
       });
+
+      if (io) {
+        io.emit(`student_notify_${project.submitted_by}`, {
+          type: "status_update",
+          projectId: project.id,
+          title: project.title,
+          newStatus: "approved"
+        });
+      }
     }
 
     // Notify ALL head admins (including self) about the approval
@@ -577,7 +703,12 @@ exports.approveProject = async (req, res) => {
       }
     }
 
-    res.status(200).json({ message: "Research project approved" });
+    emitWorkflowRefresh(io, ["student", "research_adviser", "head_admin"]);
+
+    res.status(200).json({
+      message: "Research project approved",
+      project: await project.reload(),
+    });
   } catch (error) {
     console.error("Approve project error:", error);
     res.status(500).json({ message: "Failed to approve project.", error: error.message });

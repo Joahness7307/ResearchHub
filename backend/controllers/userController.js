@@ -9,6 +9,23 @@ require("dotenv").config();
 const { Resend } = require("resend");
 const resend = new Resend(process.env.RESEND_API_KEY);
 
+const STUDENT_INTERNAL_STATUS_MAP = {
+  admin_revision: "endorsed",
+};
+
+function serializeProjectForStudent(project) {
+  const data = typeof project.toJSON === "function" ? project.toJSON() : { ...project };
+  const visibleStatus = STUDENT_INTERNAL_STATUS_MAP[data.status] || data.status;
+
+  if (visibleStatus === data.status) return data;
+
+  return {
+    ...data,
+    status: visibleStatus,
+    internal_status: data.status,
+  };
+}
+
 // Register User (public signup: student or guest)
 exports.register = async (req, res) => {
   try {
@@ -581,7 +598,9 @@ exports.getUserProjects = async (req, res) => {
 
     console.log(`getUserProjects: found ${projects.length} projects for user ${req.user.id}`);
 
-    return res.json({ projects });
+    return res.json({
+      projects: projects.map(serializeProjectForStudent),
+    });
   } catch (error) {
     console.error("getUserProjects error:", error);
     return res.status(500).json({ message: "Failed to fetch projects", error: error.message });

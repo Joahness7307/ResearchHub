@@ -1,8 +1,10 @@
-import React, { useEffect, useState, useContext } from "react";
+import React, { useCallback, useEffect, useState, useContext } from "react";
 import axios from "../../api/axios";
 import { API_ROUTES } from "../../api/apiRoutes";
 import { AuthContext } from "../../context/AuthContext";
 import { useNavigate } from "react-router-dom"; 
+import { WORKFLOW_NOTIFICATIONS_UPDATED } from "../../utils/workflowEvents";
+import { isEligibleResearchStudent } from "../../utils/studentEligibility";
 import "./NotificationPage.css";
 
 const NotificationPage = () => {
@@ -10,12 +12,12 @@ const NotificationPage = () => {
   const [notifications, setNotifications] = useState([]);
   const navigate = useNavigate();
 
-  useEffect(() => {
+  const fetchNotifications = useCallback(() => {
     if (user && user.role === "research_adviser") {
       axios.get(API_ROUTES.notifications.adviserById(user.id))
         .then(res => setNotifications(res.data.notifications))
         .catch(() => setNotifications([]));
-    } else if (user && user.role === "student") {
+    } else if (isEligibleResearchStudent(user)) {
       axios.get(API_ROUTES.notifications.student)
         .then(res => setNotifications(res.data.notifications))
         .catch(() => setNotifications([]));
@@ -23,12 +25,29 @@ const NotificationPage = () => {
       axios.get(API_ROUTES.notifications.headAdminById(user.id))
         .then(res => setNotifications(res.data.notifications))
         .catch(() => setNotifications([]));
-    } else if (user.role === "admin" ) {
+    } else if (user && user.role === "admin" ) {
       axios.get(API_ROUTES.notifications.adminById(user.id))
         .then(res => setNotifications(res.data.notifications))
         .catch(() => setNotifications([]));
+    } else {
+      setNotifications([]);
     }
   }, [user]);
+
+  useEffect(() => {
+    if (user?.role === "student" && !isEligibleResearchStudent(user)) {
+      navigate("/dashboard", { replace: true });
+      return;
+    }
+
+    fetchNotifications();
+  }, [fetchNotifications, navigate, user]);
+
+  useEffect(() => {
+    window.addEventListener(WORKFLOW_NOTIFICATIONS_UPDATED, fetchNotifications);
+    return () =>
+      window.removeEventListener(WORKFLOW_NOTIFICATIONS_UPDATED, fetchNotifications);
+  }, [fetchNotifications]);
 
   return (
     <div className="notification-page-container">

@@ -28,7 +28,6 @@ export const sidebarLinks = {
   ],
   guest: [
     { label: "Dashboard", to: "/dashboard" },
-    { label: "Notifications", to: "/notifications" },
   ],
 };
 

@@ -9,6 +9,8 @@ import axios from "../../api/axios";
 import { API_ROUTES } from "../../api/apiRoutes";
 import { io } from "socket.io-client";
 import { notificationIsUnread } from "../../context/DashboardNotificationsUnreadContext";
+import { WORKFLOW_NOTIFICATIONS_UPDATED } from "../../utils/workflowEvents";
+import { isEligibleResearchStudent } from "../../utils/studentEligibility";
 import './Navbar.css';
 
 const STUDENT_NOTIFICATIONS_PATH = "/notifications";
@@ -39,11 +41,18 @@ const Navbar = ({
 
   // User role checks (always boolean)
   const isUnauthenticated = !user;
+  const canUseStudentNotifications = isEligibleResearchStudent(user);
   const isStudentOrGuest = !!user && (user.role === "student" || user.role === "guest");
   const isAdminRole = !!user && (user.role === "admin" || user.role === "head_admin" || user.role === "research_adviser");
 
   // Notification fetch for student
   const fetchStudentNotifications = useCallback(async () => {
+    if (!isEligibleResearchStudent(user)) {
+      setStudentNotifications([]);
+      setStudentNotifCount(0);
+      return;
+    }
+
     try {
       const res = await axios.get(API_ROUTES.notifications.student);
       const list = res.data.notifications ?? [];
@@ -53,26 +62,40 @@ const Navbar = ({
       setStudentNotifications([]);
       setStudentNotifCount(0);
     }
-  }, []);
+  }, [user]);
 
-  // Real-time updates (socket only; refetch is tied to route in the next effect)
+  // Real-time updates (socket + workflow broadcast)
   useEffect(() => {
-    if (!user || user.role !== "student") return undefined;
+    if (!canUseStudentNotifications) return undefined;
     socketRef.current = io(process.env.REACT_APP_BACKEND_URL);
-    socketRef.current.on(`student_notify_${user.id}`, () => {
-      fetchStudentNotifications();
-    });
+    const onNotify = () => fetchStudentNotifications();
+    socketRef.current.on(`student_notify_${user.id}`, onNotify);
+    socketRef.current.on("workflow_refresh_student", onNotify);
     return () => {
       if (socketRef.current) socketRef.current.disconnect();
       socketRef.current = null;
     };
-  }, [user?.id, user?.role, fetchStudentNotifications]);
+  }, [canUseStudentNotifications, user?.id, fetchStudentNotifications]);
+
+  useEffect(() => {
+    if (!canUseStudentNotifications) return undefined;
+    const onWorkflow = () => fetchStudentNotifications();
+    window.addEventListener(WORKFLOW_NOTIFICATIONS_UPDATED, onWorkflow);
+    return () =>
+      window.removeEventListener(WORKFLOW_NOTIFICATIONS_UPDATED, onWorkflow);
+  }, [canUseStudentNotifications, fetchStudentNotifications]);
 
   // Load / refresh list + unread count on mount and when navigation changes
   useEffect(() => {
-    if (user?.role !== "student") return;
+    if (!canUseStudentNotifications) {
+      setShowStudentDropdown(false);
+      setStudentNotifications([]);
+      setStudentNotifCount(0);
+      return;
+    }
+
     fetchStudentNotifications();
-  }, [user?.id, user?.role, location.pathname, fetchStudentNotifications]);
+  }, [canUseStudentNotifications, user?.id, location.pathname, fetchStudentNotifications]);
 
   useEffect(() => {
     function handleClickOutside(event) {
@@ -90,6 +113,7 @@ const Navbar = ({
   }, [showStudentDropdown]);
 
   const handleStudentBellClick = async () => {
+    if (!canUseStudentNotifications) return;
     setShowStudentDropdown(prev => !prev);
     if (!showStudentDropdown) {
       await fetchStudentNotifications();
@@ -129,11 +153,11 @@ const Navbar = ({
 
   // Hamburger sidebar links for student/guest
   const sidebarLinks = [
-    ...(user && user.role === "student" && (user.year_level === "3rd" || user.year_level === "4th" || user.grade_level === "12")
+    ...(canUseStudentNotifications
       ? [{ label: "Upload Project", to: "/upload-project" }]
       : []),
     { label: "My Account", to: "/my-account" },
-    { label: "Notifications", to: "/notifications" },
+    ...(canUseStudentNotifications ? [{ label: "Notifications", to: "/notifications" }] : []),
     { label: "Logout", action: handleLogout }
   ];
 
@@ -246,62 +270,64 @@ const Navbar = ({
       {isStudentOrGuest && (
         <>
           <div className="navbar-right desktop-nav student-nav-links">
-            {user.role === "student" && (user.year_level === "3rd" || user.year_level === "4th" || user.grade_level === "12") && (
+            {canUseStudentNotifications && (
               <Link to="/upload-project" className="nav-link nav-btn primary-btn">Upload Project</Link>
             )}
             <Link to="/my-account" className="nav-link">My Account</Link>
-            <span style={{ position: "relative" }}>
-              <img
-                src={notifIcon}
-                alt="Notifications"
-                ref={studentBellRef}
-                className="notification-icon"
-                onClick={handleStudentBellClick}
-              />
-              {studentNotifCount > 0 && (
-                <span className="notification-badge">{studentNotifCount}</span>
-              )}
-              {showStudentDropdown && (
-                <div ref={studentDropdownRef} className="projects-dropdown">
-                  <div className="projects-dropdown-list">
-                    {studentNotifications.length === 0 ? (
-                      <div className="projects-dropdown-empty">No notifications</div>
-                    ) : (
-                      studentNotifications.slice(0, 5).map(notif => (
-                        <div
-                          key={notif.id}
-                          className={`projects-dropdown-item ${notif.isRead ? "read" : "unread"}`}
-                          onClick={async () => {
-                            setShowStudentDropdown(false);
-                            await axios.patch(
-                              `${API_ROUTES.notifications.student}/${notif.id}/read`
-                            );
-                            await fetchStudentNotifications();
-                            navigate(`/notifications/${notif.id}`);
-                          }}
-                        >
-                          <div className="dropdown-item-reason">
-                            {notif.reason}
+            {canUseStudentNotifications && (
+              <span style={{ position: "relative" }}>
+                <img
+                  src={notifIcon}
+                  alt="Notifications"
+                  ref={studentBellRef}
+                  className="notification-icon"
+                  onClick={handleStudentBellClick}
+                />
+                {studentNotifCount > 0 && (
+                  <span className="notification-badge">{studentNotifCount}</span>
+                )}
+                {showStudentDropdown && (
+                  <div ref={studentDropdownRef} className="projects-dropdown">
+                    <div className="projects-dropdown-list">
+                      {studentNotifications.length === 0 ? (
+                        <div className="projects-dropdown-empty">No notifications</div>
+                      ) : (
+                        studentNotifications.slice(0, 5).map(notif => (
+                          <div
+                            key={notif.id}
+                            className={`projects-dropdown-item ${notif.isRead ? "read" : "unread"}`}
+                            onClick={async () => {
+                              setShowStudentDropdown(false);
+                              await axios.patch(
+                                `${API_ROUTES.notifications.student}/${notif.id}/read`
+                              );
+                              await fetchStudentNotifications();
+                              navigate(`/notifications/${notif.id}`);
+                            }}
+                          >
+                            <div className="dropdown-item-reason">
+                              {notif.reason}
+                            </div>
+                            <div className="projects-dropdown-date">
+                              {notif.createdAt ? new Date(notif.createdAt).toLocaleString() : ""}
+                            </div>
                           </div>
-                          <div className="projects-dropdown-date">
-                            {notif.createdAt ? new Date(notif.createdAt).toLocaleString() : ""}
-                          </div>
-                        </div>
-                      ))
-                    )}
+                        ))
+                      )}
+                    </div>
+                    <button
+                      className="dropdown-see-all-btn"
+                      onClick={() => {
+                        setShowStudentDropdown(false);
+                        navigate("/notifications");
+                      }}
+                    >
+                      See all notifications
+                    </button>
                   </div>
-                  <button
-                    className="dropdown-see-all-btn"
-                    onClick={() => {
-                      setShowStudentDropdown(false);
-                      navigate("/notifications");
-                    }}
-                  >
-                    See all notifications
-                  </button>
-                </div>
-              )}
-            </span>
+                )}
+              </span>
+            )}
             <button onClick={handleLogout} className="nav-link logout-btn">Logout</button>
           </div>
 
@@ -330,7 +356,7 @@ const Navbar = ({
                   onClick={() => toggleSidebar(false)}
                 >
                   <span className="sidebar-link-text">{link.label}</span>
-                  {user.role === "student" &&
+                  {canUseStudentNotifications &&
                     link.to === STUDENT_NOTIFICATIONS_PATH &&
                     studentNotifCount > 0 && (
                       <span

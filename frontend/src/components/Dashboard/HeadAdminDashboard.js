@@ -7,6 +7,8 @@ import "./AdminDashboard.css";
 import categoryColors from "../../constants/categoryColors";
 import "../Dashboard/StudentDashboard.css";
 import { AuthContext } from "../../context/AuthContext";
+import { useWorkflowRefresh } from "../../hooks/useWorkflowRefresh";
+import { useDashboardNotificationsUnread } from "../../context/DashboardNotificationsUnreadContext";
 
 // Search Bar Component
 const SearchBar = ({ searchTerm, onSearchChange }) => (
@@ -129,6 +131,7 @@ const projectsPerPage = 10;
 const HeadAdminDashboard = ({ section }) => {
   const { user } = useContext(AuthContext);
   const navigate = useNavigate();
+  const { refreshUnreadCount } = useDashboardNotificationsUnread();
   const [projects, setProjects] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -181,32 +184,37 @@ const HeadAdminDashboard = ({ section }) => {
     setSearchTerm("");
   }, [selectedCard]);
 
-  // Fetch all projects
-  useEffect(() => {
-    const fetchProjects = async () => {
-      try {
-        const res = await axios.get(API_ROUTES.head_admin.getAllProjects);
-        const data = res.data;
+  const fetchProjects = useCallback(async () => {
+    try {
+      const res = await axios.get(API_ROUTES.head_admin.getAllProjects);
+      const data = res.data;
 
-        // Also fetch current user's bookmarks to mark correctly
-        const bookmarkRes = await axios.get(API_ROUTES.bookmarks.getMyBookmarks);
-        const bookmarkedIds = bookmarkRes.data.map((project) => project.id); // ← direct access
+      const bookmarkRes = await axios.get(API_ROUTES.bookmarks.getMyBookmarks);
+      const bookmarkedIds = bookmarkRes.data.map((project) => project.id);
 
-        const projectsWithBookmarkStatus = data.map((project) => ({
-          ...project,
-          bookmarked: bookmarkedIds.includes(project.id),
-        }));
+      const projectsWithBookmarkStatus = data.map((project) => ({
+        ...project,
+        bookmarked: bookmarkedIds.includes(project.id),
+      }));
 
-        setProjects(projectsWithBookmarkStatus);
-        setBookmarkedProjects(bookmarkedIds);
-      } catch (err) {
-        console.error("Failed to load projects or bookmarks:", err);
-        setProjects([]);
-      }
-    };
-
-    fetchProjects();
+      setProjects(projectsWithBookmarkStatus);
+      setBookmarkedProjects(bookmarkedIds);
+    } catch (err) {
+      console.error("Failed to load projects or bookmarks:", err);
+      setProjects([]);
+    }
   }, []);
+
+  useEffect(() => {
+    if (user) fetchProjects();
+  }, [user, fetchProjects]);
+
+  useWorkflowRefresh({
+    onProjectsRefresh: fetchProjects,
+    onNotificationsRefresh: refreshUnreadCount,
+    socketChannel: user?.id ? `admin_notify_${user.id}` : undefined,
+    workflowSocketEvents: ["workflow_refresh_head_admin"],
+  });
 
   // Filter & Pagination Logic
   const {
