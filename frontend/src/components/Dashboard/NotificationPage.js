@@ -5,6 +5,7 @@ import { AuthContext } from "../../context/AuthContext";
 import { useNavigate } from "react-router-dom"; 
 import { WORKFLOW_NOTIFICATIONS_UPDATED } from "../../utils/workflowEvents";
 import { isEligibleResearchStudent } from "../../utils/studentEligibility";
+import { formatNotificationSummary } from "../../utils/formatNotificationSummary";
 import "./NotificationPage.css";
 
 const NotificationPage = () => {
@@ -63,7 +64,7 @@ const NotificationPage = () => {
               style={{ cursor: "pointer" }}
               onClick={() => {
                 if (user && user.role === "head_admin") {
-                  navigate(`/head-admin/notifications/${notif.id}`); // Always use this for head admin
+                  navigate(`/head-admin/notifications/${notif.id}`);
                 } else if (user && user.role === "admin") {
                   navigate(`/admin/notifications/${notif.id}`);
                 } else if (user && user.role === "research_adviser") {
@@ -73,7 +74,7 @@ const NotificationPage = () => {
                 }
               }}
             >
-              <div className="notification-message">{notif.reason}</div>
+              <div className="notification-message">{formatNotificationSummary(notif.reason)}.</div>
               <div className="notification-meta">
                 <span>
                   {notif.createdAt

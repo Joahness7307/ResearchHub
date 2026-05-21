@@ -11,6 +11,7 @@ import { io } from "socket.io-client";
 import { notificationIsUnread } from "../../context/DashboardNotificationsUnreadContext";
 import { WORKFLOW_NOTIFICATIONS_UPDATED } from "../../utils/workflowEvents";
 import { isEligibleResearchStudent } from "../../utils/studentEligibility";
+import { formatNotificationSummary } from "../../utils/formatNotificationSummary";
 import './Navbar.css';
 
 const STUDENT_NOTIFICATIONS_PATH = "/notifications";
@@ -306,7 +307,7 @@ const Navbar = ({
                             }}
                           >
                             <div className="dropdown-item-reason">
-                              {notif.reason}
+                              {formatNotificationSummary(notif.reason)}.
                             </div>
                             <div className="projects-dropdown-date">
                               {notif.createdAt ? new Date(notif.createdAt).toLocaleString() : ""}

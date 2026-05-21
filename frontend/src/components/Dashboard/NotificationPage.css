@@ -68,6 +68,107 @@
   margin-left: 1rem;
 }
 
+.notification-details-container {
+  max-width: 860px;
+  margin: 110px auto 40px;
+  background: #fff;
+  padding: 2.25rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 12px rgba(37,99,235,0.07);
+}
+
+.notification-details-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: flex-start;
+  margin-bottom: 1.5rem;
+}
+
+.notification-context-card {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.notification-context-card h3 {
+  color: #1f2937;
+  font-size: 0.95rem;
+  font-weight: 700;
+  margin: 0 0 0.7rem;
+}
+
+.notification-context-message {
+  color: #111827;
+  font-size: 1.05rem;
+  line-height: 1.55;
+  margin: 0 0 0.75rem;
+}
+
+.notification-context-meta,
+.notification-context-help {
+  color: #6b7280;
+  font-size: 0.88rem;
+}
+
+.notification-context-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.notification-context-value {
+  color: #374151;
+  line-height: 1.45;
+  margin: 0 0 0.45rem;
+}
+
+.notification-reason-box {
+  margin-top: 1rem;
+  border-radius: 10px;
+}
+
+.notification-reason-label {
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  color: #1f2937;
+}
+
+.notification-reason-text {
+  line-height: 1.6;
+  white-space: pre-line;
+  color: #333;
+}
+
+.notification-details-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+
+.notification-primary-action,
+.notification-secondary-action {
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 700;
+  padding: 0.8rem 1.2rem;
+}
+
+.notification-primary-action {
+  background: #2563eb;
+  color: #fff;
+}
+
+.notification-secondary-action {
+  background: #6b7280;
+  color: #fff;
+}
+
 /* 📲 Tablet Portrait */
 @media (max-width: 768px) {
   .notification-page-container {
@@ -77,7 +178,24 @@
   }
   .notification-title {
   font-size: 1.5rem;
-}
+  }
+  .notification-details-container {
+    margin: 90px 1.25rem 40px;
+    padding: 1.5rem;
+  }
+  .notification-context-grid {
+    grid-template-columns: 1fr;
+  }
+  .notification-details-actions {
+    flex-direction: column;
+    gap: 0.65rem;
+  }
+  .notification-primary-action,
+  .notification-secondary-action {
+    width: 100%;
+    text-align: center;
+    padding: 0.9rem 1rem;
+  }
 }
 
 /* 📱 Small Mobile */
@@ -89,5 +207,15 @@
   }
   .notification-title {
   font-size: 1.5rem;
-}
+  }
+  .notification-details-actions {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .notification-primary-action,
+  .notification-secondary-action {
+    width: 100%;
+    font-size: 0.95rem;
+    padding: 0.8rem;
+  }
 }
