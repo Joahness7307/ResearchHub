@@ -2,9 +2,9 @@ import React, { useRef, useEffect, useState, useContext, useCallback } from "rea
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { AuthContext } from "../../context/AuthContext";
 import { useSidebar } from "../../context/SidebarContext";
-import appLogo from '../../assets/appLogo.png';
-import fallbackLogo from '../../assets/logo192.png';
-import notifIcon from "../../assets/notification.png";
+import appLogo from '../../assets//images/app-logo.png';
+import fallbackLogo from '../../assets//icons/fallback-logo-icon.png';
+import notifIcon from "../../assets/icons/notification-bell-icon.png";
 import axios from "../../api/axios";
 import { API_ROUTES } from "../../api/apiRoutes";
 import { io } from "socket.io-client";

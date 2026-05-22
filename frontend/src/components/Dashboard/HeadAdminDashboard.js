@@ -46,8 +46,8 @@ const ProjectList = ({ projects, navigate, section, handleBookmarkToggle }) => (
           <img
             src={
               project.bookmarked
-                ? require("../../assets/bookmarkedIcon.png")
-                : require("../../assets/bookmarkIcon.png")
+                ? require("../../assets/icons/bookmarked-icon.png")
+                : require("../../assets/icons/bookmark-icon.png")
             }
             alt={project.bookmarked ? "Bookmarked" : "Bookmark"}
             className="bookmark-icon"
@@ -111,7 +111,7 @@ const ProjectList = ({ projects, navigate, section, handleBookmarkToggle }) => (
               }}
             >
               <img
-                src={require("../../assets/commentIcon.png")}
+                src={require("../../assets/icons/comment-icon.png")}
                 alt="Comments"
                 style={{ width: 20, height: 20, opacity: 0.8 }}
               />

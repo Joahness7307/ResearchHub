@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
 import axios from "../../api/axios";
 import { API_ROUTES } from "../../api/apiRoutes";
-import openEyeIcon from "../../assets/openEyeIcon.png";
-import closeEyeIcon from "../../assets/closeEyeIcon.png";
+import openEyeIcon from "../../assets/icons/open-eye-icon.png";
+import closeEyeIcon from "../../assets/icons/close-eye-icon.png";
 import { useNavigate, Link } from "react-router-dom";
 import "./AuthForm.css";
 

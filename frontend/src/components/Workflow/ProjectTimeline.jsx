@@ -1,10 +1,11 @@
 import React from "react";
-import pendingIcon from "../../assets/icons/pending.png";
-import endorsedIcon from "../../assets/icons/endorsed.png";
-import revisionIcon from "../../assets/icons/request-revision.png";
-import informedIcon from "../../assets/icons/adviser-informed-student-icon.png";
+import pendingIcon from "../../assets/icons/pending-icon.png";
+import endorsedIcon from "../../assets/icons/endorsed-icon.png";
+import revisionIcon from "../../assets/icons/request-revision-icon.png";
+import informedIcon from "../../assets/icons/informed-student-icon.png";
 import reuploadedIcon from "../../assets/icons/reuploaded-icon.png";
-import approvedIcon from "../../assets/icons/approved.png";
+import approvedIcon from "../../assets/icons/approved-icon.png";
+import { formatNotificationSummary } from "../../utils/formatNotificationSummary";
 import "./ProjectTimeline.css";
 
 const EVENT_META = {
@@ -27,8 +28,221 @@ function formatDate(value) {
   return new Date(value).toLocaleString();
 }
 
-const ProjectTimeline = ({ events = [], activeNotificationId }) => {
-  if (!events.length) {
+export function filterTimelineEvents(events = [], currentUserRole) {
+  return events.filter((event) => {
+    const message = (event.message || "").toLowerCase();
+
+    // STUDENT VIEW
+    if (currentUserRole === "student") {
+
+      if (message.includes("new pending project in your")) {
+        return false;
+      }
+
+      if (
+        message.includes("you endorsed") &&
+        message.includes("awaiting admin approval")
+      ) {
+        return false;
+      }
+
+      if (
+        message.includes("project") &&
+        message.includes("was marked for revision")
+      ) {
+        return false;
+      }
+
+      if (
+        message.includes("project") &&
+        message.includes("requires revision from head admin")
+      ) {
+        return false;
+      }
+
+      if (
+        message.includes("you requested revision")
+      ) {
+        return false;
+      }
+
+      if (
+        message.includes("student reuploaded revised project")
+      ) {
+        return false;
+      }
+
+      if (
+        message.includes("informed the student about revision ")
+      ) {
+        return false;
+      }
+
+      if (
+        message.includes("was endorsed by research adviser")
+      ) {
+        return false;
+      }
+
+      if (
+        message.includes("your project") &&
+        message.includes("approved")
+      ) {
+        return false;
+      }
+
+      if (
+        message.includes("project") &&
+        message.includes("has been approved")
+      ) {
+        return false;
+      }
+
+      return true;
+    }
+
+    // RESEARCH ADVISER VIEW
+    if (currentUserRole === "research_adviser") {
+
+      if (message.includes("you submitted the project")) {
+        return false;
+      }
+
+      if (
+        message.includes("your project") &&
+        message.includes("endorsed for admin")
+      ) {
+        return false;
+      }
+
+      if (
+        message.includes("your") &&
+        message.includes("project requires revision")
+      ) {
+        return false;
+      }
+
+      if (
+        message.includes("requested revision")
+      ) {
+        return false;
+      }
+
+      if (
+        message.includes("your revised project") &&
+        message.includes("reuploaded")
+      ) {
+        return false;
+      }
+
+      if (
+        message.includes("was endorsed by research adviser")
+      ) {
+        return false;
+      }
+
+      if (
+        message.includes("your project") &&
+        message.includes("approved")
+      ) {
+        return false;
+      }
+
+      if (
+        message.includes("you approved") &&
+        message.includes("project")
+      ) {
+        return false;
+      }
+
+      return true;
+    }
+
+    // HEAD ADMIN VIEW
+    if (currentUserRole === "head_admin") {
+
+      if (message.includes("new pending project in your department")) {
+        return false;
+      }
+
+      if (
+        message.includes("you endorsed the") &&
+        message.includes("awaiting admin approval")
+      ) {
+        return false;
+      }
+
+      if (message.includes("you submitted the project")) {
+        return false;
+      }
+
+      if (
+        message.includes("your project") &&
+        message.includes("endorsed for admin")
+      ) {
+        return false;
+      }
+
+      if (
+        message.includes("your") &&
+        message.includes("project requires revision")
+      ) {
+        return false;
+      }
+
+      if (
+        message.includes("project") &&
+        message.includes("was marked for revision")
+      ) {
+        return false;
+      }
+
+      if (
+        message.includes("project") &&
+        message.includes("requires revision")
+      ) {
+        return false;
+      }
+
+      if (
+        message.includes("your revised project") &&
+        message.includes("reuploaded")
+      ) {
+        return false;
+      }
+
+      if (
+        message.includes("student reuploaded revised project")
+      ) {
+        return false;
+      }
+
+      if (
+        message.includes("your project") &&
+        message.includes("approved")
+      ) {
+        return false;
+      }
+
+      if (
+        message.includes("project") &&
+        message.includes("has been approved")
+      ) {
+        return false;
+      }
+
+      return true;
+    }
+
+    return true;
+  });
+}
+
+const ProjectTimeline = ({ events = [], activeNotificationId, currentUserRole }) => {
+  
+  const filteredEvents = filterTimelineEvents(events, currentUserRole);
+
+  if (!filteredEvents.length) {
     return (
       <section className="project-timeline">
         <div className="project-timeline-empty">No workflow history available yet.</div>
@@ -40,7 +254,7 @@ const ProjectTimeline = ({ events = [], activeNotificationId }) => {
     <section className="project-timeline" aria-label="Project workflow timeline">
       <h3 className="project-timeline-title">Project Workflow Timeline</h3>
       <ol className="project-timeline-list">
-        {events.map((event) => {
+        {filteredEvents.map((event) => {
           const meta = EVENT_META[event.eventType] || EVENT_META.activity;
           const isActive = Number(event.id) === Number(activeNotificationId);
 
@@ -59,7 +273,7 @@ const ProjectTimeline = ({ events = [], activeNotificationId }) => {
                   </span>
                   {isActive && <span className="project-timeline-current">Opened notification</span>}
                 </div>
-                <p className="project-timeline-message">{event.message}</p>
+                <p className="project-timeline-message">{formatNotificationSummary(event.message)}</p>
                 <div className="project-timeline-meta">
                   <span>Actor: {formatRole(event.actorRole)}</span>
                   <span>{formatDate(event.timestamp)}</span>

@@ -5,7 +5,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { AuthContext } from "../../context/AuthContext";
 import { useDashboardNotificationsUnread } from "../../context/DashboardNotificationsUnreadContext";
 import { isEligibleResearchStudent } from "../../utils/studentEligibility";
-import ProjectTimeline from "../Workflow/ProjectTimeline";
+import ProjectTimeline, { filterTimelineEvents } from "../Workflow/ProjectTimeline";
 import "./NotificationPage.css";
 
 function getNotificationType(reason = "") {
@@ -40,20 +40,40 @@ function formatNotificationDetails(reason = "") {
     };
   }
 
-  // Split by "Reason:"
-  const reasonMatch = reason.split(" Reason:");
-
-  // If no revision reason exists
-  if (reasonMatch.length === 1) {
+  // Pattern 1 — " Reason:" (used by head admin revision request)
+  // Example: "Project X requires revision. Reason: fix chapter 2"
+  const standardReasonIndex = reason.indexOf(" Reason:");
+  if (standardReasonIndex !== -1) {
     return {
-      summary: reason,
+      summary: reason.slice(0, standardReasonIndex).trim(),
+      revisionReason: reason.slice(standardReasonIndex + " Reason:".length).trim(),
+    };
+  }
+
+  // Pattern 2 — "Reason from Head Admin:" (used by adviser inform student)
+  // Example: "Your project requires revision. Please reupload... Reason from Head Admin: fix it"
+  const headAdminReasonIndex = reason.indexOf(" Reason from Head Admin:");
+  if (headAdminReasonIndex !== -1) {
+    return {
+      summary: reason.slice(0, headAdminReasonIndex).trim(),
+      revisionReason: reason.slice(headAdminReasonIndex + " Reason from Head Admin:".length).trim(),
+    };
+  }
+
+  // Pattern 3 — ". Please reupload" with no explicit reason label
+  // Strip the reupload instruction from summary if no reason found
+  const reuploadIndex = reason.indexOf(". Please reupload");
+  if (reuploadIndex !== -1) {
+    return {
+      summary: reason.slice(0, reuploadIndex).trim(),
       revisionReason: "",
     };
   }
 
+  // No reason pattern found — show full message as summary
   return {
-    summary: reasonMatch[0].trim(),
-    revisionReason: reasonMatch[1].trim(),
+    summary: reason,
+    revisionReason: "",
   };
 }
 
@@ -114,6 +134,13 @@ const NotificationDetails = () => {
   const [timeline, setTimeline] = useState([]);
   const navigate = useNavigate();
   const { refreshUnreadCount } = useDashboardNotificationsUnread();
+
+  const visibleTimelineEvents = filterTimelineEvents(
+  timeline,
+  user?.role
+  );
+
+  const shouldShowBottomActions = visibleTimelineEvents.length >= 5;
 
   useEffect(() => {
     if (!id || !user) return;
@@ -182,7 +209,6 @@ const NotificationDetails = () => {
 
   const notificationType = getNotificationType(notification.reason || "");
   const currentStatus = projectContext?.status || notification.Project?.status;
-  const revisionReason = projectContext?.rejection_reason;
   const formattedNotification = formatNotificationDetails(notification.reason || "");
 
   return (
@@ -222,27 +248,33 @@ const NotificationDetails = () => {
         </div>
       </section>
 
-      <section className="notification-context-grid">
-        <div className="notification-context-card">
+      <section className="notification-context-card" style={{ marginTop: "1rem" }}>
           <h3>Current Project Status</h3>
           <p className="notification-context-value">{formatStatus(currentStatus)}</p>
           <span className="notification-context-help">
             This reflects the project state today, not necessarily the state when this notification was created.
           </span>
-        </div>
-        <div className="notification-context-card">
-          <h3>Revision Reason</h3>
-          <p className="notification-context-value">
-            {revisionReason || "No active revision reason on the current project."}
-          </p>
-        </div>
       </section>
 
-      <ActionButtons projectId={projectId} user={user} navigate={navigate} />
+      <ActionButtons
+        projectId={projectId} 
+        user={user} 
+        navigate={navigate} 
+      />
 
-      <ProjectTimeline events={timeline} activeNotificationId={id} />
+      <ProjectTimeline 
+        events={timeline}
+        activeNotificationId={id} 
+        currentUserRole={user?.role} 
+      />
 
-      <ActionButtons projectId={projectId} user={user} navigate={navigate} />
+      {shouldShowBottomActions && (
+        <ActionButtons 
+          projectId={projectId} 
+          user={user} 
+          navigate={navigate} 
+        />
+      )}
 
     </div>
   );

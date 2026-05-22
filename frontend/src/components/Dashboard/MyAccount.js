@@ -4,7 +4,7 @@ import "./MyAccount.css";
 import axios from "../../api/axios";
 import { useNavigate } from "react-router-dom";
 import categoryColors from "../../constants/categoryColors";
-import dropdownArrow from "../../assets/dropdownArrow.png";
+import dropdownArrow from "../../assets/icons/dropdown-arrow-icon.png";
 import UserAvatar from "../../components/UserAvatar";
 import { WORKFLOW_PROJECTS_UPDATED } from "../../utils/workflowEvents";
 import { isEligibleResearchStudent } from "../../utils/studentEligibility";

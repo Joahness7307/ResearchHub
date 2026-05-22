@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from "react";
 import axios from "../../api/axios";
 import { API_ROUTES } from "../../api/apiRoutes";
-import commentIcon from "../../assets/commentIcon.png";
-import bookmarkIcon from "../../assets/bookmarkIcon.png";
-import bookmarkedIcon from "../../assets/bookmarkedIcon.png";
+import commentIcon from "../../assets/icons/comment-icon.png";
+import bookmarkIcon from "../../assets/icons/bookmark-icon.png";
+import bookmarkedIcon from "../../assets/icons/bookmarked-icon.png";
 import { useNavigate } from "react-router-dom";
 import "./StudentDashboard.css";
 // NOTE: categoryColors is not provided, assuming it's correctly mapped in your constants

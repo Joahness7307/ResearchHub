@@ -212,7 +212,7 @@ const ResearchAdviserDashboard = ({ section }) => {
                     <li key={project.id} className="repository-item" onClick={() => navigate(`/adviser/projects/${project.id}`)} style={{ position: 'relative' }}>
                         {/* Bookmark Icon - Top Right */}
                         <img
-                        src={project.bookmarked ? require("../../assets/bookmarkedIcon.png") : require("../../assets/bookmarkIcon.png")}
+                        src={project.bookmarked ? require("../../assets/icons/bookmarked-icon.png") : require("../../assets/icons/bookmark-icon.png")}
                         alt={project.bookmarked ? "Bookmarked" : "Bookmark"}
                         className={`bookmark-icon ${bookmarkLoading[project.id] ? "loading" : ""}`}
                         onClick={(e) => handleBookmarkToggle(e, project.id, project.bookmarked)}
@@ -239,7 +239,7 @@ const ResearchAdviserDashboard = ({ section }) => {
                         {(section === "approved" || section === "repository") && (
                         <div className="comment-icon-container">
                             <img 
-                            src={require("../../assets/commentIcon.png")} 
+                            src={require("../../assets/icons/comment-icon.png")} 
                             alt="Comments" 
                             className="comment-icon" 
                             />

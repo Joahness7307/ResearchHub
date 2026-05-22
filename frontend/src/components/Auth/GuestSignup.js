@@ -2,8 +2,8 @@ import React, { useState } from "react";
 import axios from "../../api/axios";
 import { API_ROUTES } from "../../api/apiRoutes";
 import { useNavigate, Link } from "react-router-dom";
-import openEyeIcon from "../../assets/openEyeIcon.png";
-import closeEyeIcon from "../../assets/closeEyeIcon.png";
+import openEyeIcon from "../../assets/icons/open-eye-icon.png";
+import closeEyeIcon from "../../assets/icons/close-eye-icon.png";
 import "./AuthForm.css";
 
 const GuestSignup = () => { // Renamed for clarity, assuming you use /register-user route

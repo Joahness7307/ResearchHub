@@ -1,6 +1,6 @@
 import React, { useState, useContext } from "react";
-import openEyeIcon from "../../assets/openEyeIcon.png";
-import closeEyeIcon from "../../assets/closeEyeIcon.png";
+import openEyeIcon from "../../assets/icons/open-eye-icon.png";
+import closeEyeIcon from "../../assets/icons/close-eye-icon.png";
 import axios from "../../api/axios";
 import { API_ROUTES } from "../../api/apiRoutes";
 import { AuthContext } from "../../context/AuthContext";

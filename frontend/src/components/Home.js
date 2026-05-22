@@ -1,12 +1,12 @@
 import React, { useEffect } from "react";
 import { useLocation, Link, useNavigate } from "react-router-dom";
 import "./Home.css";
-import caparidaImg from "../assets/caparida.png";
-import yongcoImg from "../assets/yongco2.jpeg";
-import caparasImg from "../assets/caparas.jpeg";
-import montillaImg from "../assets/montilla.jpg";
-import toringImg from "../assets/toring2.jpeg";
-import lapisImg from "../assets/lapis.jpeg";
+import caparidaImg from "../assets/images/caparida.png";
+import yongcoImg from "../assets/images/yongco2.jpeg";
+import caparasImg from "../assets/images/caparas.jpeg";
+import montillaImg from "../assets/images/montilla.jpg";
+import toringImg from "../assets/images/toring2.jpeg";
+import lapisImg from "../assets/images/lapis.jpeg";
 
 const Home = () => {
   const location = useLocation();

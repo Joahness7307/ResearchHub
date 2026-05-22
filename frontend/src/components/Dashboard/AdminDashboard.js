@@ -2,8 +2,8 @@ import React, { useEffect, useState, useMemo, useCallback, useContext } from "re
 import { useNavigate } from "react-router-dom";
 import axios from "../../api/axios";
 import { API_ROUTES } from "../../api/apiRoutes";
-import openEyeIcon from "../../assets/openEyeIcon.png";
-import closeEyeIcon from "../../assets/closeEyeIcon.png";
+import openEyeIcon from "../../assets/icons/open-eye-icon.png";
+import closeEyeIcon from "../../assets/icons/close-eye-icon.png";
 import "./AdminDashboard.css";
 import UserRolePieChart from "../UserRolePieChart";
 import ProjectStatusPieChart from "../ProjectStatusPieChart";

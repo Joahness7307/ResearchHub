@@ -7,9 +7,9 @@ import { dispatchWorkflowRefresh } from "../../utils/workflowEvents";
 import RevisionReasonModal from "../RevisionReasonModal";
 import "./ProjectDetails.css";
 import categoryColors from "../../constants/categoryColors";
-import bookmarkIcon from "../../assets/bookmarkIcon.png";
-import bookmarkedIcon from "../../assets/bookmarkedIcon.png";
-import commentIcon from "../../assets/commentIcon.png";
+import bookmarkIcon from "../../assets/icons/bookmark-icon.png";
+import bookmarkedIcon from "../../assets/icons/bookmarked-icon.png";
+import commentIcon from "../../assets/icons/comment-icon.png";
 
 const ProjectDetails = () => {
     const { id } = useParams();

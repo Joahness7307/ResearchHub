@@ -21,6 +21,12 @@ export function formatNotificationSummary(reason = "") {
     summary = summary.slice(0, reasonIndex);
   }
 
+   // Remove " Reason from Head Admin:" and everything after
+  const headAdminIndex = summary.indexOf(" Reason from Head Admin:");
+  if (headAdminIndex !== -1) {
+    summary = summary.slice(0, headAdminIndex);
+  }
+
   // Remove verbose reupload instructions
   const reuploadIndex = summary.indexOf(". Please reupload");
   if (reuploadIndex !== -1) {

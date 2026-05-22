@@ -112,13 +112,6 @@
   font-size: 0.88rem;
 }
 
-.notification-context-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 1rem;
-  margin-top: 1rem;
-}
-
 .notification-context-value {
   color: #374151;
   line-height: 1.45;
@@ -182,9 +175,6 @@
   .notification-details-container {
     margin: 90px 1.25rem 40px;
     padding: 1.5rem;
-  }
-  .notification-context-grid {
-    grid-template-columns: 1fr;
   }
   .notification-details-actions {
     flex-direction: column;
