@@ -1,21 +1,49 @@
 import React from "react";
-import pendingIcon from "../../assets/icons/pending-icon.png";
-import endorsedIcon from "../../assets/icons/endorsed-icon.png";
-import revisionIcon from "../../assets/icons/request-revision-icon.png";
-import informedIcon from "../../assets/icons/informed-student-icon.png";
-import reuploadedIcon from "../../assets/icons/reuploaded-icon.png";
-import approvedIcon from "../../assets/icons/approved-icon.png";
 import { formatNotificationSummary } from "../../utils/formatNotificationSummary";
 import "./ProjectTimeline.css";
 
 const EVENT_META = {
-  pending: { label: "Pending", icon: pendingIcon, className: "pending" },
-  endorsed: { label: "Endorsed", icon: endorsedIcon, className: "endorsed" },
-  revision_request: { label: "Revision Request", icon: revisionIcon, className: "revision" },
-  informed_student: { label: "Informed Student", icon: informedIcon, className: "informed" },
-  reuploaded: { label: "Reuploaded", icon: reuploadedIcon, className: "reuploaded" },
-  approved: { label: "Approved", icon: approvedIcon, className: "approved" },
-  activity: { label: "Activity", icon: pendingIcon, className: "activity" },
+  pending: {
+    label: "Pending",
+    icon: "/workflow-timeline-icons/pending-icon.png",
+    className: "pending"
+  },
+
+  endorsed: {
+    label: "Endorsed",
+    icon: "/workflow-timeline-icons/endorsed-icon.png",
+    className: "endorsed"
+  },
+
+  revision_request: {
+    label: "Revision Request",
+    icon: "/workflow-timeline-icons/request-revision-icon.png",
+    className: "revision"
+  },
+
+  informed_student: {
+    label: "Informed Student",
+    icon: "/workflow-timeline-icons/informed-student-icon.png",
+    className: "informed"
+  },
+
+  reuploaded: {
+    label: "Reuploaded",
+    icon: "/workflow-timeline-icons/reuploaded-icon.png",
+    className: "reuploaded"
+  },
+
+  approved: {
+    label: "Approved",
+    icon: "/workflow-timeline-icons/approved-icon.png",
+    className: "approved"
+  },
+
+  activity: {
+    label: "Activity",
+    icon: "/workflow-timeline-icons/pending-icon.png",
+    className: "activity"
+  },
 };
 
 function formatRole(role) {
