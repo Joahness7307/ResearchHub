@@ -28,7 +28,7 @@ function getTimelineEventType(reason = "") {
 function getNotificationOwnerRole(notification) {
   if (notification.adviserId) return "research_adviser";
   if (notification.studentId) return "student";
-  if (notification.adminId) return notification.User?.role || "admin";
+  if (notification.adminId) return "head_admin";
 
   return null;
 }
@@ -97,7 +97,6 @@ router.get(
 
       const notifications = await Notification.findAll({
         where: { projectId: req.params.projectId },
-        include: [{ model: User, attributes: ["id", "role"] }],
         order: [["createdAt", "ASC"]],
       });
 
@@ -112,6 +111,9 @@ router.get(
           eventType,
           actorRole: getTimelineActorRole(item, eventType, project, reason),
           recipientRole: getNotificationOwnerRole(item),
+          adviserId: item.adviserId,
+          studentId: item.studentId,
+          adminId: item.adminId,
           message: reason,
           timestamp: item.createdAt,
         };

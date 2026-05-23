@@ -24,12 +24,14 @@ async function getAdvisersForProject(project) {
   }
   if (orConditions.length === 0) return [];
 
-  return User.findAll({
-    where: {
-      role: "research_adviser",
-      [Op.or]: orConditions,
+  const advisers = await User.findAll({
+  where: {
+    role: "research_adviser",
+    [Op.or]: orConditions,
     },
   });
+
+  return [...new Map(advisers.map(a => [a.id, a])).values()];
 }
 
 async function getHeadAdmins() {

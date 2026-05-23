@@ -28,219 +28,70 @@ function formatDate(value) {
   return new Date(value).toLocaleString();
 }
 
-export function filterTimelineEvents(events = [], currentUserRole) {
+export function filterTimelineEvents(events = [], currentUserRole, currentUserId) {
   return events.filter((event) => {
+
+    const recipient = event.recipientRole;
+    const eventType = event.eventType;
     const message = (event.message || "").toLowerCase();
 
+    // ─────────────────────────────────────────────
     // STUDENT VIEW
+    // Show only events where student is the recipient
+    // PLUS key workflow events that affect them
+    // ─────────────────────────────────────────────
     if (currentUserRole === "student") {
+      // Always show events sent TO the student
+      if (recipient === "student") return true;
 
-      if (message.includes("new pending project in your")) {
-        return false;
+      // Also show adviser-informed events (student needs to see this context)
+      if (eventType === "informed_student" && recipient === "research_adviser") {
+        // Show only the student-facing inform message, not the adviser self-confirm
+        return message.includes("requires revision") && 
+               message.includes("please reupload");
       }
 
-      if (
-        message.includes("you endorsed") &&
-        message.includes("awaiting admin approval")
-      ) {
-        return false;
-      }
-
-      if (
-        message.includes("project") &&
-        message.includes("was marked for revision")
-      ) {
-        return false;
-      }
-
-      if (
-        message.includes("project") &&
-        message.includes("requires revision from head admin")
-      ) {
-        return false;
-      }
-
-      if (
-        message.includes("you requested revision")
-      ) {
-        return false;
-      }
-
-      if (
-        message.includes("student reuploaded revised project")
-      ) {
-        return false;
-      }
-
-      if (
-        message.includes("informed the student about revision ")
-      ) {
-        return false;
-      }
-
-      if (
-        message.includes("was endorsed by research adviser")
-      ) {
-        return false;
-      }
-
-      if (
-        message.includes("your project") &&
-        message.includes("approved")
-      ) {
-        return false;
-      }
-
-      if (
-        message.includes("project") &&
-        message.includes("has been approved")
-      ) {
-        return false;
-      }
-
-      return true;
+      // Hide everything else (adviser notifications, head admin notifications)
+      return false;
     }
 
+    // ─────────────────────────────────────────────
     // RESEARCH ADVISER VIEW
+    // Show only events where adviser is the recipient
+    // ─────────────────────────────────────────────
     if (currentUserRole === "research_adviser") {
-
-      if (message.includes("you submitted the project")) {
-        return false;
-      }
-
+      // Show ONLY notifications intended for THIS adviser
       if (
-        message.includes("your project") &&
-        message.includes("endorsed for admin")
+        recipient === "research_adviser" &&
+        Number(event.adviserId) === Number(currentUserId)
       ) {
-        return false;
+        return true;
       }
 
-      if (
-        message.includes("your") &&
-        message.includes("project requires revision")
-      ) {
-        return false;
-      }
-
-      if (
-        message.includes("requested revision")
-      ) {
-        return false;
-      }
-
-      if (
-        message.includes("your revised project") &&
-        message.includes("reuploaded")
-      ) {
-        return false;
-      }
-
-      if (
-        message.includes("was endorsed by research adviser")
-      ) {
-        return false;
-      }
-
-      if (
-        message.includes("your project") &&
-        message.includes("approved")
-      ) {
-        return false;
-      }
-
-      if (
-        message.includes("you approved") &&
-        message.includes("project")
-      ) {
-        return false;
-      }
-
-      return true;
+      // Hide everything else
+      return false;
     }
 
+    // ─────────────────────────────────────────────
     // HEAD ADMIN VIEW
+    // Show only events where head_admin is the recipient
+    // ─────────────────────────────────────────────
     if (currentUserRole === "head_admin") {
+      // Always show events sent TO the head admin
+      if (recipient === "head_admin") return true;
 
-      if (message.includes("new pending project in your department")) {
-        return false;
-      }
-
-      if (
-        message.includes("you endorsed the") &&
-        message.includes("awaiting admin approval")
-      ) {
-        return false;
-      }
-
-      if (message.includes("you submitted the project")) {
-        return false;
-      }
-
-      if (
-        message.includes("your project") &&
-        message.includes("endorsed for admin")
-      ) {
-        return false;
-      }
-
-      if (
-        message.includes("your") &&
-        message.includes("project requires revision")
-      ) {
-        return false;
-      }
-
-      if (
-        message.includes("project") &&
-        message.includes("was marked for revision")
-      ) {
-        return false;
-      }
-
-      if (
-        message.includes("project") &&
-        message.includes("requires revision")
-      ) {
-        return false;
-      }
-
-      if (
-        message.includes("your revised project") &&
-        message.includes("reuploaded")
-      ) {
-        return false;
-      }
-
-      if (
-        message.includes("student reuploaded revised project")
-      ) {
-        return false;
-      }
-
-      if (
-        message.includes("your project") &&
-        message.includes("approved")
-      ) {
-        return false;
-      }
-
-      if (
-        message.includes("project") &&
-        message.includes("has been approved")
-      ) {
-        return false;
-      }
-
-      return true;
+      // Hide everything else
+      return false;
     }
 
+    // Default — show everything (for admin or unknown roles)
     return true;
   });
 }
 
-const ProjectTimeline = ({ events = [], activeNotificationId, currentUserRole }) => {
+const ProjectTimeline = ({ events = [], activeNotificationId, currentUserRole, currentUserId }) => {
   
-  const filteredEvents = filterTimelineEvents(events, currentUserRole);
+  const filteredEvents = filterTimelineEvents(events, currentUserRole, currentUserId);
 
   if (!filteredEvents.length) {
     return (

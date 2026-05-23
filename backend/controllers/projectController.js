@@ -12,6 +12,33 @@ const {
 } = require("../services/notificationService");
 const { isEligibleResearchStudent } = require("../utils/studentEligibility");
 
+async function getRelevantAdvisers(project) {
+  const where = {
+    role: "research_adviser",
+  };
+
+  // Safe conditional query building
+  if (project.department_id && project.strand_id) {
+    where[Op.or] = [
+      { department_id: project.department_id },
+      { strand_id: project.strand_id },
+    ];
+  } else if (project.department_id) {
+    where.department_id = project.department_id;
+  } else if (project.strand_id) {
+    where.strand_id = project.strand_id;
+  }
+
+  const advisers = await User.findAll({ where });
+
+  // Remove duplicates by adviser ID
+  const uniqueAdvisers = [
+    ...new Map(advisers.map((a) => [a.id, a])).values(),
+  ];
+
+  return uniqueAdvisers;
+}
+
 // Upload final research paper
 exports.submitProject = async (req, res) => {
   const transaction = await sequelize.transaction();
@@ -77,30 +104,14 @@ exports.submitProject = async (req, res) => {
       reason: `You submitted the project "${project.title}".`
     }, { transaction: transaction });
 
-    // Notify advisers in the same department/strand inside transaction
-    // NEW - safe adviser query with proper warning
+    let possibleAdvisers = [];
+
+    // Notify advisers in the same department/strand inside transaction only once
     if (user.department_id || user.strand_id) {
 
-      // Build where condition safely - never pass empty {} into Op.or
-      const adviserWhere = { role: "research_adviser" };
-
-      if (user.department_id && user.strand_id) {
-        // Student has both - match either
-        adviserWhere[Op.or] = [
-          { department_id: user.department_id },
-          { strand_id: user.strand_id }
-        ];
-      } else if (user.department_id) {
-        // College student - match by department only
-        adviserWhere.department_id = user.department_id;
-      } else if (user.strand_id) {
-        // SHS student - match by strand only
-        adviserWhere.strand_id = user.strand_id;
-      }
-
-      const possibleAdvisers = await User.findAll({
-        where: adviserWhere,
-        transaction: transaction
+      possibleAdvisers = await getRelevantAdvisers({
+        department_id: user.department_id,
+        strand_id: user.strand_id,
       });
 
       for (const adv of possibleAdvisers) {
@@ -134,18 +145,6 @@ exports.submitProject = async (req, res) => {
         type: "submission",
         message: `You submitted the project "${project.title}".`
       });
-    
-
-      if (user.department_id || user.strand_id) {
-        const possibleAdvisers = await User.findAll({
-          where: {
-            role: "research_adviser",
-            [Op.or]: [
-              user.department_id ? { department_id: user.department_id } : {},
-              user.strand_id ? { strand_id: user.strand_id } : {}
-            ]
-          }
-        });
 
           for (const adv of possibleAdvisers) {
             io.emit(`adviser_notify_${adv.id}`, {
@@ -156,7 +155,6 @@ exports.submitProject = async (req, res) => {
               message: `New project waiting in ${user.strand_id ? "strand" : "department"}`
             });
           }
-        }
       }
 
     // Success response
@@ -331,15 +329,7 @@ exports.endorseProject = async (req, res) => {
     }
 
     // 2. Notify ALL advisers in the same strand/department (including self)
-    const advisers = await User.findAll({
-      where: {
-        role: "research_adviser",
-        [Op.or]: [
-          project.department_id ? { department_id: project.department_id } : {},
-          project.strand_id ? { strand_id: project.strand_id } : {}
-        ]
-      }
-    });
+    const advisers = await getRelevantAdvisers(project);
 
     for (const adv of advisers) {
       await Notification.create({
@@ -515,7 +505,7 @@ exports.informStudentOfRevision = async (req, res) => {
 
     const io = req.app.get("io");
     const adminReason = project.rejection_reason
-      ? ` Reason from Head Admin: ${project.rejection_reason}`
+      ? ` Reason: ${project.rejection_reason}`
       : "";
 
     await project.update({
@@ -633,15 +623,7 @@ exports.approveProject = async (req, res) => {
     const io = req.app.get("io");
 
     // Notify ALL advisers in same strand/dept
-    const advisers = await User.findAll({
-      where: {
-        role: "research_adviser",
-        [Op.or]: [
-          project.department_id ? { department_id: project.department_id } : {},
-          project.strand_id ? { strand_id: project.strand_id } : {}
-        ]
-      }
-    });
+    const advisers = await getRelevantAdvisers(project);
 
     for (const adv of advisers) {
       await Notification.create({

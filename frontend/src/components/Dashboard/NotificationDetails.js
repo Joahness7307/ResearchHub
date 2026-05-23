@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useContext } from "react";
+import React, { useEffect, useState, useContext, useMemo } from "react";
 import axios from "../../api/axios";
 import { API_ROUTES } from "../../api/apiRoutes";
 import { useParams, useNavigate } from "react-router-dom";
@@ -135,10 +135,7 @@ const NotificationDetails = () => {
   const navigate = useNavigate();
   const { refreshUnreadCount } = useDashboardNotificationsUnread();
 
-  const visibleTimelineEvents = filterTimelineEvents(
-  timeline,
-  user?.role
-  );
+  const visibleTimelineEvents = useMemo(() => filterTimelineEvents(timeline, user?.role, user?.id), [timeline, user?.role, user?.id]);
 
   const shouldShowBottomActions = visibleTimelineEvents.length >= 5;
 
@@ -265,7 +262,8 @@ const NotificationDetails = () => {
       <ProjectTimeline 
         events={timeline}
         activeNotificationId={id} 
-        currentUserRole={user?.role} 
+        currentUserRole={user?.role}
+        currentUserId={user?.id}
       />
 
       {shouldShowBottomActions && (
