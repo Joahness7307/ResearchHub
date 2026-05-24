@@ -8,7 +8,6 @@ import MyAccountWithHeadAdminSidebar from "../components/Layout/MyAccountWithHea
 import MyAccountWithAdviserSidebar from "../components/Layout/MyAccountWithAdviserSidebar";
 import NotificationPage from "../components/Dashboard/NotificationPage";
 import NotificationDetails from "../components/Dashboard/NotificationDetails";
-import SetupAccount from "../components/Dashboard/SetupAccount";
 import ForceChangePassword from "../components/Auth/ForceChangePassword";
 import { AuthContext } from "../context/AuthContext";
 import ProtectedRoute from "./ProtectedRoute";
@@ -111,7 +110,6 @@ const sharedAuthenticatedRoutes = (
       }
     />
 
-    <Route path="/setup-account" element={<SetupAccount />} />
   </>
 );
 

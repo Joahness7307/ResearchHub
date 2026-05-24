@@ -286,7 +286,7 @@ exports.getAllProjects = async (req, res) => {
   try {
     const projects = await Project.findAll({
       where: { status: "approved" },
-      include: [{ model: User, as: "submitter", attributes: ["department", "year_level", "strand", "grade_level"] }]
+      include: [{ model: User, as: "submitter", attributes: ["department_id", "year_level", "strand_id", "grade_level"] }]
     });
     res.json(projects);
   } catch (error) {
@@ -702,7 +702,7 @@ exports.getAllProjectsAdmin = async (req, res) => {
     const projects = await Project.findAll({
       order: [["created_at", "DESC"]],
       include: [
-        { model: User, as: "submitter", attributes: ["id", "full_name", "username", "email", "department", "year_level", "strand", "grade_level"] }
+        { model: User, as: "submitter", attributes: ["id", "full_name", "username", "email", "department_id", "year_level", "strand_id", "grade_level"] }
       ]
     });
 

@@ -721,4 +721,14 @@
     font-size: 0.98rem;
     margin-bottom: 1rem;
   }
+  .inform-student-btn {
+    width: 100%;
+    padding: 0.6rem 0.7rem;
+    font-size: 0.95rem;
+  }
+  .reupload-btn {
+    width: 100%;
+    padding: 0.6rem 0.7rem;
+    font-size: 0.95rem;
+  }
 }

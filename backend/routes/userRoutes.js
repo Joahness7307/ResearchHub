@@ -1,6 +1,6 @@
 // userRoutes.js
 const express = require("express");
-const { register, login, forgotPassword, resetPassword, inviteUser, getInvitationInfo, setupAccount, getAllUsers, getUserCount, addUser, updateOwnProfile, updateUser, deleteUser, getUserProfile, getUserProjects, forceChangePassword } = require("../controllers/userController");
+const { register, login, getAllUsers, getUserCount, addUser, updateOwnProfile, updateUser, deleteUser, getUserProfile, getUserProjects, forceChangePassword } = require("../controllers/userController");
 const authMiddleware = require("../middlewares/authMiddleware");
 const uploadProfilePic = require("../config/multer-profile");
 
@@ -12,15 +12,6 @@ router.post("/login", login);
 
 // Protected routes - authMiddleware checks for valid token
 router.post("/force-change-password", authMiddleware(), forceChangePassword);
-
-// Not yet implemented
-router.post("/forgot-password", forgotPassword);
-router.post("/reset-password/:token", resetPassword);
-
-// Invite and setup routes. Not yet implemented
-router.post("/invite-user", authMiddleware(["admin"]), inviteUser); 
-router.get("/invitation-info", getInvitationInfo);
-router.post("/setup-account", setupAccount);
 
 // Admin-only (CRUD Operations)
 router.get("/all", authMiddleware(["admin"]), getAllUsers);

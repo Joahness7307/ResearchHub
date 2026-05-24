@@ -122,61 +122,6 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Contact Section */}
-      {/* <section className="contact" id="contact">
-        <h2>Contact Us</h2>
-        <div className="contact-bar"></div>
-
-        <div className="contact-content">
-          <div className="contact-text">
-            <p>If you have any questions, suggestions, or issues, feel free to reach out. We're here to help!</p>
-            <div className="contacts">
-              <p>
-                <b>Email:</b> researchhub@email.com
-              </p>
-              <p>
-                <b>Location:</b> Consolatrix College of Toledo City, Inc., Cebu, Philippines
-              </p>
-            </div>
-          </div>
-
-          <form className="contact-form" onSubmit={handleSubmit}>
-            <label>
-              Email
-              <input
-                type="email"
-                placeholder="your@email.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-            </label>
-            <label>
-              Message
-              <textarea
-                placeholder="Your message..."
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-                required
-              />
-            </label>
-            <button type="submit">Send</button>
-
-            {feedback && (
-              <p
-                style={{
-                  marginTop: "10px",
-                  color: feedback.includes("success") ? "green" : "red",
-                  fontWeight: 500,
-                }}
-              >
-                {feedback}
-              </p>
-            )}
-          </form>
-        </div>
-      </section> */}
-
       {/* Footer */}
       <footer className="footer">
         <div className="footer-links">
@@ -187,20 +132,6 @@ const Home = () => {
               <li><Link to="/role-selection">Signup</Link></li>
             </ul>
           </div>
-          {/* <div>
-            <b>Contact</b>
-            <ul>
-              <li>researchhub@email.com</li>
-              <li>Philippines</li>
-            </ul>
-          </div>
-          <div>
-            <b>Social</b>
-            <ul>
-              <li><a href="https://facebook.com" target="_blank" rel="noopener noreferrer">Facebook</a></li>
-              <li><a href="https://twitter.com" target="_blank" rel="noopener noreferrer">Twitter</a></li>
-            </ul>
-          </div> */}
         </div>
         <div className="footer-copy">
           Copyright © {new Date().getFullYear()} ResearchHub. All rights reserved.

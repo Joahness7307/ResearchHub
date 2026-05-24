@@ -657,6 +657,11 @@
     .admin-form-input {
         padding-right: 2.8rem;
     }
+    .admin-btn {
+      width: 100%;
+      padding: 0.7rem;
+      font-size: 0.95rem;
+    }
 }
 
 @media (max-width: 380px) {
@@ -664,12 +669,12 @@
     font-size: 1.6rem;
   }
   .password-toggle-icon img {
-        width: 18px;
-        height: 18px;
-    }
-    .admin-form-input {
-        padding-right: 2.6rem;
-    }
+    width: 18px;
+    height: 18px;
+  }
+  .admin-form-input {
+      padding-right: 2.6rem;
+  }
 }
 
 .add-academic-bar {

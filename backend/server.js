@@ -11,7 +11,6 @@ const userRoutes = require("./routes/userRoutes");
 const projectRoutes = require("./routes/projectRoutes");
 const commentRoutes = require("./routes/commentRoutes");
 const notificationRoutes = require("./routes/notificationRoutes");
-const contactRoutes = require('./routes/contactRoutes');
 const bookmarkRoutes = require("./routes/bookmarkRoutes");
 const academicRoutes = require("./routes/academicRoutes");
 
@@ -52,7 +51,6 @@ app.use("/api/users", userRoutes);
 app.use("/api/projects", projectRoutes);
 app.use("/api/comments", commentRoutes);
 app.use("/api/notifications", notificationRoutes);
-app.use('/api/contact', contactRoutes);
 app.use("/api/bookmarks", bookmarkRoutes);
 app.use("/api/academic", academicRoutes);
 

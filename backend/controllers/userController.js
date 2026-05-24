@@ -2,7 +2,6 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const multer = require("multer");
 const { User, Project, Department, Block, Major, Strand } = require("../models");
-const { Invitation } = require("../models");
 const crypto = require("crypto");
 const { Op } = require("sequelize");
 require("dotenv").config();
@@ -184,55 +183,6 @@ exports.forceChangePassword = async (req, res) => {
   }
 };
 
-// Forgot Password
-exports.forgotPassword = async (req, res) => {
-  try {
-    const { email } = req.body;
-    if (!email) return res.status(400).json({ message: "Email required." });
-
-    const user = await User.findOne({ where: { email } });
-    if (!user) return res.status(200).json({ message: "If email exists, reset link sent." });
-
-    const token = crypto.randomBytes(32).toString("hex");
-    user.resetToken = token;
-    user.resetTokenExpiry = Date.now() + 3600000; // 1 hour
-    await user.save();
-
-    const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${token}`;
-
-    await resend.emails.send({
-      from: process.env.CONTACT_FROM_EMAIL || "ResearchHub <onboarding@resend.dev>",
-      to: [email],
-      subject: "ResearchHub Password Reset",
-      html: `<p>Click <a href="${resetUrl}" target="_blank">here</a> to reset your password. This link expires in 1 hour.</p>`
-    });
-
-    res.json({ message: "Please check your email, a reset link has been sent." });
-  } catch (error) {
-    console.error("❌ RESEND PASSWORD RESET FAILED:", error);
-    res.status(500).json({ message: "Failed to send reset email.", error: error.message });
-  }
-};
-
-// Reset Password
-exports.resetPassword = async (req, res) => {
-  try {
-    const { token } = req.params;
-    const { password } = req.body;
-    const user = await User.findOne({ where: { resetToken: token, resetTokenExpiry: { [Op.gt]: Date.now() } } });
-    if (!user) return res.status(400).json({ message: "Invalid or expired token." });
-
-    user.password = await bcrypt.hash(password, 10);
-    user.resetToken = null;
-    user.resetTokenExpiry = null;
-    await user.save();
-
-    res.json({ message: "Password reset successful. You can now login." });
-  } catch (error) {
-    res.status(500).json({ message: "Failed to reset password.", error: error.message });
-  }
-};
-
 // Get user count
 exports.getUserCount = async (req, res) => {
   try {
@@ -251,106 +201,6 @@ exports.getAllUsers = async (req, res) => {
       attributes: ['id', 'full_name', 'email', 'role', 'created_at', 'force_password_change']
     });
     res.status(200).json({ users });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-};
-
-// Invite user (admin)
-exports.inviteUser = async (req, res) => {
-  try {
-    const { email, role, type, department, strand } = req.body;
-    const allowedInviteRoles = ["admin", "head_admin", "research_adviser"];
-    if (!allowedInviteRoles.includes(role)) return res.status(400).json({ message: "Invalid role for invite." });
-
-    if (role === "research_adviser") {
-      if (!type) return res.status(400).json({ message: "Adviser type required." });
-      if (type === "college" && !department) return res.status(400).json({ message: "Department required for college adviser." });
-      if (type === "senior_high" && !strand) return res.status(400).json({ message: "Strand required for senior high adviser." });
-    }
-
-    const existingUser = await User.findOne({ where: { email } });
-    if (existingUser) return res.status(400).json({ message: "Email already registered." });
-
-    const token = crypto.randomBytes(32).toString("hex");
-    const invitation = await Invitation.create({
-      email,
-      username: null,
-      token,
-      role,
-      type: type || null,
-      department: department || null,
-      strand: strand || null,
-    });
-
-    const inviteUrl = `${process.env.FRONTEND_URL}/setup-account?token=${token}`;
-
-    await resend.emails.send({
-      from: process.env.CONTACT_FROM_EMAIL || "ResearchHub <onboarding@resend.dev>",
-      to: [email],
-      subject: `ResearchHub Invitation (${role.replace("_"," ")})`,
-      html: `<p>You have been invited as <b>${role.replace("_"," ")}</b>. <p><a href="${inviteUrl}" target="_blank">Click here to set up your account</a></p>`
-    });
-
-    res.json({ message: "Invitation sent successfully!" });
-  } catch (error) {
-    console.error("Invite User Error:", error);
-    res.status(500).json({ error: error.message });
-  }
-};
-
-exports.getInvitationInfo = async (req, res) => {
-  try {
-    const { token } = req.query;
-    const invitation = await Invitation.findOne({ where: { token, used: false } });
-    if (!invitation) return res.status(404).json({ message: "Invalid or expired invitation." });
-    res.json({ invitation });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-};
-
-// Setup Account (invited users) - created via invite link; should NOT be forced
-exports.setupAccount = async (req, res) => {
-  try {
-    const { token, full_name, username, password, confirm_password } = req.body;
-    if (!token || !full_name || !username || !password || !confirm_password) return res.status(400).json({ message: "Missing fields." });
-    if (password !== confirm_password) return res.status(400).json({ message: "Passwords do not match." });
-
-    const invitation = await Invitation.findOne({ where: { token, used: false } });
-    if (!invitation) return res.status(400).json({ message: "Invalid or expired invitation." });
-
-    const existing = await User.findOne({ where: { [Op.or]: [{ email: invitation.email }, { username }] } });
-    if (existing) return res.status(400).json({ message: "Email or username already in use." });
-
-    const userObj = {
-      full_name,
-      username,
-      email: invitation.email,
-      password: await bcrypt.hash(password, 10),
-      role: invitation.role,
-      // invited users setup their own password, do NOT force change
-      force_password_change: false
-    };
-
-    if (invitation.role === "research_adviser") {
-      userObj.type = invitation.type;
-      if (invitation.type === "college") {
-        // Find department by old name (temporary bridge)
-        const dept = await Department.findOne({ where: { name: invitation.department } });
-        userObj.department_id = dept ? dept.id : null;
-      }
-      if (invitation.type === "senior_high") {
-        const strand = await Strand.findOne({ where: { name: invitation.strand } });
-        userObj.strand_id = strand ? strand.id : null;
-      }
-    }
-
-    await User.create(userObj);
-    invitation.used = true;
-    await invitation.save();
-
-    res.json({ message: "Account setup successful. You can now login." });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -463,11 +313,11 @@ exports.updateOwnProfile = async (req, res) => {
       username: user.username,
       email: user.email,
       role: user.role,
-      department: user.department,
+      department: user.department_id,
       year_level: user.year_level,
       block: user.block,
       major: user.major,
-      strand: user.strand,
+      strand: user.strand_id,
       grade_level: user.grade_level,
       type: user.type,
       force_password_change: !!user.force_password_change,
@@ -592,7 +442,7 @@ exports.getUserProjects = async (req, res) => {
       where: { submitted_by: req.user.id },
       order: [["created_at", "DESC"]],
       include: [
-        { model: User, as: "submitter", attributes: ["id", "full_name", "email", "department", "year_level", "grade_level"] }
+        { model: User, as: "submitter", attributes: ["id", "full_name", "email", "department_id", "strand_id", "year_level", "grade_level"] }
       ]
     });
 

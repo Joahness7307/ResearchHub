@@ -175,8 +175,7 @@ const Navbar = ({
   const unauthLinks = [
     { label: "About Us", id: "about" },
     { label: "Features", id: "features" },
-    { label: "Our Team", id: "team" },
-    // { label: "Contact Us", id: "contact" }
+    { label: "Our Team", id: "team" }
   ];
 
   const handleNavClick = (e, id) => {

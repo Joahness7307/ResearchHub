@@ -13,17 +13,10 @@ module.exports = (sequelize, DataTypes) => {
     profile_pic_url: { type: DataTypes.STRING, allowNull: true, defaultValue: null },
     created_at: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW },
     updated_at: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW },
-    resetToken: { type: DataTypes.STRING, allowNull: true },
-    resetTokenExpiry: { type: DataTypes.DATE, allowNull: true },
     department_id: { type: DataTypes.INTEGER, allowNull: true },
     block_id: { type: DataTypes.INTEGER, allowNull: true },
     major_id: { type: DataTypes.INTEGER, allowNull: true },
     strand_id: { type: DataTypes.INTEGER, allowNull: true },
-    // Old fields (to be dropped later) - comment them out to avoid accidental use
-    // department: { type: DataTypes.STRING, allowNull: true },
-    // block: { type: DataTypes.STRING, allowNull: true },
-    // major: { type: DataTypes.STRING, allowNull: true },
-    // strand: { type: DataTypes.STRING, allowNull: true },
   }, {
     tableName: 'Users',
     timestamps: false
