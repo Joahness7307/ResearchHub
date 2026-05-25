@@ -34,16 +34,16 @@ async function getAdvisersForProject(project) {
   return [...new Map(advisers.map(a => [a.id, a])).values()];
 }
 
-async function getHeadAdmins() {
-  return User.findAll({ where: { role: "head_admin" } });
+async function getResearchCoordinators() {
+  return User.findAll({ where: { role: "research_coordinator" } });
 }
 
-async function createNotification({ projectId, studentId, adviserId, adminId, reason }) {
+async function createNotification({ projectId, studentId, adviserId, researchCoordinatorId, reason }) {
   return Notification.create({
     projectId,
     studentId: studentId ?? null,
     adviserId: adviserId ?? null,
-    adminId: adminId ?? null,
+    researchCoordinatorId: researchCoordinatorId ?? null,
     isRead: false,
     reason,
   });
@@ -61,9 +61,9 @@ function emitAdviser(io, adviserId, payload) {
   }
 }
 
-function emitHeadAdmin(io, adminId, payload) {
-  if (io && adminId) {
-    io.emit(`admin_notify_${adminId}`, payload);
+function emitResearchCoordinator(io, coordinatorId, payload) {
+  if (io && coordinatorId) {
+    io.emit(`research_coordinator_notify_${coordinatorId}`, payload);
   }
 }
 
@@ -112,17 +112,17 @@ async function notifyProjectAdvisers(io, project, reason, payloadExtra = {}) {
 }
 
 /**
- * Notify all head admins (DB + socket).
+ * Notify all research coordinators (DB + socket).
  */
-async function notifyHeadAdmins(io, project, reason, payloadExtra = {}) {
-  const heads = await getHeadAdmins();
-  for (const head of heads) {
+async function notifyResearchCoordinators(io, project, reason, payloadExtra = {}) {
+  const coordinators = await getResearchCoordinators();
+  for (const coordinator of coordinators) {
     await createNotification({
       projectId: project.id,
-      adminId: head.id,
+      researchCoordinatorId: coordinator.id,
       reason,
     });
-    emitHeadAdmin(io, head.id, {
+    emitResearchCoordinator(io, coordinator.id, {
       type: "status_update",
       projectId: project.id,
       title: project.title,
@@ -130,7 +130,7 @@ async function notifyHeadAdmins(io, project, reason, payloadExtra = {}) {
       ...payloadExtra,
     });
   }
-  return heads;
+  return coordinators;
 }
 
 /**
@@ -141,20 +141,20 @@ function emitWorkflowRefresh(io, roles = []) {
   const payload = { type: "workflow_refresh", at: Date.now() };
   if (roles.includes("student")) io.emit("workflow_refresh_student", payload);
   if (roles.includes("research_adviser")) io.emit("workflow_refresh_adviser", payload);
-  if (roles.includes("head_admin")) io.emit("workflow_refresh_head_admin", payload);
+  if (roles.includes("research_coordinator")) io.emit("workflow_refresh_research_coordinator", payload);
   if (roles.includes("admin")) io.emit("workflow_refresh_admin", payload);
 }
 
 module.exports = {
   PROJECT_STATUS,
   getAdvisersForProject,
-  getHeadAdmins,
+  getResearchCoordinators,
   createNotification,
   notifyStudent,
   notifyProjectAdvisers,
-  notifyHeadAdmins,
+  notifyResearchCoordinators,
   emitStudent,
   emitAdviser,
-  emitHeadAdmin,
+  emitResearchCoordinator,
   emitWorkflowRefresh,
 };

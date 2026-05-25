@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const { Notification, Project, User } = require("../models");
 
-const { getHeadAdminNotifications, markNotificationRead, getStudentNotifications, markStudentNotificationRead } = require("../controllers/projectController");
+const { getResearchCoordinatorNotifications, markNotificationRead, getStudentNotifications, markStudentNotificationRead } = require("../controllers/projectController");
 const authMiddleware = require("../middlewares/authMiddleware");
 const { isEligibleResearchStudent } = require("../utils/studentEligibility");
 
@@ -28,7 +28,7 @@ function getTimelineEventType(reason = "") {
 function getNotificationOwnerRole(notification) {
   if (notification.adviserId) return "research_adviser";
   if (notification.studentId) return "student";
-  if (notification.adminId) return "head_admin";
+  if (notification.researchCoordinatorId) return "research_coordinator";
 
   return null;
 }
@@ -38,8 +38,8 @@ function getLegacyRevisionActorRole(reason = "") {
 
   // Legacy notifications do not have a source/actor column yet. This limited
   // fallback only disambiguates who initiated a revision workflow.
-  if (text.includes("from head admin") || text.includes("requested revision")) {
-    return "head_admin";
+  if (text.includes("from research coordinator") || text.includes("requested revision")) {
+    return "research_coordinator";
   }
 
   return "research_adviser";
@@ -56,13 +56,13 @@ function getTimelineActorRole(notification, eventType, project, reason = "") {
     case "informed_student":
       return "research_adviser";
     case "revision_request":
-      if (ownerRole === "head_admin" || ownerRole === "admin") return ownerRole;
+      if (ownerRole === "research_coordinator" || ownerRole === "admin") return ownerRole;
       return getLegacyRevisionActorRole(reason);
     case "approved":
-      if (["head_admin", "admin"].includes(project?.last_updated_by_role)) {
+      if (["research_coordinator", "admin"].includes(project?.last_updated_by_role)) {
         return project.last_updated_by_role;
       }
-      if (ownerRole === "head_admin" || ownerRole === "admin") return ownerRole;
+      if (ownerRole === "research_coordinator" || ownerRole === "admin") return ownerRole;
       return "admin";
     default:
       return ownerRole;
@@ -79,7 +79,7 @@ router.get("/adviser/:id", authMiddleware(["research_adviser"]), async (req, res
 
 router.get(
   "/project/:projectId/timeline",
-  authMiddleware(["student", "admin", "head_admin", "research_adviser"]),
+  authMiddleware(["student", "admin", "research_coordinator", "research_adviser"]),
   async (req, res) => {
     try {
       if (req.user.role === "student" && !isEligibleResearchStudent(req.user)) {
@@ -113,7 +113,7 @@ router.get(
           recipientRole: getNotificationOwnerRole(item),
           adviserId: item.adviserId,
           studentId: item.studentId,
-          adminId: item.adminId,
+          researchCoordinatorId: item.researchCoordinatorId,
           message: reason,
           timestamp: item.createdAt,
         };
@@ -144,8 +144,8 @@ router.patch("/adviser/:id/read", authMiddleware(["research_adviser"]), async (r
   await notif.save();
   res.json({ message: "Notification marked as read" });
 });
-router.get("/head-admin/:id", authMiddleware(["head_admin"]), getHeadAdminNotifications);
-router.patch("/head-admin/:id/read", authMiddleware(["head_admin"]), markNotificationRead);
+router.get("/research-coordinator/:id", authMiddleware(["research_coordinator"]), getResearchCoordinatorNotifications);
+router.patch("/research-coordinator/:id/read", authMiddleware(["research_coordinator"]), markNotificationRead);
 
 // router.get("/admin/notifications", authMiddleware(["admin"]), getAdminNotifications);
 // router.patch("/admin/notifications/:id/read", authMiddleware(["admin"]), markNotificationRead);

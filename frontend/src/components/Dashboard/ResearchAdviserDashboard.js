@@ -263,7 +263,7 @@ const ResearchAdviserDashboard = ({ section }) => {
                         <div className="dashboard-card-count">{needRevision.length}</div>
                     </div>
                     <div className={`dashboard-card${selectedRevisionCard === "admin" ? " active" : ""}`} style={{ cursor: "pointer" }} onClick={() => setSelectedRevisionCard("admin")}>
-                        <h3>Head Admin Request Revision</h3>
+                        <h3>Research Coordinator Request Revision</h3>
                         <div className="dashboard-card-count">{adminRevision.length}</div>
                     </div>
                 </div>

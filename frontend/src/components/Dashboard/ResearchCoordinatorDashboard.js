@@ -39,7 +39,7 @@ const ProjectList = ({ projects, navigate, section, handleBookmarkToggle }) => (
         <li
           key={project.id}
           className="repository-item"
-          onClick={() => navigate(`/head-admin/projects/${project.id}`)}
+          onClick={() => navigate(`/research-coordinator/projects/${project.id}`)}
           style={{ position: "relative", cursor: "pointer" }}
         >
           {/* Bookmark Icon */}
@@ -91,7 +91,7 @@ const ProjectList = ({ projects, navigate, section, handleBookmarkToggle }) => (
             <span className="repository-authors"><i><span style={{fontWeight: 500}}>Authors: </span>{project.authors}</i></span>
           </div>
 
-          <div className="repository-abstract headadmin-abstract-border">
+          <div className="repository-abstract research-coordinator-abstract-border">
             <b>Abstract:</b>{" "}
             {project.abstract?.length > 120
               ? project.abstract.slice(0, 120) + "..."
@@ -128,7 +128,7 @@ const ProjectList = ({ projects, navigate, section, handleBookmarkToggle }) => (
 
 const projectsPerPage = 10;
 
-const HeadAdminDashboard = ({ section }) => {
+const ResearchCoordinatorDashboard = ({ section }) => {
   const { user } = useContext(AuthContext);
   const navigate = useNavigate();
   const { refreshUnreadCount } = useDashboardNotificationsUnread();
@@ -186,7 +186,7 @@ const HeadAdminDashboard = ({ section }) => {
 
   const fetchProjects = useCallback(async () => {
     try {
-      const res = await axios.get(API_ROUTES.head_admin.getAllProjects);
+      const res = await axios.get(API_ROUTES.research_coordinator.getAllProjects);
       const data = res.data;
 
       const bookmarkRes = await axios.get(API_ROUTES.bookmarks.getMyBookmarks);
@@ -213,7 +213,7 @@ const HeadAdminDashboard = ({ section }) => {
     onProjectsRefresh: fetchProjects,
     onNotificationsRefresh: refreshUnreadCount,
     socketChannel: user?.id ? `admin_notify_${user.id}` : undefined,
-    workflowSocketEvents: ["workflow_refresh_head_admin"],
+    workflowSocketEvents: ["workflow_refresh_research_coordinator"],
   });
 
   // Filter & Pagination Logic
@@ -228,7 +228,7 @@ const HeadAdminDashboard = ({ section }) => {
     const pending = projects.filter((p) => p.status === "endorsed");
     const approved = projects.filter((p) => p.status === "approved");
     const revision = projects.filter(
-      (p) => p.status === "admin_revision" && p.last_updated_by_role === "head_admin"
+      (p) => p.status === "admin_revision" && p.last_updated_by_role === "research_coordinator"
     );
     const repository = approved;
 
@@ -288,7 +288,7 @@ const HeadAdminDashboard = ({ section }) => {
   const latestPending = pendingProjects.slice(0, 3);
 
   return (
-    <div className="head-admin-dashboard-wrapper">
+    <div className="research-coordinator-dashboard-wrapper">
       <div
         style={{
           maxWidth: "1400px",
@@ -300,23 +300,23 @@ const HeadAdminDashboard = ({ section }) => {
         {selectedCard === "dashboard" && (
           <>
             <h2 style={{ margin: "4rem 0 2rem", fontSize: "2rem", color: "#1e293b" }}>
-              Head Admin Dashboard
+              Research Coordinator Dashboard
             </h2>
 
             <div className="dashboard-cards-row" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "1.5rem", marginBottom: "3rem" }}>
-              <div className="dashboard-card" onClick={() => navigate("/head-admin/pending-projects")}>
+              <div className="dashboard-card" onClick={() => navigate("/research-coordinator/pending-projects")}>
                 <h3>Pending Projects</h3>
                 <div className="dashboard-card-count">{pendingProjects.length}</div>
               </div>
-              <div className="dashboard-card" onClick={() => navigate("/head-admin/approved-projects")}>
+              <div className="dashboard-card" onClick={() => navigate("/research-coordinator/approved-projects")}>
                 <h3>Approved Projects</h3>
                 <div className="dashboard-card-count">{approvedProjects.length}</div>
               </div>
-              <div className="dashboard-card" onClick={() => navigate("/head-admin/request-for-revision")}>
+              <div className="dashboard-card" onClick={() => navigate("/research-coordinator/request-for-revision")}>
                 <h3>Request for Revision</h3>
                 <div className="dashboard-card-count">{revisionProjects.length}</div>
               </div>
-              <div className="dashboard-card" onClick={() => navigate("/head-admin/repository")}>
+              <div className="dashboard-card" onClick={() => navigate("/research-coordinator/repository")}>
                 <h3>Repository Projects</h3>
                 <div className="dashboard-card-count">{repositoryProjects.length}</div>
               </div>
@@ -353,7 +353,7 @@ const HeadAdminDashboard = ({ section }) => {
                   fontSize: "1.1rem",
                   fontWeight: "600",
                 }}
-                onClick={() => navigate("/head-admin/pending-projects")}
+                onClick={() => navigate("/research-coordinator/pending-projects")}
               >
                 See All Pending Projects
               </button>
@@ -390,4 +390,4 @@ const HeadAdminDashboard = ({ section }) => {
   );
 };
 
-export default HeadAdminDashboard;
+export default ResearchCoordinatorDashboard;

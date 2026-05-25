@@ -7,7 +7,7 @@ const {
   PROJECT_STATUS,
   notifyStudent,
   notifyProjectAdvisers,
-  notifyHeadAdmins,
+  notifyResearchCoordinators,
   emitWorkflowRefresh,
 } = require("../services/notificationService");
 const { isEligibleResearchStudent } = require("../utils/studentEligibility");
@@ -173,10 +173,10 @@ exports.submitProject = async (req, res) => {
   }
 };
 
-exports.getHeadAdminNotifications = async (req, res) => {
+exports.getResearchCoordinatorNotifications = async (req, res) => {
   try {
     const notifications = await Notification.findAll({
-      where: { adminId: req.user.id },
+      where: { researchCoordinatorId: req.user.id },
       include: [{ model: Project }],
       order: [["createdAt", "DESC"]]
     });
@@ -189,7 +189,7 @@ exports.getHeadAdminNotifications = async (req, res) => {
 exports.markNotificationRead = async (req, res) => {
   try {
     const notif = await Notification.findOne({
-      where: { id: req.params.id, adminId: req.user.id }
+      where: { id: req.params.id, researchCoordinatorId: req.user.id }
     });
     if (!notif) return res.status(404).json({ message: "Notification not found" });
     notif.isRead = true;
@@ -352,19 +352,19 @@ exports.endorseProject = async (req, res) => {
       }
     }
 
-    // 3. Notify head admins
-    const headAdmins = await User.findAll({ where: { role: "head_admin" } });
-    for (const head of headAdmins) {
+    // 3. Notify research coordinators
+    const researchCoordinators = await User.findAll({ where: { role: "research_coordinator" } });
+    for (const coordinator of researchCoordinators) {
       await Notification.create({
         projectId: project.id,
-        adminId: head.id,
+        researchCoordinatorId: coordinator.id,
         isRead: false,
         reason: `Project "${project.title}" was endorsed by research adviser "${req.user.full_name}".`
       });
 
-      // ADD THIS BLOCK BELOW TO FIX REAL-TIME UPDATES FOR HEAD ADMIN
+      // ADD THIS BLOCK BELOW TO FIX REAL-TIME UPDATES FOR RESEARCH COORDINATORS
       if (io) {
-        io.emit(`admin_notify_${head.id}`, {
+        io.emit(`admin_notify_${coordinator.id}`, {
           type: "new_pending",
           projectId: project.id,
           title: project.title,
@@ -373,7 +373,7 @@ exports.endorseProject = async (req, res) => {
       }
     }
 
-    emitWorkflowRefresh(io, ["student", "research_adviser", "head_admin"]);
+    emitWorkflowRefresh(io, ["student", "research_adviser", "research_coordinator"]);
 
     res.json({
       message: "Project endorsed to admin for approval.",
@@ -385,7 +385,7 @@ exports.endorseProject = async (req, res) => {
   }
 };
 
-// Adviser or Head Admin requests revision
+// Adviser or Research Coordinator requests revision
 exports.needRevision = async (req, res) => {
   try {
     const user = req.user;
@@ -403,8 +403,8 @@ exports.needRevision = async (req, res) => {
 
     const io = req.app.get("io");
 
-    // Head Admin: endorsed → admin_revision (student NOT notified yet)
-    if (user.role === "head_admin" || user.role === "admin") {
+    // Research Coordinator: endorsed → admin_revision (student NOT notified yet)
+    if (user.role === "research_coordinator" || user.role === "admin") {
       if (project.status !== PROJECT_STATUS.ENDORSED) {
         return res.status(400).json({
           message: "Only endorsed projects can be sent back for admin revision.",
@@ -421,18 +421,18 @@ exports.needRevision = async (req, res) => {
       await notifyProjectAdvisers(
         io,
         project,
-        `Project "${project.title}" requires revision from Head Admin. Reason: ${reason}`,
+        `Project "${project.title}" requires revision from Research Coordinator. Reason: ${reason}`,
         { newStatus: PROJECT_STATUS.ADMIN_REVISION, reason, updatedBy: user.full_name }
       );
 
-      await notifyHeadAdmins(
+      await notifyResearchCoordinators(
         io,
         project,
         `You requested revision for "${project.title}". Reason: ${reason}`,
         { newStatus: PROJECT_STATUS.ADMIN_REVISION, reason, updatedBy: user.full_name }
       );
 
-      emitWorkflowRefresh(io, ["research_adviser", "head_admin"]);
+      emitWorkflowRefresh(io, ["research_adviser", "research_coordinator"]);
 
       return res.json({
         message: "Advisers notified for revision.",
@@ -490,7 +490,7 @@ exports.needRevision = async (req, res) => {
   }
 };
 
-// Adviser informs student after Head Admin requested revision (admin_revision → need_revision)
+// Adviser informs student after Research Coordinator requested revision (admin_revision → need_revision)
 exports.informStudentOfRevision = async (req, res) => {
   try {
     const project = await Project.findByPk(req.params.id);
@@ -538,7 +538,7 @@ exports.informStudentOfRevision = async (req, res) => {
       }
     );
 
-    emitWorkflowRefresh(io, ["student", "research_adviser", "head_admin"]);
+    emitWorkflowRefresh(io, ["student", "research_adviser", "research_coordinator"]);
 
     res.json({
       message: "Student notified of revision.",
@@ -607,7 +607,7 @@ exports.reuploadProjectDocument = async (req, res) => {
   }
 };
 
-// Approve project (admin / head admin)
+// Approve project (admin / research coordinator)
 exports.approveProject = async (req, res) => {
   try {
     const project = await Project.findByPk(req.params.id, {
@@ -663,18 +663,18 @@ exports.approveProject = async (req, res) => {
       }
     }
 
-    // Notify ALL head admins (including self) about the approval
-    const headAdmins = await User.findAll({ where: { role: "head_admin" } });
-    for (const head of headAdmins) {
+    // Notify ALL research coordinators (including self) about the approval
+    const researchCoordinators = await User.findAll({ where: { role: "research_coordinator" } });
+    for (const coordinator of researchCoordinators) {
       await Notification.create({
         projectId: project.id,
-        adminId: head.id,
+        researchCoordinatorId: coordinator.id,
         isRead: false,
         reason: `You approved the "${project.title}" project and added to the repository.`
       });
 
       if (io) {
-        io.emit(`admin_notify_${head.id}`, {
+        io.emit(`admin_notify_${coordinator.id}`, {
           type: "status_update",
           projectId: project.id,
           title: project.title,
@@ -685,7 +685,7 @@ exports.approveProject = async (req, res) => {
       }
     }
 
-    emitWorkflowRefresh(io, ["student", "research_adviser", "head_admin"]);
+    emitWorkflowRefresh(io, ["student", "research_adviser", "research_coordinator"]);
 
     res.status(200).json({
       message: "Research project approved",

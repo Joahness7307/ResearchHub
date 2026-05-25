@@ -21,14 +21,14 @@ export function notificationIsUnread(n) {
 }
 
 const PATH_BY_ROLE = {
-  head_admin: "/head-admin/notifications",
+  research_coordinator: "/research-coordinator/notifications",
   research_adviser: "/adviser/notifications",
 };
 
 const DashboardNotificationsUnreadContext = createContext(null);
 
 /**
- * Provides a single unread count for adviser/head-admin notification routes,
+ * Provides a single unread count for adviser/research_coordinator notification routes,
  * fetched once per layout (desktop sidebar + mobile drawer share this).
  */
 export function DashboardNotificationsUnreadProvider({ role, children }) {
@@ -44,7 +44,7 @@ export function DashboardNotificationsUnreadProvider({ role, children }) {
   }, []);
 
   useEffect(() => {
-    if (!user?.id || (role !== "head_admin" && role !== "research_adviser")) {
+    if (!user?.id || (role !== "research_coordinator" && role !== "research_adviser")) {
       setUnreadCount(0);
       return;
     }
@@ -54,9 +54,9 @@ export function DashboardNotificationsUnreadProvider({ role, children }) {
     const load = async () => {
       try {
         const res =
-          role === "head_admin"
+          role === "research_coordinator"
             ? await axios.get(
-                API_ROUTES.notifications.headAdminById(user.id)
+                API_ROUTES.notifications.researchCoordinatorById(user.id)
               )
             : await axios.get(
                 API_ROUTES.notifications.adviserById(user.id)

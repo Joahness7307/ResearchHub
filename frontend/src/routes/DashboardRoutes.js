@@ -3,7 +3,7 @@ import { Outlet, Route } from "react-router-dom";
 import DashboardRouter from "../components/Dashboard/DashboardRouter";
 import ProtectedRoute from "./ProtectedRoute";
 
-const DASHBOARD_ALLOWED_ROLES = ["student", "guest", "research_adviser", "head_admin", "admin"];
+const DASHBOARD_ALLOWED_ROLES = ["student", "guest", "research_adviser", "research_coordinator", "admin"];
 
 function DashboardProtectedLayout() {
   return (

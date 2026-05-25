@@ -26,12 +26,12 @@ router.get("/profile", authMiddleware(), getUserProfile);
 // Update profile: auth runs first so req.user is available to multer-profile params
 router.put(
   "/profile/update",
-  authMiddleware(["student", "admin", "research_adviser", "head_admin", "guest"]),
+  authMiddleware(["student", "admin", "research_adviser", "research_coordinator", "guest"]),
   uploadProfilePic.single("profile_pic"),
   updateOwnProfile
 );
 
 // Get all research projects submitted by the logged-in user
-router.get("/my-projects", authMiddleware(["student", "admin", "research_adviser", "head_admin"]), getUserProjects);
+router.get("/my-projects", authMiddleware(["student", "admin", "research_adviser", "research_coordinator"]), getUserProjects);
 
 module.exports = router;

@@ -5,9 +5,9 @@ import StudentDashboard from "./StudentDashboard";
 import GuestDashboard from "./GuestDashboard";
 import AdminLayout from "../Layout/AdminLayout";
 import ResearchAdviserLayout from "../Layout/ResearchAdviserLayout";
-import HeadAdminLayout from "../Layout/HeadAdminLayout";
+import ResearchCoordinatorLayout from "../Layout/ResearchCoordinatorLayout";
 import ResearchAdviserDashboard from "./ResearchAdviserDashboard";
-import HeadAdminDashboard from "./HeadAdminDashboard";
+import ResearchCoordinatorDashboard from "./ResearchCoordinatorDashboard";
 import AdminDashboard from "./AdminDashboard";
 
 const DashboardRouter = () => {
@@ -22,10 +22,10 @@ const DashboardRouter = () => {
       return <ResearchAdviserLayout>
                 <ResearchAdviserDashboard />
               </ResearchAdviserLayout>;
-    case "head_admin":
-      return <HeadAdminLayout>
-                <HeadAdminDashboard />
-              </HeadAdminLayout>;
+    case "research_coordinator":
+      return <ResearchCoordinatorLayout>
+                <ResearchCoordinatorDashboard />
+              </ResearchCoordinatorLayout>;
     case "admin":
       return <AdminLayout>
                 <AdminDashboard />

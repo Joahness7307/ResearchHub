@@ -31,7 +31,7 @@ const Login = () => {
 
       switch (user.role) {
         case "admin": navigate("/admin"); break;
-        case "head_admin": navigate("/head-admin"); break;
+        case "research_coordinator": navigate("/research-coordinator"); break;
         case "guest": navigate("/dashboard"); break;
         case "research_adviser": navigate("/adviser"); break;
         default: navigate("/dashboard"); break;

@@ -4,11 +4,11 @@ const authMiddleware = require("../middlewares/authMiddleware");
 const { addBookmark, removeBookmark, getUserBookmarks, isBookmarked } = require("../controllers/bookmarkController");
 
 // Add bookmark
-router.post("/:projectId", authMiddleware(["student", "guest", "research_adviser", "head_admin", "admin"]), addBookmark);
+router.post("/:projectId", authMiddleware(["student", "guest", "research_adviser", "research_coordinator", "admin"]), addBookmark);
 // Remove bookmark
-router.delete("/:projectId", authMiddleware(["student", "guest", "research_adviser", "head_admin", "admin"]), removeBookmark);
+router.delete("/:projectId", authMiddleware(["student", "guest", "research_adviser", "research_coordinator", "admin"]), removeBookmark);
 // Get all bookmarks for user
-router.get("/my", authMiddleware(["student", "guest", "research_adviser", "head_admin", "admin"]), getUserBookmarks);
+router.get("/my", authMiddleware(["student", "guest", "research_adviser", "research_coordinator", "admin"]), getUserBookmarks);
 // Check if bookmarked
-router.get("/is-bookmarked/:projectId", authMiddleware(["student", "guest", "research_adviser", "head_admin", "admin"]), isBookmarked);
+router.get("/is-bookmarked/:projectId", authMiddleware(["student", "guest", "research_adviser", "research_coordinator", "admin"]), isBookmarked);
 module.exports = router;

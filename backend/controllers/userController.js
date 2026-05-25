@@ -210,7 +210,7 @@ exports.getAllUsers = async (req, res) => {
 exports.addUser = async (req, res) => {
   try {
     const { username, full_name, email, password, role, type, department_id, strand_id } = req.body;
-    const allowedRoles = ["admin", "head_admin", "research_adviser", "student", "guest"];
+    const allowedRoles = ["admin", "research_coordinator", "research_adviser", "student", "guest"];
     if (!allowedRoles.includes(role)) return res.status(400).json({ message: "Invalid role." });
     if (!username || !full_name || !email || !password) return res.status(400).json({ message: "Missing fields." });
 

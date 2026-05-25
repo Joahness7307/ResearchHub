@@ -8,7 +8,7 @@ module.exports = (sequelize, DataTypes) => {
     password: { type: DataTypes.STRING, allowNull: false },
     year_level: { type: DataTypes.ENUM("1st", "2nd", "3rd", "4th"), allowNull: true },
     grade_level: { type: DataTypes.ENUM("11", "12"), allowNull: true },
-    role: { type: DataTypes.ENUM("admin", "head_admin", "research_adviser", "student", "guest"), allowNull: false, defaultValue: "guest" },
+    role: { type: DataTypes.STRING, allowNull: false, defaultValue: "guest"},
     force_password_change: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
     profile_pic_url: { type: DataTypes.STRING, allowNull: true, defaultValue: null },
     created_at: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW },

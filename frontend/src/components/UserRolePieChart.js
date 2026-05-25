@@ -9,7 +9,7 @@ ChartJS.register(ArcElement, Tooltip, Legend, ChartDataLabels); // 💡 REGISTER
 
 // Define a map for role display names and colors
 const ROLE_CONFIG = {
-    head_admin: { label: "Head Admin", color: '#fcd34d' }, 
+    research_coordinator: { label: "Research Coordinator", color: '#fcd34d' }, 
     admin: { label: "Admin", color: '#f87171' },           
     research_adviser: { label: "Research Adviser", color: '#34d399' }, 
     student: { label: "Student", color: '#60a5fa' },       

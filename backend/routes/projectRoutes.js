@@ -1,6 +1,6 @@
 const express = require("express");
 const path = require("path");
-const { submitProject, getHeadAdminNotifications, markNotificationRead, getStudentNotifications, getAllProjects, getProjectCounts, endorseProject, needRevision, approveProject, getAllProjectsAdmin, editProjectMetadata, hideProject, deleteProject, informStudentOfRevision, reuploadProjectDocument  } = require("../controllers/projectController");
+const { submitProject, getResearchCoordinatorNotifications, markNotificationRead, getStudentNotifications, getAllProjects, getProjectCounts, endorseProject, needRevision, approveProject, getAllProjectsAdmin, editProjectMetadata, hideProject, deleteProject, informStudentOfRevision, reuploadProjectDocument  } = require("../controllers/projectController");
 const categories = require("../config/categories");
 const { Project, User } = require("../models");
 const authMiddleware = require("../middlewares/authMiddleware");
@@ -72,7 +72,7 @@ router.get("/public/counts", async (req, res) => {
 });
 
 // Get sinlge research project
-router.get("/:id", authMiddleware(["student", "admin", "head_admin", "research_adviser", "guest"]), async (req, res) => {
+router.get("/:id", authMiddleware(["student", "admin", "research_coordinator", "research_adviser", "guest"]), async (req, res) => {
   try {
     const { id } = req.params; // <-- FIX: get id from params
     const project = await Project.findByPk(id, {
@@ -150,12 +150,12 @@ router.get("/download/:id", async (req, res) => {
 
 router.post("/adviser/endorse/:id", authMiddleware(["research_adviser"]), endorseProject);
 router.post("/adviser/need-revision/:id", authMiddleware(["research_adviser"]), needRevision);
-router.post("/admin/need-revision/:id", authMiddleware(["admin", "head_admin"]), needRevision);
+router.post("/admin/need-revision/:id", authMiddleware(["admin", "research_coordinator"]), needRevision);
 
-// Head Admin Management
-router.get("/head-admin/all", authMiddleware(["head_admin"]), getAllProjectsAdmin);
-router.get("/head-admin/notifications", authMiddleware(["head_admin"]), getHeadAdminNotifications);
-router.patch("/head-admin/notifications/:id/read", authMiddleware(["head_admin"]), markNotificationRead);
+// Research Coordinator Management
+router.get("/research-coordinator/all", authMiddleware(["research_coordinator"]), getAllProjectsAdmin);
+router.get("/research-coordinator/notifications", authMiddleware(["research_coordinator"]), getResearchCoordinatorNotifications);
+router.patch("/research-coordinator/notifications/:id/read", authMiddleware(["research_coordinator"]), markNotificationRead);
 
 // Admin Management
 router.get("/admin/all", authMiddleware(["admin"]), getAllProjectsAdmin);
@@ -164,20 +164,20 @@ router.get("/admin/counts", authMiddleware(["admin"]), getProjectCounts);
 // router.patch("/admin/notifications/:id/read", authMiddleware(["admin"]), markNotificationRead);
 
 router.get("/student/notifications", authMiddleware(["student"]), getStudentNotifications);
-router.post("/admin/approve/:id", authMiddleware(["admin", "head_admin"]), approveProject);
+router.post("/admin/approve/:id", authMiddleware(["admin", "research_coordinator"]), approveProject);
 
 router.post("/adviser/inform-student/:id", authMiddleware(["research_adviser"]), informStudentOfRevision);
 
 router.put("/reupload/:id", authMiddleware(["student"]), upload.single("document"), reuploadProjectDocument);
 
 // Edit metadata (title, abstract, etc.)
-router.put("/admin/edit/:id", authMiddleware(["admin", "head_admin"]), editProjectMetadata);
+router.put("/admin/edit/:id", authMiddleware(["admin", "research_coordinator"]), editProjectMetadata);
 
 // Hide/Unpublish project
-router.patch("/admin/hide/:id", authMiddleware(["admin", "head_admin"]), hideProject);
+router.patch("/admin/hide/:id", authMiddleware(["admin", "research_coordinator"]), hideProject);
 
 // Delete/Archive project
-router.delete("/admin/delete/:id", authMiddleware(["admin", "head_admin"]), deleteProject);
+router.delete("/admin/delete/:id", authMiddleware(["admin", "research_coordinator"]), deleteProject);
 
 
 module.exports = router;

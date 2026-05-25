@@ -5,13 +5,13 @@ export const sidebarLinks = {
     { label: "Manage Projects", to: "/admin/manage-projects" },
     { label: "Academic Settings", to: "/admin/academic" },
   ],
-  head_admin: [
-    { label: "Dashboard", to: "/head-admin" },
-    { label: "Pending Projects", to: "/head-admin/pending-projects" },
-    { label: "Approved Projects", to: "/head-admin/approved-projects" },
-    { label: "Request for Revision", to: "/head-admin/request-for-revision" },
-    { label: "Project Repository", to: "/head-admin/repository" },
-    { label: "Notifications", to: "/head-admin/notifications" },
+  research_coordinator: [
+    { label: "Dashboard", to: "/research-coordinator" },
+    { label: "Pending Projects", to: "/research-coordinator/pending-projects" },
+    { label: "Approved Projects", to: "/research-coordinator/approved-projects" },
+    { label: "Request for Revision", to: "/research-coordinator/request-for-revision" },
+    { label: "Project Repository", to: "/research-coordinator/repository" },
+    { label: "Notifications", to: "/research-coordinator/notifications" },
   ],
   research_adviser: [
     { label: "Dashboard", to: "/adviser" },

@@ -220,7 +220,7 @@ const MyAccount = () => {
   // Determine if user gets two-column layout
   const useTwoColumnLayout =
     user?.role === "student" ||  // All students (college + SHS)
-    ["admin", "head_admin", "research_adviser", "guest"].includes(user?.role);
+    ["admin", "research_coordinator", "research_adviser", "guest"].includes(user?.role);
 
   // Determine if user gets full project sections (Pending, etc.)
   const showProjectSections = isEligibleResearchStudent(user);
@@ -326,7 +326,7 @@ const MyAccount = () => {
                     const role = user?.role;
                     let path = `/projects/${p.id}`;
                     if (role === "research_adviser") path = `/adviser/projects/${p.id}`;
-                    else if (role === "head_admin") path = `/head-admin/projects/${p.id}`;
+                    else if (role === "research_coordinator") path = `/research-coordinator/projects/${p.id}`;
                     else if (role === "admin") path = `/admin/projects/${p.id}`;
                     navigate(path);
                   }}

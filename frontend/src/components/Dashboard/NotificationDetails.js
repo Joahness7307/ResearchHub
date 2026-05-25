@@ -40,7 +40,7 @@ function formatNotificationDetails(reason = "") {
     };
   }
 
-  // Pattern 1 — " Reason:" (used by head admin revision request)
+  // Pattern 1 — " Reason:" (used by Research Coordinator revision request)
   // Example: "Project X requires revision. Reason: fix chapter 2"
   const standardReasonIndex = reason.indexOf(" Reason:");
   if (standardReasonIndex !== -1) {
@@ -50,13 +50,13 @@ function formatNotificationDetails(reason = "") {
     };
   }
 
-  // Pattern 2 — "Reason from Head Admin:" (used by adviser inform student)
-  // Example: "Your project requires revision. Please reupload... Reason from Head Admin: fix it"
-  const headAdminReasonIndex = reason.indexOf(" Reason from Head Admin:");
-  if (headAdminReasonIndex !== -1) {
+  // Pattern 2 — "Reason from Research Coordinator:" (used by adviser inform student)
+  // Example: "Your project requires revision. Please reupload... Reason from Research Coordinator: fix it"
+  const researchCoordinatorReasonIndex = reason.indexOf(" Reason from Research Coordinator:");
+  if (researchCoordinatorReasonIndex !== -1) {
     return {
-      summary: reason.slice(0, headAdminReasonIndex).trim(),
-      revisionReason: reason.slice(headAdminReasonIndex + " Reason from Head Admin:".length).trim(),
+      summary: reason.slice(0, researchCoordinatorReasonIndex).trim(),
+      revisionReason: reason.slice(researchCoordinatorReasonIndex + " Reason from Research Coordinator:".length).trim(),
     };
   }
 
@@ -84,8 +84,8 @@ const ActionButtons = ({ projectId, user, navigate }) => {
   const handleViewProject = () => {
     if (user.role === "research_adviser") {
       navigate(`/adviser/projects/${projectId}`);
-    } else if (user.role === "head_admin") {
-      navigate(`/head-admin/projects/${projectId}`);
+    } else if (user.role === "research_coordinator") {
+      navigate(`/research-coordinator/projects/${projectId}`);
     } else if (user.role === "admin") {
       navigate(`/admin/projects/${projectId}`);
     } else {
@@ -100,8 +100,8 @@ const ActionButtons = ({ projectId, user, navigate }) => {
       navigate("/adviser/notifications");
     } else if (user.role === "admin") {
       navigate("/admin/notifications");
-    } else if (user.role === "head_admin") {
-      navigate("/head-admin/notifications");
+    } else if (user.role === "research_coordinator") {
+      navigate("/research-coordinator/notifications");
     }
   };
 
@@ -151,8 +151,8 @@ const NotificationDetails = () => {
       notifUrl = API_ROUTES.notifications.student;
     } else if (user.role === "research_adviser") {
       notifUrl = API_ROUTES.notifications.adviserById(user.id);
-    } else if (user.role === "head_admin") {
-      notifUrl = API_ROUTES.notifications.headAdminById(user.id);
+    } else if (user.role === "research_coordinator") {
+      notifUrl = API_ROUTES.notifications.researchCoordinatorById(user.id);
     } else if (user.role === "admin") {
       notifUrl = API_ROUTES.notifications.adminById(user.id);
     }
@@ -171,14 +171,14 @@ const NotificationDetails = () => {
             patchUrl = API_ROUTES.notifications.studentMarkAsRead(id);
           } else if (user.role === "research_adviser") {
             patchUrl = API_ROUTES.notifications.adviserMarkAsRead(id);
-          } else if (user.role === "head_admin") {
-            patchUrl = API_ROUTES.notifications.headAdminMarkAsRead(id);
+          } else if (user.role === "research_coordinator") {
+            patchUrl = API_ROUTES.notifications.researchCoordinatorMarkAsRead(id);
           } else if (user.role === "admin") {
             patchUrl = API_ROUTES.notifications.adminMarkAsRead(id);
           }
           if (patchUrl) {
             axios.patch(patchUrl).then(() => {
-              if (user.role === "head_admin" || user.role === "research_adviser") {
+              if (user.role === "research_coordinator" || user.role === "research_adviser") {
                 refreshUnreadCount();
               }
             });

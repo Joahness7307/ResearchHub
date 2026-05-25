@@ -1,12 +1,12 @@
 import React from "react";
 import { Navigate, Route } from "react-router-dom";
 import AdminLayout from "../components/Layout/AdminLayout";
-import HeadAdminLayout from "../components/Layout/HeadAdminLayout";
+import ResearchCoordinatorLayout from "../components/Layout/ResearchCoordinatorLayout";
 import ResearchAdviserLayout from "../components/Layout/ResearchAdviserLayout";
 import publicRoutes from "./publicRoutes";
 import sharedAuthenticatedRoutes from "./sharedAuthenticatedRoutes";
 import adminRoutes from "./AdminRoutes";
-import headAdminRoutes from "./HeadAdminRoutes";
+import researchCoordinatorRoutes from "./ResearchCoordinatorRoutes";
 import researchAdviserRoutes from "./ResearchAdviserRoutes";
 import dashboardRoutes from "./DashboardRoutes";
 import ProtectedRoute from "./ProtectedRoute";
@@ -29,14 +29,14 @@ const appRoutes = (
     </Route>
 
     <Route
-      path="/head-admin/*"
+      path="/research-coordinator/*"
       element={
-        <ProtectedRoute allowedRoles={["head_admin"]}>
-          <HeadAdminLayout />
+        <ProtectedRoute allowedRoles={["research_coordinator"]}>
+          <ResearchCoordinatorLayout />
         </ProtectedRoute>
       }
     >
-      {headAdminRoutes}
+      {researchCoordinatorRoutes}
     </Route>
 
     <Route

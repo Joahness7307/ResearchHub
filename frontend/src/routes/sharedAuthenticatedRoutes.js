@@ -4,7 +4,7 @@ import SubmitResearch from "../components/Research/SubmitResearch";
 import MyAccount from "../components/Dashboard/MyAccount";
 import ProjectDetails from "../components/Research/ProjectDetails";
 import AdminLayout from "../components/Layout/AdminLayout";
-import MyAccountWithHeadAdminSidebar from "../components/Layout/MyAccountWithHeadAdminSidebar";
+import MyAccountWithResearchCoordinatorSidebar from "../components/Layout/MyAccountWithResearchCoordinatorSidebar";
 import MyAccountWithAdviserSidebar from "../components/Layout/MyAccountWithAdviserSidebar";
 import NotificationPage from "../components/Dashboard/NotificationPage";
 import NotificationDetails from "../components/Dashboard/NotificationDetails";
@@ -39,15 +39,15 @@ const sharedAuthenticatedRoutes = (
     <Route
       path="/my-account"
       element={
-        <ProtectedRoute allowedRoles={["admin", "head_admin", "student", "research_adviser", "guest"]}>
+        <ProtectedRoute allowedRoles={["admin", "research_coordinator", "student", "research_adviser", "guest"]}>
           <AuthContext.Consumer>
             {({ user }) =>
               user?.role === "admin" ? (
                 <AdminLayout>
                   <MyAccount />
                 </AdminLayout>
-              ) : user?.role === "head_admin" ? (
-                <MyAccountWithHeadAdminSidebar />
+              ) : user?.role === "research_coordinator" ? (
+                <MyAccountWithResearchCoordinatorSidebar />
               ) : user?.role === "research_adviser" ? (
                 <MyAccountWithAdviserSidebar />
               ) : (
@@ -91,7 +91,7 @@ const sharedAuthenticatedRoutes = (
     <Route
       path="/notifications/:id"
       element={
-        <ProtectedRoute allowedRoles={["student", "admin", "head_admin", "research_adviser"]}>
+        <ProtectedRoute allowedRoles={["student", "admin", "research_coordinator", "research_adviser"]}>
           <NotificationAccessGuard>
             <NotificationDetails />
           </NotificationAccessGuard>
@@ -102,7 +102,7 @@ const sharedAuthenticatedRoutes = (
     <Route
       path="/notifications"
       element={
-        <ProtectedRoute allowedRoles={["student", "admin"]}>
+        <ProtectedRoute allowedRoles={["student", "admin" , "research_coordinator", "research_adviser"]}>
           <NotificationAccessGuard>
             <NotificationPage />
           </NotificationAccessGuard>

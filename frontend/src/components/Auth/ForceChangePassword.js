@@ -24,7 +24,7 @@ const ForceChangePassword = () => {
     if (user && !user.force_password_change) {
       const routes = {
         admin: "/admin",
-        head_admin: "/head-admin",
+        research_coordinator: "/research-coordinator",
         guest: "/guest",
         research_adviser: "/adviser",
         student: "/projects"

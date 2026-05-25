@@ -5,7 +5,7 @@ import { useDashboardNotificationsUnread } from "../../context/DashboardNotifica
 import SidebarNavigation from "../common/Sidebar/SidebarNavigation";
 import { getSidebarLinks } from "../../config/sidebarLinks";
 
-const HeadAdminSideNavbar = () => {
+const ResearchCoordinatorSideNavbar = () => {
   const navigate = useNavigate();
   const { logout } = useContext(AuthContext);
   const { unreadCount, notificationsPath } = useDashboardNotificationsUnread();
@@ -18,7 +18,7 @@ const HeadAdminSideNavbar = () => {
   return (
     <aside className="side-navbar">
       <SidebarNavigation
-        links={getSidebarLinks("head_admin")}
+        links={getSidebarLinks("research_coordinator")}
         badgeMap={{ [notificationsPath]: unreadCount }}
         logout={handleLogout}
       />
@@ -26,4 +26,4 @@ const HeadAdminSideNavbar = () => {
   );
 };
 
-export default HeadAdminSideNavbar;
+export default ResearchCoordinatorSideNavbar;

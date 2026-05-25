@@ -106,12 +106,12 @@ const ProjectDetails = () => {
             let url = "";
             if (user?.role === "research_adviser") { // FIX 1: Add optional chaining
                 url = API_ROUTES.projects.needRevision.adviser(id);
-            } else if (user?.role === "head_admin") { // FIX 2: Add optional chaining
+            } else if (user?.role === "research_coordinator") { // FIX 2: Add optional chaining
                 url = API_ROUTES.projects.needRevision.admin(id);
             }
             const res = await axios.post(url, { reason });
             const newStatus =
-                user?.role === "head_admin" ? "admin_revision" : "need_revision";
+                user?.role === "research_coordinator" ? "admin_revision" : "need_revision";
             const updated =
                 res.data?.project || {
                     ...project,
@@ -287,7 +287,7 @@ const ProjectDetails = () => {
                     user?.role !== "student" &&
                     user?.role !== "guest" && (
                     <div className="revision-required" style={{ background: "#fff8f0", border: "1px solid #fbbf24", color: "#b33834", margin: "1rem 0", padding: "1rem", borderRadius: "8px" }}>
-                        <b>Head Admin Revision Reason:</b> {project.rejection_reason}
+                        <b>Research Coordinator Revision Reason:</b> {project.rejection_reason}
                     </div>
                 )}
                 
@@ -426,7 +426,7 @@ const ProjectDetails = () => {
                 )}
 
                     {/* FIX 7: Add optional chaining to user.role */}
-                    {user?.role === "head_admin" && project.status === "endorsed" && (
+                    {user?.role === "research_coordinator" && project.status === "endorsed" && (
                         <div className="adviser-actions">
                             <button
                                 onClick={async () => {

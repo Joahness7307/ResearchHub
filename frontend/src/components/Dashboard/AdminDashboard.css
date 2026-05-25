@@ -1,11 +1,11 @@
-.headadmin-abstract-border {
+.research-coordinator-abstract-border {
   border-bottom: 1.5px solid #e5e7eb;
   padding-bottom: 0.5rem;
   margin-bottom: 2rem;
 }
 /* Dashboard-scoped tokens — do NOT use :root; that overrides Navbar.css globally */
 .dashboard-content,
-.head-admin-dashboard-wrapper,
+.research-coordinator-dashboard-wrapper,
 .adviser-dashboard-container {
   --primary-color: #2563eb;
   --secondary-color: #3a3e92;
@@ -49,7 +49,7 @@
 }
 
 /* --- NEW STYLES FOR SUMMARY CARDS (Retained) --- */
-.head-admin-dashboard-wrapper h2 {
+.research-coordinator-dashboard-wrapper h2 {
   color: var(--secondary-color);
   font-size: 1.8rem;
 }
@@ -419,7 +419,7 @@
 
 .role-student { background-color: #dbeafe; color: #1e40af; }
 .role-admin { background-color: #fed6c7; color: #b42b09; }
-.role-head_admin { background-color: #fef3c7; color: #b45309; }
+.role-research_coordinator { background-color: #fef3c7; color: #b45309; }
 .role-research_adviser { background-color: #d1fae5; color: #065f46; }
 .role-guest { background-color: #a78bfa; color: #381b91; }
 
@@ -624,7 +624,7 @@
         padding: 0.75rem; /* Reduce padding slightly */
         margin: 1rem auto 2rem auto;
     }
-    .headadmin-abstract-border {
+    .research-coordinator-abstract-border {
       border-bottom: 1.5px solid #e5e7eb;
       padding-bottom: 0.5rem;
       margin-bottom: 2.5rem;

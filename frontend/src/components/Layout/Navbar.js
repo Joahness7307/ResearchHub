@@ -35,8 +35,8 @@ const Navbar = ({
   const location = useLocation();
   const socketRef = useRef(null);
 
-  // Sidebar context hook for admin/adviser/head_admin roles.
-  // Sidebar context hook for admin/adviser/head_admin roles.
+  // Sidebar context hook for admin/adviser/research_coordinator roles.
+  // Sidebar context hook for admin/adviser/research_coordinator roles.
   const roleName = user?.role || "";
   const { isOpen: adminIsOpen, toggle: adminToggle } = useSidebar(roleName);
 
@@ -44,7 +44,7 @@ const Navbar = ({
   const isUnauthenticated = !user;
   const canUseStudentNotifications = isEligibleResearchStudent(user);
   const isStudentOrGuest = !!user && (user.role === "student" || user.role === "guest");
-  const isAdminRole = !!user && (user.role === "admin" || user.role === "head_admin" || user.role === "research_adviser");
+  const isAdminRole = !!user && (user.role === "admin" || user.role === "research_coordinator" || user.role === "research_adviser");
 
   // Notification fetch for student
   const fetchStudentNotifications = useCallback(async () => {
@@ -139,7 +139,7 @@ const Navbar = ({
       setIsSidebarOpen(openState);
       return;
     }
-    // Admin/Adviser/Head Admin: toggle layout sidebar via SidebarContext
+    // Admin/Adviser/Research Coordinator: toggle layout sidebar via SidebarContext
     if (isAdminRole && roleName) {
       adminToggle();
       return;
@@ -166,7 +166,7 @@ const Navbar = ({
   if (user) {
     if (user.role === "student") logoLink = "/dashboard";
     else if (user.role === "admin") logoLink = "/admin";
-    else if (user.role === "head_admin") logoLink = "/head-admin";
+    else if (user.role === "research_coordinator") logoLink = "/research-coordinator";
     else if (user.role === "research_adviser") logoLink = "/adviser";
     else if (user.role === "guest") logoLink = "/dashboard";
   }
@@ -374,7 +374,7 @@ const Navbar = ({
         </>
       )}
 
-      {/* --- Admin / Adviser / Head Admin Navbar --- */}
+      {/* --- Admin / Adviser / Research Coordinator Navbar --- */}
       {isAdminRole && (
         <div className="navbar-right">
           <Link to="/my-account" className="nav-link my-account-link">My Account</Link>

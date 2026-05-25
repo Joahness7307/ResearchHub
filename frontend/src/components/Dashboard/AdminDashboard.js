@@ -570,7 +570,7 @@ const AdminDashboard = ({ activeSection }) => {
 
               <select name="role" value={addUserForm.role} onChange={handleAddUserChange} required>
                 <option value="admin">Admin</option>
-                <option value="head_admin">Head Admin</option>
+                <option value="research_coordinator">Research Coordinator</option>
                 <option value="research_adviser">Research Adviser</option>
                 <option value="student">Student</option>
                 <option value="guest">Guest</option>
@@ -700,7 +700,7 @@ const AdminDashboard = ({ activeSection }) => {
                   value={editForm.role}
                   onChange={e => setEditForm({ ...editForm, role: e.target.value })}
                 >
-                  <option value="head_admin">Head Admin</option>
+                  <option value="res">Research Coordinator</option>
                   <option value="admin">Admin</option>
                   <option value="research_adviser">Research Adviser</option>
                   <option value="student">Student</option>

@@ -3,7 +3,7 @@ import React, { createContext, useContext, useState, useCallback } from "react";
 const SidebarContext = createContext(null);
 
 export const SidebarProvider = ({ children }) => {
-  // keys: "admin", "head_admin", "research_adviser" etc.
+  // keys: "admin", "research_coordinator", "research_adviser" etc.
   const [state, setState] = useState({});
 
   const setOpen = useCallback((role, value) => {

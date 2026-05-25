@@ -22,8 +22,8 @@ const NotificationPage = () => {
       axios.get(API_ROUTES.notifications.student)
         .then(res => setNotifications(res.data.notifications))
         .catch(() => setNotifications([]));
-    } else if (user && (user.role === "head_admin")) {
-      axios.get(API_ROUTES.notifications.headAdminById(user.id))
+    } else if (user && (user.role === "research_coordinator" )) {
+      axios.get(API_ROUTES.notifications.researchCoordinatorById(user.id))
         .then(res => setNotifications(res.data.notifications))
         .catch(() => setNotifications([]));
     } else if (user && user.role === "admin" ) {
@@ -63,8 +63,8 @@ const NotificationPage = () => {
               className={`notification-item${notif.isRead ? " read" : ""}`}
               style={{ cursor: "pointer" }}
               onClick={() => {
-                if (user && user.role === "head_admin") {
-                  navigate(`/head-admin/notifications/${notif.id}`);
+                if (user && user.role === "research_coordinator" ) {
+                  navigate(`/research-coordinator/notifications/${notif.id}`);
                 } else if (user && user.role === "admin") {
                   navigate(`/admin/notifications/${notif.id}`);
                 } else if (user && user.role === "research_adviser") {

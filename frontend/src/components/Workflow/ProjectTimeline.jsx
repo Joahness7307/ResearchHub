@@ -79,7 +79,7 @@ export function filterTimelineEvents(events = [], currentUserRole, currentUserId
                message.includes("please reupload");
       }
 
-      // Hide everything else (adviser notifications, head admin notifications)
+      // Hide everything else (adviser notifications, research coordinator notifications)
       return false;
     }
 
@@ -101,12 +101,12 @@ export function filterTimelineEvents(events = [], currentUserRole, currentUserId
     }
 
     // ─────────────────────────────────────────────
-    // HEAD ADMIN VIEW
-    // Show only events where head_admin is the recipient
+    // RESEARCH COORDINATOR VIEW
+    // Show only events where research_coordinator is the recipient
     // ─────────────────────────────────────────────
-    if (currentUserRole === "head_admin") {
-      // Always show events sent TO the head admin
-      if (recipient === "head_admin") return true;
+    if (currentUserRole === "research_coordinator") {
+      // Always show events sent TO the research coordinator
+      if (recipient === "research_coordinator") return true;
 
       // Hide everything else
       return false;

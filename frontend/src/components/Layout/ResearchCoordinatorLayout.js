@@ -1,18 +1,18 @@
 import React from "react";
 import { Outlet } from "react-router-dom";
 import DashboardLayout from "../common/Layout/DashboardLayout";
-import HeadAdminSideNavbar from "./HeadAdminSideNavbar";
+import ResearchCoordinatorSideNavbar from "./ResearchCoordinatorSideNavbar";
 import { getMobileSidebarLinks } from "../../config/sidebarLinks";
 import { DashboardNotificationsUnreadProvider } from "../../context/DashboardNotificationsUnreadContext";
 
-const HeadAdminLayout = ({ children }) => {
-  const mobileLinks = getMobileSidebarLinks("head_admin");
+const ResearchCoordinatorLayout = ({ children }) => {
+  const mobileLinks = getMobileSidebarLinks("research_coordinator");
 
   return (
-    <DashboardNotificationsUnreadProvider role="head_admin">
+    <DashboardNotificationsUnreadProvider role="research_coordinator">
       <DashboardLayout
-        role="head_admin"
-        sidebarComponent={HeadAdminSideNavbar}
+        role="research_coordinator"
+        sidebarComponent={ResearchCoordinatorSideNavbar}
         mobileLinks={mobileLinks}
       >
         {children || <Outlet />}
@@ -21,4 +21,4 @@ const HeadAdminLayout = ({ children }) => {
   );
 };
 
-export default HeadAdminLayout;
+export default ResearchCoordinatorLayout;

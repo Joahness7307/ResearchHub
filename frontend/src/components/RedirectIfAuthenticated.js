@@ -10,8 +10,8 @@ const RedirectIfAuthenticated = ({ children }) => {
     switch (user.role) {
       case "admin":
         return <Navigate to="/admin" />;
-      case "head_admin":
-        return <Navigate to="/head-admin" />;
+      case "research_coordinator":
+        return <Navigate to="/research-coordinator" />;
       case "research_adviser":
         return <Navigate to="/adviser" />;
       case "student":
