@@ -14,7 +14,7 @@ const PROJECT_STATUS = {
 /**
  * Advisers affiliated with the project's department or strand.
  */
-async function getAdvisersForProject(project) {
+async function getResearchAdvisersForProject(project) {
   const orConditions = [];
   if (project.department_id) {
     orConditions.push({ department_id: project.department_id });
@@ -38,11 +38,11 @@ async function getResearchCoordinators() {
   return User.findAll({ where: { role: "research_coordinator" } });
 }
 
-async function createNotification({ projectId, studentId, adviserId, researchCoordinatorId, reason }) {
+async function createNotification({ projectId, studentId, researchAdviserId, researchCoordinatorId, reason }) {
   return Notification.create({
     projectId,
     studentId: studentId ?? null,
-    adviserId: adviserId ?? null,
+    researchAdviserId: researchAdviserId ?? null,
     researchCoordinatorId: researchCoordinatorId ?? null,
     isRead: false,
     reason,
@@ -55,9 +55,9 @@ function emitStudent(io, studentId, payload) {
   }
 }
 
-function emitAdviser(io, adviserId, payload) {
-  if (io && adviserId) {
-    io.emit(`adviser_notify_${adviserId}`, payload);
+function emitResearchAdviser(io, researchAdviserId, payload) {
+  if (io && researchAdviserId) {
+    io.emit(`research_adviser_notify_${researchAdviserId}`, payload);
   }
 }
 
@@ -92,15 +92,15 @@ async function notifyStudent(io, { project, reason, payload }) {
 /**
  * Notify all advisers for a project (DB + socket per adviser).
  */
-async function notifyProjectAdvisers(io, project, reason, payloadExtra = {}) {
-  const advisers = await getAdvisersForProject(project);
+async function notifyProjectResearchAdvisers(io, project, reason, payloadExtra = {}) {
+  const advisers = await getResearchAdvisersForProject(project);
   for (const adv of advisers) {
     await createNotification({
       projectId: project.id,
-      adviserId: adv.id,
+      researchAdviserId: adv.id,
       reason,
     });
-    emitAdviser(io, adv.id, {
+    emitResearchAdviser(io, adv.id, {
       type: "status_update",
       projectId: project.id,
       title: project.title,
@@ -140,21 +140,21 @@ function emitWorkflowRefresh(io, roles = []) {
   if (!io) return;
   const payload = { type: "workflow_refresh", at: Date.now() };
   if (roles.includes("student")) io.emit("workflow_refresh_student", payload);
-  if (roles.includes("research_adviser")) io.emit("workflow_refresh_adviser", payload);
+  if (roles.includes("research_adviser")) io.emit("workflow_refresh_research_adviser", payload);
   if (roles.includes("research_coordinator")) io.emit("workflow_refresh_research_coordinator", payload);
   if (roles.includes("admin")) io.emit("workflow_refresh_admin", payload);
 }
 
 module.exports = {
   PROJECT_STATUS,
-  getAdvisersForProject,
+  getResearchAdvisersForProject,
   getResearchCoordinators,
   createNotification,
   notifyStudent,
-  notifyProjectAdvisers,
+  notifyProjectResearchAdvisers,
   notifyResearchCoordinators,
   emitStudent,
-  emitAdviser,
+  emitResearchAdviser,
   emitResearchCoordinator,
   emitWorkflowRefresh,
 };

@@ -91,7 +91,7 @@ export function filterTimelineEvents(events = [], currentUserRole, currentUserId
       // Show ONLY notifications intended for THIS adviser
       if (
         recipient === "research_adviser" &&
-        Number(event.adviserId) === Number(currentUserId)
+        Number(event.researchAdviserId) === Number(currentUserId)
       ) {
         return true;
       }

@@ -26,7 +26,7 @@ function getTimelineEventType(reason = "") {
 }
 
 function getNotificationOwnerRole(notification) {
-  if (notification.adviserId) return "research_adviser";
+  if (notification.researchAdviserId) return "research_adviser";
   if (notification.studentId) return "student";
   if (notification.researchCoordinatorId) return "research_coordinator";
 
@@ -71,7 +71,7 @@ function getTimelineActorRole(notification, eventType, project, reason = "") {
 
 router.get("/adviser/:id", authMiddleware(["research_adviser"]), async (req, res) => {
   const notifications = await Notification.findAll({
-    where: { adviserId: req.params.id },
+    where: { researchAdviserId: req.params.id },
     order: [["createdAt", "DESC"]],
   });
   res.json({ notifications });
@@ -111,7 +111,7 @@ router.get(
           eventType,
           actorRole: getTimelineActorRole(item, eventType, project, reason),
           recipientRole: getNotificationOwnerRole(item),
-          adviserId: item.adviserId,
+          researchAdviserId: item.researchAdviserId,
           studentId: item.studentId,
           researchCoordinatorId: item.researchCoordinatorId,
           message: reason,
@@ -137,7 +137,7 @@ router.get(
 
 router.patch("/adviser/:id/read", authMiddleware(["research_adviser"]), async (req, res) => {
   const notif = await Notification.findOne({
-    where: { id: req.params.id, adviserId: req.user.id }
+    where: { id: req.params.id, researchAdviserId: req.user.id }
   });
   if (!notif) return res.status(404).json({ message: "Notification not found" });
   notif.isRead = true;

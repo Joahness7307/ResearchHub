@@ -27,7 +27,6 @@ exports.getComments = async (req, res) => {
         { model: User, as: 'user', attributes: ['id', 'full_name', 'role'] },
         { model: Comment, as: 'replies', include: [{ model: User, as: 'user', attributes: ['id', 'full_name', 'role'] }] }
       ],
-      order: [['createdAt', 'ASC']]
     });
     res.json(comments);
   } catch (error) {

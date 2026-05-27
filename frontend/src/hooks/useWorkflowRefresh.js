@@ -11,8 +11,8 @@ import {
  * @param {object} options
  * @param {() => void} options.onProjectsRefresh
  * @param {() => void} [options.onNotificationsRefresh]
- * @param {string} [options.socketChannel] e.g. adviser_notify_12
- * @param {string[]} [options.workflowSocketEvents] e.g. ['workflow_refresh_adviser']
+ * @param {string} [options.socketChannel] e.g. research_adviser_notify_12
+ * @param {string[]} [options.workflowSocketEvents] e.g. ['workflow_refresh_research_adviser']
  */
 export function useWorkflowRefresh({
   onProjectsRefresh,

@@ -132,7 +132,9 @@ router.get("/download/:id", async (req, res) => {
     }
 
     // Stream the PDF from Cloudinary
-    const response = await axios.get(project.documentPath, { responseType: "stream" });
+    const response = await axios.get(project.documentPath, 
+      { responseType: "stream"
+      });
 
     // Set the download header
     res.setHeader(
@@ -144,6 +146,7 @@ router.get("/download/:id", async (req, res) => {
     // Pipe the PDF stream to the response
     response.data.pipe(res);
   } catch (error) {
+    console.error("Download error:", error);
     res.status(500).json({ message: "Failed to download PDF", error: error.message });
   }
 });

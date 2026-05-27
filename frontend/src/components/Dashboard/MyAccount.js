@@ -341,7 +341,7 @@ const MyAccount = () => {
                     <b>Abstract:</b> {(p.abstract || "").slice(0, 120)}...
                   </div>
                   <div className="paper-actions">
-                    <a href={p.documentPath || p.document_path} target="_blank" rel="noopener noreferrer" className="view-pdf-btn" onClick={(e) => e.stopPropagation()}>
+                    <a href={p.documentPath || p.documentPath} target="_blank" rel="noopener noreferrer" className="view-pdf-btn" onClick={(e) => e.stopPropagation()}>
                       View PDF
                     </a>
                     <span className="paper-date">

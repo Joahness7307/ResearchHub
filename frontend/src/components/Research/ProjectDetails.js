@@ -494,7 +494,7 @@ const ProjectDetails = () => {
                             </div>
                             <div className="comment-content">{comment.content}</div>
                             <div className="comment-date">
-                            {new Date(comment.createdAt).toLocaleString()}
+                            {new Date(comment.created_at).toLocaleString()}
                             </div>
 
                             {/* Replies */}
@@ -507,7 +507,7 @@ const ProjectDetails = () => {
                                     </div>
                                     <div className="reply-content">{reply.content}</div>
                                     <div className="reply-date">
-                                    {new Date(reply.createdAt).toLocaleString()}
+                                    {new Date(reply.created_at).toLocaleString()}
                                     </div>
                                 </li>
                                 ))}

@@ -6,13 +6,13 @@ const { Op } = require("sequelize");
 const {
   PROJECT_STATUS,
   notifyStudent,
-  notifyProjectAdvisers,
+  notifyProjectResearchAdvisers,
   notifyResearchCoordinators,
   emitWorkflowRefresh,
 } = require("../services/notificationService");
 const { isEligibleResearchStudent } = require("../utils/studentEligibility");
 
-async function getRelevantAdvisers(project) {
+async function getRelevantResearchAdvisers(project) {
   const where = {
     role: "research_adviser",
   };
@@ -29,14 +29,14 @@ async function getRelevantAdvisers(project) {
     where.strand_id = project.strand_id;
   }
 
-  const advisers = await User.findAll({ where });
+  const researchAdvisers = await User.findAll({ where });
 
-  // Remove duplicates by adviser ID
-  const uniqueAdvisers = [
-    ...new Map(advisers.map((a) => [a.id, a])).values(),
+  // Remove duplicates by research adviser ID
+  const uniqueResearchAdvisers = [
+    ...new Map(researchAdvisers.map((a) => [a.id, a])).values(),
   ];
 
-  return uniqueAdvisers;
+  return uniqueResearchAdvisers;
 }
 
 // Upload final research paper
@@ -59,9 +59,9 @@ exports.submitProject = async (req, res) => {
       category
     } = req.body;
 
-    const documentUrl = req.file?.path || req.file?.secure_url;
+    const document_url = req.file?.path || req.file?.secure_url;
 
-    console.log("📄 Uploaded PDF URL:", documentUrl);
+    console.log("📄 Uploaded PDF URL:", document_url);
 
     // Validate required fields
     if (!title || !title_description || !abstract || !category) {
@@ -75,15 +75,15 @@ exports.submitProject = async (req, res) => {
     //              IMPORTANT CHANGES START HERE
     // ───────────────────────────────────────────────────────────────
 
-    // 1. NO MORE adviser check → students can submit without adviser
-    // 2. We save department_id / strand_id so future advisers can see it
+    // 1. NO MORE research adviser check → students can submit without research adviser
+    // 2. We save department_id / strand_id so future research advisers can see it
 
     const project = await Project.create({
       title,
       title_description,
       abstract,
       category,
-      documentPath: documentUrl,
+      documentPath: document_url,
       authors: user.full_name || user.username || "Unknown",
       submitted_by: user.id,
 
@@ -91,8 +91,8 @@ exports.submitProject = async (req, res) => {
       department_id: user.department_id || null,
       strand_id: user.strand_id || null,
 
-      // No adviser yet → will be assigned later when adviser claims/endorses
-      adviser_id: null,
+      // No research adviser yet → will be assigned later when research adviser claims/endorses
+      research_adviser_id: null,
       status: "pending"
     }, { transaction: transaction });
 
@@ -104,20 +104,20 @@ exports.submitProject = async (req, res) => {
       reason: `You submitted the project "${project.title}".`
     }, { transaction: transaction });
 
-    let possibleAdvisers = [];
+    let possibleResearchAdvisers = [];
 
-    // Notify advisers in the same department/strand inside transaction only once
+    // Notify research advisers in the same department/strand inside transaction only once
     if (user.department_id || user.strand_id) {
 
-      possibleAdvisers = await getRelevantAdvisers({
+      possibleResearchAdvisers = await getRelevantResearchAdvisers({
         department_id: user.department_id,
         strand_id: user.strand_id,
       });
 
-      for (const adv of possibleAdvisers) {
+      for (const adv of possibleResearchAdvisers) {
         await Notification.create({
           projectId: project.id,
-          adviserId: adv.id,
+          researchAdviserId: adv.id,
           isRead: false,
           reason: `New pending project in your ${
             user.strand_id ? "strand" : "department"
@@ -146,8 +146,8 @@ exports.submitProject = async (req, res) => {
         message: `You submitted the project "${project.title}".`
       });
 
-          for (const adv of possibleAdvisers) {
-            io.emit(`adviser_notify_${adv.id}`, {
+          for (const adv of possibleResearchAdvisers) {
+            io.emit(`research_adviser_notify_${adv.id}`, {
               type: "new_submission",
               title: project.title,
               student: user.full_name,
@@ -159,7 +159,7 @@ exports.submitProject = async (req, res) => {
 
     // Success response
     res.status(201).json({
-      message: "Project submitted successfully! It will be visible to advisers of your strand/department once assigned.",
+      message: "Project submitted successfully! It will be visible to research advisers of your strand/department once assigned.",
       project
     });
 
@@ -290,6 +290,7 @@ exports.getAllProjects = async (req, res) => {
     });
     res.json(projects);
   } catch (error) {
+    console.log("getAllProjects error:", error);
     res.status(500).json({ error: error.message });
   }
 };
@@ -328,19 +329,19 @@ exports.endorseProject = async (req, res) => {
       }
     }
 
-    // 2. Notify ALL advisers in the same strand/department (including self)
-    const advisers = await getRelevantAdvisers(project);
+    // 2. Notify ALL research advisers in the same strand/department (including self)
+    const researchAdvisers = await getRelevantResearchAdvisers(project);
 
-    for (const adv of advisers) {
+    for (const adv of researchAdvisers) {
       await Notification.create({
         projectId: project.id,
-        adviserId: adv.id,
+        researchAdviserId: adv.id,
         isRead: false,
         reason: `You endorsed the "${project.title}" project — now awaiting admin approval.`
       });
 
       if (io) {
-        io.emit(`adviser_notify_${adv.id}`, {
+        io.emit(`research_adviser_notify_${adv.id}`, {
           type: "status_update",
           projectId: project.id,
           title: project.title,
@@ -418,7 +419,7 @@ exports.needRevision = async (req, res) => {
         last_updated_by_role: user.role,
       });
 
-      await notifyProjectAdvisers(
+      await notifyProjectResearchAdvisers(
         io,
         project,
         `Project "${project.title}" requires revision from Research Coordinator. Reason: ${reason}`,
@@ -468,7 +469,7 @@ exports.needRevision = async (req, res) => {
         },
       });
 
-      await notifyProjectAdvisers(
+      await notifyProjectResearchAdvisers(
         io,
         project,
         `Project "${project.title}" was marked for revision. Reason: ${reason}`,
@@ -527,7 +528,7 @@ exports.informStudentOfRevision = async (req, res) => {
       },
     });
 
-    await notifyProjectAdvisers(
+    await notifyProjectResearchAdvisers(
       io,
       project,
       `Research adviser "${req.user.full_name}" informed the student about revision for "${project.title}".`,
@@ -563,15 +564,15 @@ exports.reuploadProjectDocument = async (req, res) => {
       });
     }
 
-    const documentUrl = req.file?.path || req.file?.secure_url;
-    if (!documentUrl) {
+    const document_url = req.file?.path || req.file?.secure_url;
+    if (!document_url) {
       return res.status(400).json({ message: "Project PDF is required." });
     }
 
     const io = req.app.get("io");
 
     await project.update({
-      documentPath: documentUrl,
+      documentPath: document_url,
       status: PROJECT_STATUS.PENDING,
       rejection_reason: null,
       last_updated_by_role: "student",
@@ -589,7 +590,7 @@ exports.reuploadProjectDocument = async (req, res) => {
       },
     });
 
-    await notifyProjectAdvisers(
+    await notifyProjectResearchAdvisers(
       io,
       project,
       `Student reuploaded revised project "${project.title}". It is now pending your review.`,
@@ -623,18 +624,18 @@ exports.approveProject = async (req, res) => {
     const io = req.app.get("io");
 
     // Notify ALL advisers in same strand/dept
-    const advisers = await getRelevantAdvisers(project);
+    const advisers = await getRelevantResearchAdvisers(project);
 
     for (const adv of advisers) {
       await Notification.create({
         projectId: project.id,
-        adviserId: adv.id,
+        researchAdviserId: adv.id,
         isRead: false,
         reason: `Project "${project.title}" has been approved and added to the repository!`
       });
 
       if (io) {
-        io.emit(`adviser_notify_${adv.id}`, {
+        io.emit(`research_adviser_notify_${adv.id}`, {
           type: "status_update",
           projectId: project.id,
           title: project.title,

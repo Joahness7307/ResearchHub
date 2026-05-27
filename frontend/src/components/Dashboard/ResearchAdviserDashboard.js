@@ -133,8 +133,8 @@ const ResearchAdviserDashboard = ({ section }) => {
     useWorkflowRefresh({
         onProjectsRefresh: fetchProjects,
         onNotificationsRefresh: refreshUnreadCount,
-        socketChannel: user?.id ? `adviser_notify_${user.id}` : undefined,
-        workflowSocketEvents: ["workflow_refresh_adviser"],
+        socketChannel: user?.id ? `research_adviser_notify_${user.id}` : undefined,
+        workflowSocketEvents: ["workflow_refresh_research_adviser"],
     });
 
     // Filtering logic (unchanged)

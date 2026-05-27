@@ -41,7 +41,6 @@ exports.getUserBookmarks = async (req, res) => {
         as: "project",
         required: true             // ← Only return bookmarks with existing, non-deleted projects
       }],
-      order: [["createdAt", "DESC"]]
     });
 
     // Now safe — no nulls
