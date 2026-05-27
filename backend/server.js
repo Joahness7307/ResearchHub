@@ -6,7 +6,7 @@ const { sequelize } = require("./models");
 const http = require("http");
 const { Server } = require("socket.io");
 
-// routes …
+// routes
 const userRoutes = require("./routes/userRoutes");
 const projectRoutes = require("./routes/projectRoutes");
 const commentRoutes = require("./routes/commentRoutes");
