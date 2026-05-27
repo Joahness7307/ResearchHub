@@ -5,8 +5,6 @@ const { User, Project, Department, Block, Major, Strand } = require("../models")
 const crypto = require("crypto");
 const { Op } = require("sequelize");
 require("dotenv").config();
-const { Resend } = require("resend");
-const resend = new Resend(process.env.RESEND_API_KEY);
 
 const STUDENT_INTERNAL_STATUS_MAP = {
   admin_revision: "endorsed",
