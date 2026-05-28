@@ -19,7 +19,21 @@ const server = http.createServer(app);
 const io = new Server(server, {
   cors: { origin: process.env.FRONTEND_URL || "*" },
 });
+
 app.set("io", io);
+
+io.on("connection", (socket) => {
+
+  socket.on("join_room", ({ role, userId }) => {
+
+    if (!role || !userId) return;
+
+    socket.join(`${role}:${userId}`);
+
+    console.log(`Socket joined room: ${role}:${userId}`);
+  });
+
+});
 
 /* ---------- CORS ---------- */
 const allowedOrigins = [
@@ -39,7 +53,6 @@ app.use(cors(corsOptions));
 
 /* ---------- Middleware ---------- */
 app.use(bodyParser.json());
-app.use("/uploads", express.static("uploads"));
 
 /* ---------- Routes ---------- */
 app.get("/health", (req, res) => {

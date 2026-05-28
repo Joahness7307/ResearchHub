@@ -160,7 +160,7 @@ const SubmitResearch = () => {
         show={showSuccess}
         onClose={() => setShowSuccess(false)}
         message={
-          "Project submitted successfully!\nWait for the admins approval"
+          "Project submitted successfully!"
         }
       />
       <h2>Upload Project</h2>

@@ -82,7 +82,7 @@ const ResearchAdviserDashboard = ({ section }) => {
             if (section === "repository") {
                 res = await axios.get("/projects");
             } else {
-                res = await axios.get("/projects/adviser/all");
+                res = await axios.get("/projects/research-adviser/all");
             }
 
             const projectsData = res.data;
@@ -209,7 +209,7 @@ const ResearchAdviserDashboard = ({ section }) => {
         ) : (
             <ul className="repository-list">
                 {listProjects.map(project => (
-                    <li key={project.id} className="repository-item" onClick={() => navigate(`/adviser/projects/${project.id}`)} style={{ position: 'relative' }}>
+                    <li key={project.id} className="repository-item" onClick={() => navigate(`/research-adviser/projects/${project.id}`)} style={{ position: 'relative' }}>
                         {/* Bookmark Icon - Top Right */}
                         <img
                         src={project.bookmarked ? require("../../assets/icons/bookmarked-icon.png") : require("../../assets/icons/bookmark-icon.png")}
@@ -297,19 +297,19 @@ const ResearchAdviserDashboard = ({ section }) => {
             <div className="adviser-dashboard-container">
                 <h2>{sectionTitles[section]}</h2>
                 <div className="dashboard-cards-row" style={{ marginBottom: "2.5rem" }}>
-                    <div className="dashboard-card" onClick={() => navigate("/adviser/pending-projects")}>
+                    <div className="dashboard-card" onClick={() => navigate("/research-adviser/pending-projects")}>
                         <h3>Pending Projects</h3>
                         <div className="dashboard-card-count">{pendingCount}</div>
                     </div>
-                    <div className="dashboard-card" onClick={() => navigate("/adviser/endorsed-projects")}>
+                    <div className="dashboard-card" onClick={() => navigate("/research-adviser/endorsed-projects")}>
                         <h3>Endorsed Projects</h3>
                         <div className="dashboard-card-count">{endorsedCount}</div>
                     </div>
-                    <div className="dashboard-card" onClick={() => navigate("/adviser/approved-projects")}>
+                    <div className="dashboard-card" onClick={() => navigate("/research-adviser/approved-projects")}>
                         <h3>Approved Projects</h3>
                         <div className="dashboard-card-count">{approvedCount}</div>
                     </div>
-                    <div className="dashboard-card" onClick={() => navigate("/adviser/request-for-revision")}>
+                    <div className="dashboard-card" onClick={() => navigate("/research-adviser/request-for-revision")}>
                         <h3>Revision Requests</h3>
                         <div className="dashboard-card-count">{revisionCount}</div>
                     </div>
@@ -324,7 +324,7 @@ const ResearchAdviserDashboard = ({ section }) => {
                     <button 
                         className="admin-btn" 
                         style={{ padding: "1rem 2rem", background: "#3a3e92", color: "#fff", border: "none", borderRadius: "8px", fontWeight: 600, fontSize: "1rem", cursor: "pointer" }} 
-                        onClick={() => navigate("/adviser/pending-projects")}
+                        onClick={() => navigate("/research-adviser/pending-projects")}
                     >
                         See All Pending Projects
                     </button>

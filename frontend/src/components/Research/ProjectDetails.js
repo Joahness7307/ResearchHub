@@ -413,7 +413,7 @@ const ProjectDetails = () => {
                             disabled={actionLoading}
                             className="endorse-btn"
                         >
-                            {actionLoading ? "Processing..." : "Approve (Endorse to Admin)"}
+                            {actionLoading ? "Processing..." : "Endorse"}
                         </button>
                         <button
                             onClick={handleNeedRevision}
