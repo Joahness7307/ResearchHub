@@ -40,7 +40,7 @@ const appRoutes = (
     </Route>
 
     <Route
-      path="/adviser/*"
+      path="/research-adviser/*"
       element={
         <ProtectedRoute allowedRoles={["research_adviser"]}>
           <ResearchAdviserLayout />

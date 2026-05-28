@@ -212,7 +212,7 @@ const ResearchCoordinatorDashboard = ({ section }) => {
   useWorkflowRefresh({
     onProjectsRefresh: fetchProjects,
     onNotificationsRefresh: refreshUnreadCount,
-    socketChannel: user?.id ? `admin_notify_${user.id}` : undefined,
+    socketChannel: user?.id ? `research_coordinator_notify_${user.id}` : undefined,
     workflowSocketEvents: ["workflow_refresh_research_coordinator"],
   });
 

@@ -325,7 +325,7 @@ const MyAccount = () => {
                   onClick={() => {
                     const role = user?.role;
                     let path = `/projects/${p.id}`;
-                    if (role === "research_adviser") path = `/adviser/projects/${p.id}`;
+                    if (role === "research_adviser") path = `/research-adviser/projects/${p.id}`;
                     else if (role === "research_coordinator") path = `/research-coordinator/projects/${p.id}`;
                     else if (role === "admin") path = `/admin/projects/${p.id}`;
                     navigate(path);

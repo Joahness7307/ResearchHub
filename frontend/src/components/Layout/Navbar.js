@@ -35,8 +35,7 @@ const Navbar = ({
   const location = useLocation();
   const socketRef = useRef(null);
 
-  // Sidebar context hook for admin/adviser/research_coordinator roles.
-  // Sidebar context hook for admin/adviser/research_coordinator roles.
+  // Sidebar context hook for admin/research_adviser/research_coordinator roles.
   const roleName = user?.role || "";
   const { isOpen: adminIsOpen, toggle: adminToggle } = useSidebar(roleName);
 
@@ -70,6 +69,10 @@ const Navbar = ({
     if (!canUseStudentNotifications) return undefined;
     socketRef.current = io(process.env.REACT_APP_BACKEND_URL);
     const onNotify = () => fetchStudentNotifications();
+    socketRef.current.emit("join_room", {
+      role: "student",
+      userId: user.id,
+    });
     socketRef.current.on(`student_notify_${user.id}`, onNotify);
     socketRef.current.on("workflow_refresh_student", onNotify);
     return () => {
@@ -139,7 +142,7 @@ const Navbar = ({
       setIsSidebarOpen(openState);
       return;
     }
-    // Admin/Adviser/Research Coordinator: toggle layout sidebar via SidebarContext
+    // Admin/Research Adviser/Research Coordinator: toggle layout sidebar via SidebarContext
     if (isAdminRole && roleName) {
       adminToggle();
       return;

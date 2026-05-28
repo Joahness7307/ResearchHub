@@ -3,40 +3,33 @@ const path = require("path");
 const fs = require("fs");
 const cloudinary = require("../config/cloudinary");
 const { Op } = require("sequelize");
+const axios = require("axios");
 const {
   PROJECT_STATUS,
+  NOTIFICATION_EVENT,
   notifyStudent,
   notifyProjectResearchAdvisers,
   notifyResearchCoordinators,
   emitWorkflowRefresh,
 } = require("../services/notificationService");
 const { isEligibleResearchStudent } = require("../utils/studentEligibility");
+const { getRelevantResearchAdvisers } = require("../utils/researchAdviser");
+const { serializeProjectForRole } = require("../utils/projectSerializer");
+const { validateTransition } = require("../services/workflowService");
 
-async function getRelevantResearchAdvisers(project) {
-  const where = {
-    role: "research_adviser",
-  };
+function validateResearchAdviserAccess(project, adviser) {
 
-  // Safe conditional query building
-  if (project.department_id && project.strand_id) {
-    where[Op.or] = [
-      { department_id: project.department_id },
-      { strand_id: project.strand_id },
-    ];
-  } else if (project.department_id) {
-    where.department_id = project.department_id;
-  } else if (project.strand_id) {
-    where.strand_id = project.strand_id;
-  }
+  const departmentMatch =
+    project.department_id &&
+    adviser.department_id &&
+    project.department_id === adviser.department_id;
 
-  const researchAdvisers = await User.findAll({ where });
+  const strandMatch =
+    project.strand_id &&
+    adviser.strand_id &&
+    project.strand_id === adviser.strand_id;
 
-  // Remove duplicates by research adviser ID
-  const uniqueResearchAdvisers = [
-    ...new Map(researchAdvisers.map((a) => [a.id, a])).values(),
-  ];
-
-  return uniqueResearchAdvisers;
+  return departmentMatch || strandMatch;
 }
 
 // Upload final research paper
@@ -44,6 +37,8 @@ exports.submitProject = async (req, res) => {
   const transaction = await sequelize.transaction();
   try {
     const user = req.user;
+
+    const io = req.app.get("io");
 
     // Eligibility check (keep this)
     if (!isEligibleResearchStudent(user)) {
@@ -71,13 +66,6 @@ exports.submitProject = async (req, res) => {
       return res.status(400).json({ message: "Project PDF is required." });
     }
 
-    // ───────────────────────────────────────────────────────────────
-    //              IMPORTANT CHANGES START HERE
-    // ───────────────────────────────────────────────────────────────
-
-    // 1. NO MORE research adviser check → students can submit without research adviser
-    // 2. We save department_id / strand_id so future research advisers can see it
-
     const project = await Project.create({
       title,
       title_description,
@@ -96,34 +84,29 @@ exports.submitProject = async (req, res) => {
       status: "pending"
     }, { transaction: transaction });
 
-    // ── Student notification (keep this) ──
-    await Notification.create({
-      projectId: project.id,
-      studentId: user.id,
-      isRead: false,
-      reason: `You submitted the project "${project.title}".`
-    }, { transaction: transaction });
-
-    let possibleResearchAdvisers = [];
+    // ── Student notification
+    await notifyStudent(io, {
+      transaction,
+      project,
+      event_type: NOTIFICATION_EVENT.SUBMITTED,
+      reason: `You submitted the project "${project.title}".`,
+      payload: {
+        newStatus: PROJECT_STATUS.PENDING,
+      },
+    });
 
     // Notify research advisers in the same department/strand inside transaction only once
     if (user.department_id || user.strand_id) {
 
-      possibleResearchAdvisers = await getRelevantResearchAdvisers({
-        department_id: user.department_id,
-        strand_id: user.strand_id,
+      await notifyProjectResearchAdvisers(io, {
+        transaction,
+        project,
+        event_type: NOTIFICATION_EVENT.SUBMITTED,
+        reason: `New pending project "${project.title}" submitted by ${user.full_name}.`,
+        payload: {
+          newStatus: PROJECT_STATUS.PENDING,
+        },
       });
-
-      for (const adv of possibleResearchAdvisers) {
-        await Notification.create({
-          projectId: project.id,
-          researchAdviserId: adv.id,
-          isRead: false,
-          reason: `New pending project in your ${
-            user.strand_id ? "strand" : "department"
-          }: "${project.title}" by ${user.full_name}`
-        }, { transaction: transaction });
-      }
 
     } else {
       // Student has no department or strand - warn in logs
@@ -137,34 +120,23 @@ exports.submitProject = async (req, res) => {
     // All database operations succeeded - commit everything
     await transaction.commit();
 
-    // Socket.io notifications AFTER commit
-    // (these are real-time only, not database - no transaction needed)
-    const io = req.app.get("io");
-    if (io) {
-      io.emit(`student_notify_${user.id}`, {
-        type: "submission",
-        message: `You submitted the project "${project.title}".`
-      });
-
-          for (const adv of possibleResearchAdvisers) {
-            io.emit(`research_adviser_notify_${adv.id}`, {
-              type: "new_submission",
-              title: project.title,
-              student: user.full_name,
-              time: new Date().toLocaleString(),
-              message: `New project waiting in ${user.strand_id ? "strand" : "department"}`
-            });
-          }
-      }
+    emitWorkflowRefresh(io, [
+      "student",
+      "research_adviser",
+    ], project);
 
     // Success response
     res.status(201).json({
-      message: "Project submitted successfully! It will be visible to research advisers of your strand/department once assigned.",
+      message: "Project submitted successfully!",
       project
     });
 
   } catch (error) {
-    await transaction.rollback();
+
+    if (!transaction.finished) {
+      await transaction.rollback();
+    }
+    
     console.error("Submit project error:", error);
     return res.status(500).json({
       message: "Something went wrong on our server. Please try again later.",
@@ -173,112 +145,79 @@ exports.submitProject = async (req, res) => {
   }
 };
 
-exports.getResearchCoordinatorNotifications = async (req, res) => {
+// Get all approved projects counts (for public repository)
+exports.getPublicProjectCounts = async (req, res) => {
   try {
-    const notifications = await Notification.findAll({
-      where: { researchCoordinatorId: req.user.id },
-      include: [{ model: Project }],
-      order: [["createdAt", "DESC"]]
+    const totalApproved = await Project.count({
+      where: { status: "approved" }
     });
-    res.json({ notifications });
+
+    const collegeApproved = await Project.count({
+      where: {
+        status: "approved",
+        strand_id: { [Op.is]: null }  // college projects have no strand
+      }
+    });
+
+    const shsApproved = await Project.count({
+      where: {
+        status: "approved",
+        strand_id: { [Op.not]: null }  // senior high have strand
+      }
+    });
+
+    res.json({
+      all: totalApproved,
+      college: collegeApproved,
+      senior_high: shsApproved
+    });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error("Public counts error:", error);
+    res.status(500).json({ error: "Failed to fetch counts" });
   }
 };
 
-exports.markNotificationRead = async (req, res) => {
-  try {
-    const notif = await Notification.findOne({
-      where: { id: req.params.id, researchCoordinatorId: req.user.id }
-    });
-    if (!notif) return res.status(404).json({ message: "Notification not found" });
-    notif.isRead = true;
-    await notif.save();
-    res.json({ message: "Notification marked as read" });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-};
-
-exports.getStudentNotifications = async (req, res) => {
-  try {
-    if (!isEligibleResearchStudent(req.user)) {
-      return res.status(403).json({
-        message: "Notifications are only available to eligible research students.",
-      });
-    }
-
-    // Make sure req.user.id is available (authMiddleware must be used)
-    const notifications = await Notification.findAll({
-      where: { studentId: req.user.id },
-      order: [["createdAt", "DESC"]],
-    });
-    res.json({ notifications });
-  } catch (error) {
-    res.status(500).json({ message: "Failed to fetch notifications", error: error.message });
-  }
-};
-
-exports.markStudentNotificationRead = async (req, res) => {
-  try {
-    if (!isEligibleResearchStudent(req.user)) {
-      return res.status(403).json({
-        message: "Notifications are only available to eligible research students.",
-      });
-    }
-
-    const notif = await Notification.findOne({
-      where: { id: req.params.id, studentId: req.user.id }
-    });
-    if (!notif) return res.status(404).json({ message: "Notification not found" });
-    notif.isRead = true;
-    await notif.save();
-    res.json({ message: "Notification marked as read" });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-};
-// NEW: Get total project counts grouped by status (for Admin Dashboard)
+// Get total project counts grouped by status (for Admin Dashboard)
 exports.getProjectCounts = async (req, res) => {
-  try {
-    // 1. Fetch counts grouped by status
-    const counts = await Project.findAll({  
-      attributes: [
-        'status',
-        [Project.sequelize.fn('COUNT', Project.sequelize.col('id')), 'count']
-      ],
-      group: ['status']
-    });
+  try {
+    // 1. Fetch counts grouped by status
+    const counts = await Project.findAll({  
+      attributes: [
+        'status',
+        [Project.sequelize.fn('COUNT', Project.sequelize.col('id')), 'count']
+      ],
+      group: ['status']
+    });
 
-    // 2. Map results to a simpler object for easier access
-    const countMap = counts.reduce((acc, curr) => {
-      acc[curr.status] = parseInt(curr.dataValues.count, 10);
-      return acc;
-    }, {});
+    // 2. Map results to a simpler object for easier access
+    const countMap = counts.reduce((acc, curr) => {
+      acc[curr.status] = parseInt(curr.dataValues.count, 10);
+      return acc;
+    }, {});
 
-    // 3. Calculate the total and group the revision statuses
-    const totalProjects = counts.reduce((sum, curr) => sum + parseInt(curr.dataValues.count, 10), 0);
+    // 3. Calculate the total and group the revision statuses
+    const totalProjects = counts.reduce((sum, curr) => sum + parseInt(curr.dataValues.count, 10), 0);
 
-    // Combine 'need_revision', 'admin_revision', and potentially 'rejected' into 'revision'
-    const revisionCount = 
-      (countMap['need_revision'] || 0) + 
-      (countMap['admin_revision'] || 0) +
-      (countMap['rejected'] || 0); // Include 'rejected' just in case it's still used
+    // Combine 'need_revision', 'admin_revision', and potentially 'rejected' into 'revision'
+    const revisionCount = 
+      (countMap['need_revision'] || 0) + 
+      (countMap['admin_revision'] || 0) +
+      (countMap['rejected'] || 0); // Include 'rejected' just in case it's still used
 
-    // 4. Map the final desired status names for the frontend
-    const results = {
-      totalProjects: totalProjects,
-      'pending': countMap['pending'] || 0,
-      'endorsed': countMap['endorsed'] || 0, // Endorsed is kept separate as requested
-      'approved': countMap['approved'] || 0,
-      'revision': revisionCount, // This is the new combined count
-    };
+    // 4. Map the final desired status names for the frontend
+    const results = {
+      totalProjects: totalProjects,
+      'pending': countMap['pending'] || 0,
+      'endorsed': countMap['endorsed'] || 0, // Endorsed is kept separate as requested
+      'approved': countMap['approved'] || 0,
+      'revision': revisionCount, // This is the new combined count
+    };
 
-    res.status(200).json(results);
-  } catch (error) {
-    console.error("getProjectCounts error:", error);
-    res.status(500).json({ error: error.message });
-  }
+    res.status(200).json(results);
+  } catch (error) {
+      console.error("getProjectCounts error:", error);
+      res.status(500).json({ error: error.message });
+    }
 };
 
 // Get all research projects (repository)
@@ -295,406 +234,689 @@ exports.getAllProjects = async (req, res) => {
   }
 };
 
-// Research adviser endorses project to admin
-exports.endorseProject = async (req, res) => {
+// Get single project by ID (for project details page)
+exports.getSingleProject = async (req, res) => {
   try {
-    const project = await Project.findByPk(req.params.id, {
-      include: [{ model: User, as: 'submitter' }]
+    const { id } = req.params;
+    const project = await Project.findByPk(id, {
+      include: [{ model: User, as: "submitter", attributes: ["id", "full_name", "email", "role"] }]
     });
     if (!project) return res.status(404).json({ message: "Project not found" });
-    if (project.status !== "pending") return res.status(400).json({ message: "Project is not pending" });
-
-    await project.update({
-      status: "endorsed",
-      last_updated_by_role: req.user.role
-    });
-
-    const io = req.app.get("io");
-
-    // 1. Notify eligible research student
-    if (isEligibleResearchStudent(project.submitter)) {
-      await Notification.create({
-        projectId: project.id,
-        studentId: project.submitted_by,
-        isRead: false,
-        reason: `Your project "${project.title}" was endorsed for admin's approval.`,
-      });
-      if (io) {
-        io.emit(`student_notify_${project.submitted_by}`, {
-          type: "status_update",
-          projectId: project.id,
-          title: project.title,
-          newStatus: "endorsed"
-        });
-      }
-    }
-
-    // 2. Notify ALL research advisers in the same strand/department (including self)
-    const researchAdvisers = await getRelevantResearchAdvisers(project);
-
-    for (const adv of researchAdvisers) {
-      await Notification.create({
-        projectId: project.id,
-        researchAdviserId: adv.id,
-        isRead: false,
-        reason: `You endorsed the "${project.title}" project — now awaiting admin approval.`
-      });
-
-      if (io) {
-        io.emit(`research_adviser_notify_${adv.id}`, {
-          type: "status_update",
-          projectId: project.id,
-          title: project.title,
-          student: project.submitter?.full_name,
-          newStatus: "endorsed",
-          updatedBy: req.user.full_name,
-          time: new Date().toLocaleString()
-        });
-      }
-    }
-
-    // 3. Notify research coordinators
-    const researchCoordinators = await User.findAll({ where: { role: "research_coordinator" } });
-    for (const coordinator of researchCoordinators) {
-      await Notification.create({
-        projectId: project.id,
-        researchCoordinatorId: coordinator.id,
-        isRead: false,
-        reason: `Project "${project.title}" was endorsed by research adviser "${req.user.full_name}".`
-      });
-
-      // ADD THIS BLOCK BELOW TO FIX REAL-TIME UPDATES FOR RESEARCH COORDINATORS
-      if (io) {
-        io.emit(`admin_notify_${coordinator.id}`, {
-          type: "new_pending",
-          projectId: project.id,
-          title: project.title,
-          message: `New endorsed project from ${req.user.full_name}`
-        });
-      }
-    }
-
-    emitWorkflowRefresh(io, ["student", "research_adviser", "research_coordinator"]);
-
-    res.json({
-      message: "Project endorsed to admin for approval.",
-      project: await project.reload(),
-    });
+    res.json(serializeProjectForRole(project, req.user.role));
   } catch (error) {
-    console.error("Endorse project error:", error);
-    res.status(500).json({ message: "Failed to endorse project.", error: error.message });
+    res.status(500).json({ error: error.message });
   }
 };
 
-// Adviser or Research Coordinator requests revision
+// Get all projects for research adviser view (projects in their strand/department)
+exports.getResearchAdviserProjects = async (req, res) => {
+  try {
+    const user = req.user;
+
+    // Build query based on adviser's affiliation
+    const where = {
+      status: { [Op.in]: ["pending", "approved", "need_revision", "endorsed", "admin_revision"] } // add statuses you want visible
+    };
+
+    if (user.department_id) {
+      where.department_id = user.department_id;
+    } else if (user.strand_id) {
+      where.strand_id = user.strand_id;
+    } else {
+      return res.status(403).json({ message: "Adviser not assigned to any department or strand" });
+    }
+
+    const projects = await Project.findAll({
+      where,
+      include: [
+        { 
+          model: User, 
+          as: "submitter", 
+          attributes: ["id", "full_name", "email", "grade_level", "year_level"] 
+        }
+      ],
+      order: [["created_at", "DESC"]]
+    });
+
+    res.json(projects);
+  } catch (error) {
+    console.error("Adviser projects error:", error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
+// Download project document (with access control)
+exports.downloadProjectDocument = async (req, res) => {
+  try {
+    // Find the project by ID
+    const { id } = req.params;
+    const project = await Project.findByPk(id);
+    if (!project || !project.documentPath) {
+      return res.status(404).json({ message: "Project or document not found" });
+    }
+
+    // Stream the PDF from Cloudinary
+    const response = await axios.get(project.documentPath, 
+      { responseType: "stream"});
+
+    // Set the download header
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename="${project.title ? project.title.replace(/[^a-z0-9]/gi, "_") : "project"}.pdf"`
+    );
+    res.setHeader("Content-Type", "application/pdf");
+
+    // Pipe the PDF stream to the response
+    response.data.pipe(res);
+  } catch (error) {
+    console.error("Download error:", error);
+    res.status(500).json({ message: "Failed to download PDF", error: error.message });
+  }
+};
+
+// Research adviser endorses project to research coordinator (pending → endorsed)
+exports.endorseProject = async (req, res) => {
+  const transaction = await sequelize.transaction();
+
+  try {
+    const project = await Project.findByPk(req.params.id, {
+      include: [{ model: User, as: "submitter" }],
+      transaction,
+    });
+
+    if (!project) {
+      await transaction.rollback();
+      return res.status(404).json({ message: "Project not found" });
+    }
+
+    if (!validateResearchAdviserAccess(project, req.user)) {
+      await transaction.rollback();
+
+      return res.status(403).json({
+        message: "Unauthorized adviser access",
+      });
+    }
+
+    validateTransition(
+      project.status,
+      PROJECT_STATUS.ENDORSED
+    );
+
+    await project.update(
+      {
+        status: PROJECT_STATUS.ENDORSED,
+        last_updated_by_role: req.user.role,
+      },
+      { transaction }
+    );
+
+    const io = req.app.get("io");
+
+    // Student notification
+    if (isEligibleResearchStudent(project.submitter)) {
+      await notifyStudent(io, {
+        transaction,
+        project,
+        event_type: NOTIFICATION_EVENT.ENDORSED,
+        reason: `Your project "${project.title}" was endorsed for admin approval.`,
+        payload: {
+          newStatus: PROJECT_STATUS.ENDORSED,
+        },
+      });
+    }
+
+    // Research Adviser notifications
+    await notifyProjectResearchAdvisers(io, {
+        transaction,
+        project,
+        event_type: NOTIFICATION_EVENT.ENDORSED,
+        reason: `Project "${project.title}" was endorsed for admin approval.`,
+        payload: {
+          newStatus: PROJECT_STATUS.ENDORSED,
+        },
+      });
+
+    // Coordinator notifications
+    await notifyResearchCoordinators(io, {
+      transaction,
+      project,
+      event_type: NOTIFICATION_EVENT.ENDORSED,
+      reason: `Project "${project.title}" was endorsed by ${req.user.full_name}.`,
+      payload: {
+        newStatus: PROJECT_STATUS.ENDORSED,
+      },
+    });
+
+    await transaction.commit();
+
+    emitWorkflowRefresh(io, [
+      "student",
+      "research_adviser",
+      "research_coordinator"
+    ], project);
+
+    return res.json({
+      message: "Project endorsed successfully.",
+      project: await project.reload(),
+    });
+
+  } catch (error) {
+
+    if (!transaction.finished) {
+      await transaction.rollback();
+    }
+
+    console.error("Endorse project error:", error);
+
+    return res.status(500).json({
+      message: "Failed to endorse project.",
+      error: error.message,
+    });
+  }
+};
+
+// Research Adviser or Research Coordinator requests revision
 exports.needRevision = async (req, res) => {
+  const transaction = await sequelize.transaction();
+
   try {
     const user = req.user;
     const { reason } = req.body;
     const { id } = req.params;
 
     if (!reason || !String(reason).trim()) {
-      return res.status(400).json({ message: "Revision reason is required." });
+      await transaction.rollback();
+
+      return res.status(400).json({
+        message: "Revision reason is required.",
+      });
     }
 
     const project = await Project.findByPk(id, {
-      include: [{ model: User, as: "submitter" }],
+      transaction,
+      lock: transaction.LOCK.UPDATE,
     });
-    if (!project) return res.status(404).json({ message: "Project not found" });
+
+    const submitter = await User.findByPk(project.submitted_by, {
+      transaction,
+    });
+
+    if (!project) {
+      await transaction.rollback();
+
+      return res.status(404).json({
+        message: "Project not found",
+      });
+    }
+
+    if (
+      user.role === "research_adviser" &&
+      !validateResearchAdviserAccess(project, user)
+    ) {
+      await transaction.rollback();
+
+      return res.status(403).json({
+        message: "Unauthorized adviser access",
+      });
+    }
 
     const io = req.app.get("io");
 
-    // Research Coordinator: endorsed → admin_revision (student NOT notified yet)
-    if (user.role === "research_coordinator" || user.role === "admin") {
-      if (project.status !== PROJECT_STATUS.ENDORSED) {
-        return res.status(400).json({
-          message: "Only endorsed projects can be sent back for admin revision.",
-          currentStatus: project.status,
-        });
-      }
+    // =========================================================
+    // RESEARCH COORDINATOR
+    // endorsed -> admin_revision
+    // =========================================================
+    if (
+      user.role === "research_coordinator"
+    ) {
 
-      await project.update({
-        status: PROJECT_STATUS.ADMIN_REVISION,
-        rejection_reason: reason,
-        last_updated_by_role: user.role,
-      });
-
-      await notifyProjectResearchAdvisers(
-        io,
-        project,
-        `Project "${project.title}" requires revision from Research Coordinator. Reason: ${reason}`,
-        { newStatus: PROJECT_STATUS.ADMIN_REVISION, reason, updatedBy: user.full_name }
+      validateTransition(
+        project.status,
+        PROJECT_STATUS.ADMIN_REVISION
       );
 
-      await notifyResearchCoordinators(
-        io,
-        project,
-        `You requested revision for "${project.title}". Reason: ${reason}`,
-        { newStatus: PROJECT_STATUS.ADMIN_REVISION, reason, updatedBy: user.full_name }
+      await project.update(
+        {
+          status: PROJECT_STATUS.ADMIN_REVISION,
+          rejection_reason: reason,
+          last_updated_by_role: user.role,
+        },
+        { transaction }
       );
 
-      emitWorkflowRefresh(io, ["research_adviser", "research_coordinator"]);
-
-      return res.json({
-        message: "Advisers notified for revision.",
-        project: await project.reload(),
-      });
-    }
-
-    // Research Adviser: pending → need_revision (student + advisers notified)
-    if (user.role === "research_adviser") {
-      if (project.status !== PROJECT_STATUS.PENDING) {
-        return res.status(400).json({
-          message: "Only pending projects can be marked for adviser revision.",
-          currentStatus: project.status,
-        });
-      }
-
-      await project.update({
-        status: PROJECT_STATUS.NEED_REVISION,
-        rejection_reason: reason,
-        last_updated_by_role: user.role,
-      });
-
-      const studentReason = `Your "${project.title}" project requires revision. Reason: ${reason}`;
-      await notifyStudent(io, {
+      // Notify research advisers ONLY
+      await notifyProjectResearchAdvisers(io, {
+        transaction,
         project,
-        reason: studentReason,
+        event_type: NOTIFICATION_EVENT.REVISION_REQUEST,
+        reason: `Research Coordinator requested revision for "${project.title}". Reason: ${reason}`,
         payload: {
-          type: "status_update",
-          projectId: project.id,
-          title: project.title,
-          newStatus: PROJECT_STATUS.NEED_REVISION,
-          reason,
+          newStatus: PROJECT_STATUS.ADMIN_REVISION,
         },
       });
 
-      await notifyProjectResearchAdvisers(
-        io,
+      // Notify research coordinators
+      await notifyResearchCoordinators(io, {
+        transaction,
         project,
-        `Project "${project.title}" was marked for revision. Reason: ${reason}`,
-        { newStatus: PROJECT_STATUS.NEED_REVISION, reason, updatedBy: user.full_name }
-      );
+        event_type: NOTIFICATION_EVENT.REVISION_REQUEST,
+        reason: `Revision requested for "${project.title}".`,
+        payload: {
+          newStatus: PROJECT_STATUS.ADMIN_REVISION,
+        },
+      });
 
-      emitWorkflowRefresh(io, ["student", "research_adviser"]);
+      await transaction.commit();
+
+      emitWorkflowRefresh(io, [
+        "student",
+        "research_adviser",
+        "research_coordinator"
+      ], project);
 
       return res.json({
-        message: "Student and advisers notified for revision.",
+        message: "Revision request sent to advisers.",
         project: await project.reload(),
       });
     }
 
-    res.status(403).json({ message: "Unauthorized" });
+    // =========================================================
+    // RESEARCH ADVISER REVISION
+    // pending -> need_revision
+    // =========================================================
+    if (user.role === "research_adviser") {
+
+      validateTransition(
+        project.status,
+        PROJECT_STATUS.NEED_REVISION
+      );
+
+      await project.update(
+        {
+          status: PROJECT_STATUS.NEED_REVISION,
+          rejection_reason: reason,
+          last_updated_by_role: user.role,
+        },
+        { transaction }
+      );
+
+      // Student notification
+      await notifyStudent(io, {
+        transaction,
+        project,
+        event_type: NOTIFICATION_EVENT.REVISION_REQUEST,
+        reason: `Your project "${project.title}" requires revision. Reason: ${reason}`,
+        payload: {
+          newStatus: PROJECT_STATUS.NEED_REVISION,
+        },
+      });
+
+      // Research Adviser notifications
+      await notifyProjectResearchAdvisers(io, {
+        transaction,
+        project,
+        event_type: NOTIFICATION_EVENT.REVISION_REQUEST,
+        reason: `Project "${project.title}" was marked for revision.`,
+        payload: {
+          newStatus: PROJECT_STATUS.NEED_REVISION,
+        },
+      });
+
+      await transaction.commit();
+
+      emitWorkflowRefresh(io, [
+        "student",
+        "research_adviser",
+        "research_coordinator"
+      ], project);
+
+      return res.json({
+        message: "Project marked for revision.",
+        project: await project.reload(),
+      });
+    }
+
+    await transaction.rollback();
+
+    return res.status(403).json({
+      message: "Unauthorized",
+    });
+
   } catch (error) {
+
+    if (!transaction.finished) {
+      await transaction.rollback();
+    }
+
     console.error("needRevision error:", error);
-    res.status(500).json({ message: "Failed to mark as need revision.", error: error.message });
+
+    return res.status(500).json({
+      message: "Failed to mark project for revision.",
+      error: error.message,
+    });
   }
 };
 
 // Adviser informs student after Research Coordinator requested revision (admin_revision → need_revision)
 exports.informStudentOfRevision = async (req, res) => {
-  try {
-    const project = await Project.findByPk(req.params.id);
-    if (!project) return res.status(404).json({ message: "Project not found" });
+  const transaction = await sequelize.transaction();
 
-    if (project.status !== PROJECT_STATUS.ADMIN_REVISION) {
-      return res.status(400).json({
-        message: "Student can only be informed when project is awaiting adviser action (admin revision).",
-        currentStatus: project.status,
+  try {
+
+    const project = await Project.findByPk(req.params.id, {
+      transaction,
+      lock: transaction.LOCK.UPDATE,
+    });
+
+    if (!project) {
+      await transaction.rollback();
+
+      return res.status(404).json({
+        message: "Project not found",
       });
     }
 
-    const io = req.app.get("io");
-    const adminReason = project.rejection_reason
-      ? ` Reason: ${project.rejection_reason}`
-      : "";
+    if (req.user.role !== "research_adviser") {
+      await transaction.rollback();
 
-    await project.update({
-      status: PROJECT_STATUS.NEED_REVISION,
-      last_updated_by_role: "research_adviser",
-    });
+      return res.status(403).json({
+        message: "Only research advisers can inform students.",
+      });
+    }
 
-    const studentReason = `Your "${project.title}" project requires revision. Please reupload your updated document.${adminReason}`;
+    if (!validateResearchAdviserAccess(project, req.user)) {
+      await transaction.rollback();
 
-    await notifyStudent(io, {
-      project,
-      reason: studentReason,
-      payload: {
-        type: "status_update",
-        projectId: project.id,
-        title: project.title,
-        newStatus: PROJECT_STATUS.NEED_REVISION,
-        reason: project.rejection_reason,
-      },
-    });
+      return res.status(403).json({
+        message: "Unauthorized adviser access",
+      });
+    }
 
-    await notifyProjectResearchAdvisers(
-      io,
-      project,
-      `Research adviser "${req.user.full_name}" informed the student about revision for "${project.title}".`,
-      {
-        newStatus: PROJECT_STATUS.NEED_REVISION,
-        reason: project.rejection_reason,
-        updatedBy: req.user.full_name,
-      }
+    validateTransition(
+      project.status,
+      PROJECT_STATUS.NEED_REVISION
     );
 
-    emitWorkflowRefresh(io, ["student", "research_adviser", "research_coordinator"]);
+    const io = req.app.get("io");
 
-    res.json({
-      message: "Student notified of revision.",
+    await project.update(
+      {
+        status: PROJECT_STATUS.NEED_REVISION,
+        last_updated_by_role: "research_adviser",
+      },
+      { transaction }
+    );
+
+    // Student notification
+    await notifyStudent(io, {
+      transaction,
+      project,
+        event_type: NOTIFICATION_EVENT.INFORMED_STUDENT,
+        reason: `Your project "${project.title}" requires revision. Reason: ${project.rejection_reason}`,
+        payload: {
+          newStatus: PROJECT_STATUS.NEED_REVISION,
+        },
+      });
+
+    // Research Adviser notifications
+    await notifyProjectResearchAdvisers(io, {
+      transaction,
+      project,
+        event_type: NOTIFICATION_EVENT.INFORMED_STUDENT,
+        reason: `Student was informed about revision for "${project.title}".`,
+        payload: {
+          newStatus: PROJECT_STATUS.NEED_REVISION,
+        },
+      });
+
+    await transaction.commit();
+
+    emitWorkflowRefresh(io, [
+      "student",
+      "research_adviser",
+      "research_coordinator"
+    ], project);
+
+    return res.json({
+      message: "Student informed successfully.",
       project: await project.reload(),
     });
+
   } catch (error) {
-    res.status(500).json({ error: error.message });
+
+    if (!transaction.finished) {
+      await transaction.rollback();
+    }
+
+    console.error("informStudentOfRevision error:", error);
+
+    return res.status(500).json({
+      message: "Failed to inform student.",
+      error: error.message,
+    });
   }
 };
 
 exports.reuploadProjectDocument = async (req, res) => {
+
+  const transaction = await sequelize.transaction();
+
   try {
-    const project = await Project.findByPk(req.params.id);
-    if (!project) return res.status(404).json({ message: "Project not found" });
-    if (project.submitted_by !== req.user.id) {
-      return res.status(403).json({ message: "Not your project" });
-    }
-    if (project.status !== PROJECT_STATUS.NEED_REVISION) {
-      return res.status(400).json({
-        message: "Only projects marked for revision can be reuploaded.",
-        currentStatus: project.status,
+
+    const project = await Project.findByPk(req.params.id, {
+      transaction,
+      lock: transaction.LOCK.UPDATE,
+    });
+
+    if (!project) {
+      await transaction.rollback();
+
+      return res.status(404).json({
+        message: "Project not found",
       });
     }
 
-    const document_url = req.file?.path || req.file?.secure_url;
+    if (req.user.role !== "student") {
+      await transaction.rollback();
+
+      return res.status(403).json({
+        message: "Only students can reupload projects.",
+      });
+    }
+
+    if (project.submitted_by !== req.user.id) {
+      await transaction.rollback();
+
+      return res.status(403).json({
+        message: "Not your project",
+      });
+    }
+
+    validateTransition(
+      project.status,
+      PROJECT_STATUS.PENDING
+    );
+
+    const document_url =
+      req.file?.path || req.file?.secure_url;
+
     if (!document_url) {
-      return res.status(400).json({ message: "Project PDF is required." });
+      await transaction.rollback();
+
+      return res.status(400).json({
+        message: "Project PDF is required.",
+      });
     }
 
     const io = req.app.get("io");
 
-    await project.update({
-      documentPath: document_url,
-      status: PROJECT_STATUS.PENDING,
-      rejection_reason: null,
-      last_updated_by_role: "student",
-    });
+    await project.update(
+      {
+        documentPath: document_url,
+        status: PROJECT_STATUS.PENDING,
+        rejection_reason: null,
+        last_updated_by_role: "student",
+      },
+      { transaction }
+    );
 
-    const studentReason = `Your revised project "${project.title}" was reuploaded and is pending adviser review.`;
+    // Student notification
     await notifyStudent(io, {
+      transaction,
       project,
-      reason: studentReason,
-      payload: {
-        type: "status_update",
-        projectId: project.id,
-        title: project.title,
+        event_type: NOTIFICATION_EVENT.REUPLOADED,
+        reason: `You reuploaded revised project "${project.title}".`,
+        payload: {
         newStatus: PROJECT_STATUS.PENDING,
       },
     });
 
-    await notifyProjectResearchAdvisers(
-      io,
+    // Adviser notifications
+    await notifyProjectResearchAdvisers(io, {
+      transaction,
       project,
-      `Student reuploaded revised project "${project.title}". It is now pending your review.`,
-      { newStatus: PROJECT_STATUS.PENDING }
-    );
+      event_type: NOTIFICATION_EVENT.REUPLOADED,
+      reason: `Student reuploaded revised project "${project.title}".`,
+      payload: {
+        newStatus: PROJECT_STATUS.PENDING,
+      },
+    });
 
-    emitWorkflowRefresh(io, ["student", "research_adviser"]);
+    await transaction.commit();
 
-    res.json({
-      message: "Project reuploaded and set to pending.",
+    emitWorkflowRefresh(io, [
+      "student",
+      "research_adviser",
+      "research_coordinator"
+    ], project);
+
+    return res.json({
+      message: "Project reuploaded successfully.",
       project: await project.reload(),
     });
+
   } catch (error) {
-    res.status(500).json({ error: error.message });
+
+    if (!transaction.finished) {
+      await transaction.rollback();
+    }
+
+    console.error("reuploadProjectDocument error:", error);
+
+    return res.status(500).json({
+      message: "Failed to reupload project.",
+      error: error.message,
+    });
   }
 };
 
-// Approve project (admin / research coordinator)
+// Approve project
 exports.approveProject = async (req, res) => {
-  try {
-    const project = await Project.findByPk(req.params.id, {
-      include: [{ model: User, as: 'submitter' }]
-    });
-    if (!project) return res.status(404).json({ message: "Project not found" });
 
-    await project.update({
-      status: "approved",
-      last_updated_by_role: req.user.role
+  const transaction = await sequelize.transaction();
+
+  try {
+
+    const project = await Project.findByPk(req.params.id, {
+      transaction,
+      lock: transaction.LOCK.UPDATE,
     });
+
+    const submitter = await User.findByPk(project.submitted_by, {
+      transaction,
+    });
+
+    if (!project) {
+      await transaction.rollback();
+
+      return res.status(404).json({
+        message: "Project not found",
+      });
+    }
+
+    if (
+      req.user.role !== "research_coordinator"
+    ) {
+      await transaction.rollback();
+
+      return res.status(403).json({
+        message: "Unauthorized",
+      });
+    }
+
+    validateTransition(
+      project.status,
+      PROJECT_STATUS.APPROVED
+    );
+
+    await project.update(
+      {
+        status: PROJECT_STATUS.APPROVED,
+        last_updated_by_role: req.user.role,
+      },
+      { transaction }
+    );
 
     const io = req.app.get("io");
 
-    // Notify ALL advisers in same strand/dept
-    const advisers = await getRelevantResearchAdvisers(project);
+    // Research Advisers
+    await notifyProjectResearchAdvisers(io, {
+      transaction,
+      project,
+      event_type: NOTIFICATION_EVENT.APPROVED,
+      reason: `Project "${project.title}" was approved.`,
+      payload: {
+        newStatus: PROJECT_STATUS.APPROVED,
+      },
+    });
 
-    for (const adv of advisers) {
-      await Notification.create({
-        projectId: project.id,
-        researchAdviserId: adv.id,
-        isRead: false,
-        reason: `Project "${project.title}" has been approved and added to the repository!`
-      });
+    // Student
+    await notifyStudent(io, {
+      transaction,
+      project,
+      event_type: NOTIFICATION_EVENT.APPROVED,
+      reason: `Your project "${project.title}" was approved.`,
+      payload: {
+        newStatus: PROJECT_STATUS.APPROVED,
+      },
+    });
 
-      if (io) {
-        io.emit(`research_adviser_notify_${adv.id}`, {
-          type: "status_update",
-          projectId: project.id,
-          title: project.title,
-          newStatus: "approved",
-          updatedBy: req.user.full_name
-        });
-      }
-    }
+    // Coordinators
+    await notifyResearchCoordinators(io, {
+      transaction,
+      project,
+      event_type: NOTIFICATION_EVENT.APPROVED,
+      reason: `Project "${project.title}" was approved.`,
+      payload: {
+        newStatus: PROJECT_STATUS.APPROVED,
+      },
+    });
 
-    // Notify eligible research student
-    if (isEligibleResearchStudent(project.submitter)) {
-      await Notification.create({
-        projectId: project.id,
-        studentId: project.submitted_by,
-        isRead: false,
-        reason: `Your project "${project.title}" has been approved and added to the repository.`
-      });
+    await transaction.commit();
 
-      if (io) {
-        io.emit(`student_notify_${project.submitted_by}`, {
-          type: "status_update",
-          projectId: project.id,
-          title: project.title,
-          newStatus: "approved"
-        });
-      }
-    }
+    emitWorkflowRefresh(io, [
+      "student",
+      "research_adviser",
+      "research_coordinator"
+    ], project);
 
-    // Notify ALL research coordinators (including self) about the approval
-    const researchCoordinators = await User.findAll({ where: { role: "research_coordinator" } });
-    for (const coordinator of researchCoordinators) {
-      await Notification.create({
-        projectId: project.id,
-        researchCoordinatorId: coordinator.id,
-        isRead: false,
-        reason: `You approved the "${project.title}" project and added to the repository.`
-      });
-
-      if (io) {
-        io.emit(`admin_notify_${coordinator.id}`, {
-          type: "status_update",
-          projectId: project.id,
-          title: project.title,
-          newStatus: "approved",
-          updatedBy: req.user.full_name,
-          time: new Date().toLocaleString()
-        });
-      }
-    }
-
-    emitWorkflowRefresh(io, ["student", "research_adviser", "research_coordinator"]);
-
-    res.status(200).json({
-      message: "Research project approved",
+    return res.status(200).json({
+      message: "Project approved successfully.",
       project: await project.reload(),
     });
+
   } catch (error) {
-    console.error("Approve project error:", error);
-    res.status(500).json({ message: "Failed to approve project.", error: error.message });
+
+    if (!transaction.finished) {
+      await transaction.rollback();
+    }
+
+    console.error("approveProject error:", error);
+
+    return res.status(500).json({
+      message: "Failed to approve project.",
+      error: error.message,
+    });
   }
 };
 

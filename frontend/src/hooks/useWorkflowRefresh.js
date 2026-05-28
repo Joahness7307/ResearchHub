@@ -6,6 +6,18 @@ import {
   dispatchWorkflowRefresh,
 } from "../utils/workflowEvents";
 
+function getRoomFromSocketChannel(socketChannel) {
+  if (!socketChannel) return null;
+
+  const match = socketChannel.match(/^(student|research_adviser|research_coordinator|admin)_notify_(\d+)$/);
+  if (!match) return null;
+
+  return {
+    role: match[1],
+    userId: match[2],
+  };
+}
+
 /**
  * Subscribes to workflow custom events and optional role socket channels.
  * @param {object} options
@@ -49,6 +61,11 @@ export function useWorkflowRefresh({
     const socket = io(process.env.REACT_APP_BACKEND_URL);
 
     const onSocketMessage = () => dispatchWorkflowRefresh();
+    const room = getRoomFromSocketChannel(socketChannel);
+
+    if (room) {
+      socket.emit("join_room", room);
+    }
 
     if (socketChannel) {
       socket.on(socketChannel, onSocketMessage);

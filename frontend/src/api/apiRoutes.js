@@ -14,12 +14,12 @@ export const API_ROUTES = {
   projects: {
     submit: "/projects/submit",
     getProject: (id) => `/projects/${id}`,
-    adviserEndorse: (id) => `/projects/adviser/endorse/${id}`,
+    adviserEndorse: (id) => `/projects/research-adviser/endorse/${id}`,
     needRevision: {
-      adviser: (id) => `/projects/adviser/need-revision/${id}`,
+      adviser: (id) => `/projects/research-adviser/need-revision/${id}`,
       admin: (id) => `/projects/admin/need-revision/${id}`,
     },
-    informStudent: (id) => `/projects/adviser/inform-student/${id}`,
+    informStudent: (id) => `/projects/research-adviser/inform-student/${id}`,
     reupload: (id) => `/projects/reupload/${id}`,
     approve: (id) => `/projects/admin/approve/${id}`
   },
@@ -38,10 +38,10 @@ export const API_ROUTES = {
     student: "/notifications/student",
     adminById: (id) => `/notifications/admin/${id}`,
     researchCoordinatorById: (id) => `/notifications/research-coordinator/${id}`,
-    adviserById: (id) => `/notifications/adviser/${id}`,
+    adviserById: (id) => `/notifications/research-adviser/${id}`,
     projectTimeline: (projectId) => `/notifications/project/${projectId}/timeline`,
     studentMarkAsRead: (id) => `/notifications/student/${id}/read`,
-    adviserMarkAsRead: (id) => `/notifications/adviser/${id}/read`,
+    adviserMarkAsRead: (id) => `/notifications/research-adviser/${id}/read`,
     researchCoordinatorMarkAsRead: (id) => `/notifications/research-coordinator/${id}/read`,
     adminMarkAsRead: (id) => `/notifications/admin/${id}/read`,
   },
@@ -62,7 +62,7 @@ export const API_ROUTES = {
   },
 
   research_adviser: {
-    getAllProjects: "projects/adviser/all",
+    getAllProjects: "projects/research-adviser/all",
   },
 
   academic: {

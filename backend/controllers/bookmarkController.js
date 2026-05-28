@@ -39,7 +39,7 @@ exports.getUserBookmarks = async (req, res) => {
       include: [{
         model: Project,
         as: "project",
-        required: true             // ← Only return bookmarks with existing, non-deleted projects
+        required: true // ← Only return bookmarks with existing, non-deleted projects
       }],
     });
 

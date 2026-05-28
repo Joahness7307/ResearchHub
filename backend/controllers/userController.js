@@ -68,7 +68,7 @@ exports.register = async (req, res) => {
 
     const newUser = await User.create(userObj);
 
-    // Optional: Return more details on success (including names via include)
+    // Return more details on success (including names via include)
     const createdUser = await User.findByPk(newUser.id, {
       include: [
         { model: Department, attributes: ['name'] },
@@ -181,7 +181,7 @@ exports.forceChangePassword = async (req, res) => {
   }
 };
 
-// Get user count
+// Get user count (admin)
 exports.getUserCount = async (req, res) => {
   try {
     const totalUsers = await User.count();
@@ -370,6 +370,7 @@ exports.updateUser = async (req, res) => {
   }
 };
 
+// Delete user (admin)
 exports.deleteUser = async (req, res) => {
   try {
     if (req.user.role !== "admin") return res.status(403).json({ message: "Forbidden" });

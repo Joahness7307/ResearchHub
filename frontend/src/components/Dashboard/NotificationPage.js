@@ -68,7 +68,7 @@ const NotificationPage = () => {
                 } else if (user && user.role === "admin") {
                   navigate(`/admin/notifications/${notif.id}`);
                 } else if (user && user.role === "research_adviser") {
-                  navigate(`/adviser/notifications/${notif.id}`);
+                  navigate(`/research-adviser/notifications/${notif.id}`);
                 } else {
                   navigate(`/notifications/${notif.id}`);
                 }

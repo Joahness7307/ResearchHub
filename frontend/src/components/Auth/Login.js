@@ -33,7 +33,7 @@ const Login = () => {
         case "admin": navigate("/admin"); break;
         case "research_coordinator": navigate("/research-coordinator"); break;
         case "guest": navigate("/dashboard"); break;
-        case "research_adviser": navigate("/adviser"); break;
+        case "research_adviser": navigate("/research-adviser"); break;
         default: navigate("/dashboard"); break;
       }
     } catch (err) {
