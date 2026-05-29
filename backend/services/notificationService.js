@@ -1,160 +1,197 @@
 const { Notification, User } = require("../models");
 const { Op } = require("sequelize");
 const { isEligibleResearchStudent } = require("../utils/studentEligibility");
+const { getRelevantResearchAdvisers } = require("../utils/researchAdviser");
+const { PROJECT_STATUS } = require("./workflowService");
 
-/** Canonical project status values (must match models/project.js ENUM) */
-const PROJECT_STATUS = {
-  PENDING: "pending",
+const NOTIFICATION_EVENT = {
+  SUBMITTED: "submitted",
   ENDORSED: "endorsed",
   APPROVED: "approved",
-  NEED_REVISION: "need_revision",
-  ADMIN_REVISION: "admin_revision",
+  REVISION_REQUEST: "revision_request",
+  REUPLOADED: "reuploaded",
+  INFORMED_STUDENT: "informed_student",
 };
 
-/**
- * Advisers affiliated with the project's department or strand.
- */
-async function getResearchAdvisersForProject(project) {
-  const orConditions = [];
-  if (project.department_id) {
-    orConditions.push({ department_id: project.department_id });
-  }
-  if (project.strand_id) {
-    orConditions.push({ strand_id: project.strand_id });
-  }
-  if (orConditions.length === 0) return [];
-
-  const advisers = await User.findAll({
-  where: {
-    role: "research_adviser",
-    [Op.or]: orConditions,
+async function createNotification({
+  transaction,
+  projectId,
+  studentId,
+  researchAdviserId,
+  researchCoordinatorId,
+  reason,
+  event_type,
+}) {
+  return Notification.create(
+    {
+      projectId,
+      studentId: studentId || null,
+      researchAdviserId: researchAdviserId || null,
+      researchCoordinatorId: researchCoordinatorId || null,
+      reason,
+      event_type,
+      isRead: false,
     },
-  });
-
-  return [...new Map(advisers.map(a => [a.id, a])).values()];
-}
-
-async function getResearchCoordinators() {
-  return User.findAll({ where: { role: "research_coordinator" } });
-}
-
-async function createNotification({ projectId, studentId, researchAdviserId, researchCoordinatorId, reason }) {
-  return Notification.create({
-    projectId,
-    studentId: studentId ?? null,
-    researchAdviserId: researchAdviserId ?? null,
-    researchCoordinatorId: researchCoordinatorId ?? null,
-    isRead: false,
-    reason,
-  });
+    { transaction }
+  );
 }
 
 function emitStudent(io, studentId, payload) {
-  if (io && studentId) {
-    io.emit(`student_notify_${studentId}`, payload);
-  }
+  if (!io || !studentId) return;
+
+  io.to(`student:${studentId}`).emit(
+    `student_notify_${studentId}`,
+    payload
+  );
 }
 
-function emitResearchAdviser(io, researchAdviserId, payload) {
-  if (io && researchAdviserId) {
-    io.emit(`research_adviser_notify_${researchAdviserId}`, payload);
-  }
+function emitResearchAdviser(io, adviserId, payload) {
+  if (!io || !adviserId) return;
+
+  io.to(`research_adviser:${adviserId}`).emit(
+    `research_adviser_notify_${adviserId}`,
+    payload
+  );
 }
 
 function emitResearchCoordinator(io, coordinatorId, payload) {
-  if (io && coordinatorId) {
-    io.emit(`research_coordinator_notify_${coordinatorId}`, payload);
-  }
+  if (!io || !coordinatorId) return;
+
+  io.to(`research_coordinator:${coordinatorId}`).emit(
+    `research_coordinator_notify_${coordinatorId}`,
+    payload
+  );
 }
 
-/**
- * Notify one student (DB + socket).
- */
-async function notifyStudent(io, { project, reason, payload }) {
-  if (!project?.submitted_by) return;
+async function notifyStudent(io, {
+  transaction = null,
+  project,
+  reason,
+  event_type,
+  payload = {},
+}) {
 
   const student = await User.findByPk(project.submitted_by);
-  if (!isEligibleResearchStudent(student)) return;
+
+  if (!student || !isEligibleResearchStudent(student)) {
+    return;
+  }
 
   await createNotification({
+    transaction,
     projectId: project.id,
-    studentId: project.submitted_by,
+    studentId: student.id,
     reason,
+    event_type,
   });
-  emitStudent(io, project.submitted_by, payload || {
-    type: "status_update",
+
+  emitStudent(io, student.id, {
+    type: event_type,
     projectId: project.id,
     title: project.title,
     message: reason,
+    ...payload,
   });
 }
 
-/**
- * Notify all advisers for a project (DB + socket per adviser).
- */
-async function notifyProjectResearchAdvisers(io, project, reason, payloadExtra = {}) {
-  const advisers = await getResearchAdvisersForProject(project);
-  for (const adv of advisers) {
+async function notifyProjectResearchAdvisers(io, {
+  transaction = null,
+  project,
+  reason,
+  event_type,
+  payload = {},
+}) {
+
+  const advisers = await getRelevantResearchAdvisers(project);
+
+  for (const adviser of advisers) {
+
     await createNotification({
+      transaction,
       projectId: project.id,
-      researchAdviserId: adv.id,
+      researchAdviserId: adviser.id,
       reason,
+      event_type,
     });
-    emitResearchAdviser(io, adv.id, {
-      type: "status_update",
+
+    emitResearchAdviser(io, adviser.id, {
+      type: event_type,
       projectId: project.id,
       title: project.title,
       message: reason,
-      ...payloadExtra,
+      ...payload,
     });
   }
-  return advisers;
 }
 
-/**
- * Notify all research coordinators (DB + socket).
- */
-async function notifyResearchCoordinators(io, project, reason, payloadExtra = {}) {
-  const coordinators = await getResearchCoordinators();
+async function notifyResearchCoordinators(io, {
+  transaction = null,
+  project,
+  reason,
+  event_type,
+  payload = {},
+}) {
+
+  const coordinators = await User.findAll({
+    where: {
+      role: {
+        [Op.in]: ["research_coordinator"],
+      },
+    },
+  });
+
   for (const coordinator of coordinators) {
+
     await createNotification({
+      transaction,
       projectId: project.id,
       researchCoordinatorId: coordinator.id,
       reason,
+      event_type,
     });
+
     emitResearchCoordinator(io, coordinator.id, {
-      type: "status_update",
+      type: event_type,
       projectId: project.id,
       title: project.title,
       message: reason,
-      ...payloadExtra,
+      ...payload,
     });
   }
-  return coordinators;
 }
 
-/**
- * Broadcast workflow change so dashboards refetch without navigation.
- */
-function emitWorkflowRefresh(io, roles = []) {
+function emitWorkflowRefresh(io, roles = [], project = null) {
   if (!io) return;
-  const payload = { type: "workflow_refresh", at: Date.now() };
-  if (roles.includes("student")) io.emit("workflow_refresh_student", payload);
-  if (roles.includes("research_adviser")) io.emit("workflow_refresh_research_adviser", payload);
-  if (roles.includes("research_coordinator")) io.emit("workflow_refresh_research_coordinator", payload);
-  if (roles.includes("admin")) io.emit("workflow_refresh_admin", payload);
+
+  const payload = {
+    type: "workflow_refresh",
+    projectId: project?.id || null,
+    status: project?.status || null,
+    timestamp: Date.now(),
+  };
+
+  if (roles.includes("student")) {
+    io.emit("workflow_refresh_student", payload);
+  }
+
+  if (roles.includes("research_adviser")) {
+    io.emit("workflow_refresh_research_adviser", payload);
+  }
+
+  if (roles.includes("research_coordinator")) {
+    io.emit("workflow_refresh_research_coordinator", payload);
+  }
+
+  if (roles.includes("admin")) {
+    io.emit("workflow_refresh_admin", payload);
+  }
 }
 
 module.exports = {
   PROJECT_STATUS,
-  getResearchAdvisersForProject,
-  getResearchCoordinators,
-  createNotification,
+  NOTIFICATION_EVENT,
   notifyStudent,
   notifyProjectResearchAdvisers,
   notifyResearchCoordinators,
-  emitStudent,
-  emitResearchAdviser,
-  emitResearchCoordinator,
-  emitWorkflowRefresh,
+  emitWorkflowRefresh
 };

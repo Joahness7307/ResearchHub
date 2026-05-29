@@ -11,14 +11,17 @@ import "./NotificationPage.css";
 function getNotificationType(reason = "") {
   const text = reason.toLowerCase();
 
-  if (text.includes("informed the student") || text.includes("please reupload your updated document")) {
+  if (text.includes("informed the student") || 
+      text.includes("please reupload your updated document") || 
+      text.includes("student was informed ")) {
     return "informed";
   }
   if (text.includes("reuploaded")) return "reuploaded";
   if (
     text.includes("requires revision") ||
     text.includes("marked for revision") ||
-    text.includes("requested revision")
+    text.includes("requested revision") ||
+    text.includes("revision requested")
   ) return "revision";
   if (text.includes("endorsed")) return "endorsed";
   if (text.includes("approved") || text.includes("repository")) return "approved";
@@ -83,7 +86,7 @@ const ActionButtons = ({ projectId, user, navigate }) => {
 
   const handleViewProject = () => {
     if (user.role === "research_adviser") {
-      navigate(`/adviser/projects/${projectId}`);
+      navigate(`/research-adviser/projects/${projectId}`);
     } else if (user.role === "research_coordinator") {
       navigate(`/research-coordinator/projects/${projectId}`);
     } else if (user.role === "admin") {
@@ -97,7 +100,7 @@ const ActionButtons = ({ projectId, user, navigate }) => {
     if (user.role === "student") {
       navigate("/notifications");
     } else if (user.role === "research_adviser") {
-      navigate("/adviser/notifications");
+      navigate("/research-adviser/notifications");
     } else if (user.role === "admin") {
       navigate("/admin/notifications");
     } else if (user.role === "research_coordinator") {

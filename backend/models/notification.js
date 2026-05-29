@@ -25,11 +25,16 @@ module.exports = (sequelize, DataTypes) => {
       field: 'is_read'
     },
 
-    reason: DataTypes.TEXT
+    reason: DataTypes.TEXT,
+
+    event_type: {
+      type: DataTypes.STRING,
+      allowNull: true
+    }
   }, {
     tableName: 'Notifications',
-    timestamps: true, // ONLY if created_at/updated_at exist in DB
-    underscored: true // optional but recommended
+    timestamps: true,
+    underscored: true
   });
 
   Notification.associate = function(models) {

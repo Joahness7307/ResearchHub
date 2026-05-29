@@ -1,6 +1,5 @@
-// src/components/UserAvatar.js
 import React from "react";
-import "./UserAvatar.css"; // We'll add this CSS next
+import "./UserAvatar.css";
 
 const UserAvatar = ({ user, size = 80, fontSize = 32, className = "" }) => {
   if (!user) return null;

@@ -3,7 +3,7 @@ import { formatNotificationSummary } from "../../utils/formatNotificationSummary
 import "./ProjectTimeline.css";
 
 const EVENT_META = {
-  pending: {
+  submitted: {
     label: "Pending",
     icon: "/workflow-timeline-icons/pending-icon.png",
     className: "pending"

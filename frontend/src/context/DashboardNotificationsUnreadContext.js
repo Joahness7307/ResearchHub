@@ -22,7 +22,7 @@ export function notificationIsUnread(n) {
 
 const PATH_BY_ROLE = {
   research_coordinator: "/research-coordinator/notifications",
-  research_adviser: "/adviser/notifications",
+  research_adviser: "/research-adviser/notifications",
 };
 
 const DashboardNotificationsUnreadContext = createContext(null);
