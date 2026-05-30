@@ -1,7 +1,7 @@
 const express = require("express");
 const { register, login, getAllUsers, getUserCount, addUser, updateOwnProfile, updateUser, deleteUser, getUserProfile, getUserProjects, forceChangePassword } = require("../controllers/userController");
 const authMiddleware = require("../middlewares/authMiddleware");
-const uploadProfilePic = require("../config/multer-profile");
+const uploadProfilePic = require("../config/profileUpload");
 
 const router = express.Router();
 

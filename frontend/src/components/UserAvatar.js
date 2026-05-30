@@ -4,7 +4,9 @@ import "./UserAvatar.css";
 const UserAvatar = ({ user, size = 80, fontSize = 32, className = "" }) => {
   if (!user) return null;
 
-  const hasPhoto = user.profile_pic_url && user.profile_pic_url.trim() !== "" && !user.profile_pic_url.includes("default-pp");
+  const hasPhoto = 
+    user.profile_pic_url && 
+    user.profile_pic_url.trim() !== "";
 
   // Get first letter of first name
   const firstLetter = user.full_name

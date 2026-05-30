@@ -19,7 +19,7 @@ const { submitProject,
 
 const categories = require("../config/categories");
 const authMiddleware = require("../middlewares/authMiddleware");
-const upload = require("../config/multer");
+const upload = require("../config/projectUpload");
 
 const router = express.Router();
 
