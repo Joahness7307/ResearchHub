@@ -1,7 +1,7 @@
 // filepath: backend/middlewares/multer-profile.js
 const multer = require("multer");
 const { CloudinaryStorage } = require("multer-storage-cloudinary");
-const cloudinary = require("../config/cloudinary");
+const cloudinary = require("./cloudinary");
 
 // Allowed image MIME types
 const allowedImageMimeTypes = ["image/jpeg", "image/png", "image/gif", "image/webp"];
