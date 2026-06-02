@@ -19,3 +19,24 @@ export function dispatchWorkflowRefresh(detail = {}) {
   dispatchWorkflowProjectsUpdated(detail);
   dispatchWorkflowNotificationsUpdated(detail);
 }
+
+let pendingWorkflowRefresh = null;
+
+export function scheduleWorkflowRefresh(detail = {}) {
+  if (pendingWorkflowRefresh) {
+    pendingWorkflowRefresh.detail = {
+      ...pendingWorkflowRefresh.detail,
+      ...detail,
+    };
+    return;
+  }
+
+  pendingWorkflowRefresh = {
+    detail,
+    timer: window.setTimeout(() => {
+      const nextDetail = pendingWorkflowRefresh.detail;
+      pendingWorkflowRefresh = null;
+      dispatchWorkflowRefresh(nextDetail);
+    }, 250),
+  };
+}

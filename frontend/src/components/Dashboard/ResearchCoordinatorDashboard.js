@@ -8,7 +8,6 @@ import categoryColors from "../../constants/categoryColors";
 import "../Dashboard/StudentDashboard.css";
 import { AuthContext } from "../../context/AuthContext";
 import { useWorkflowRefresh } from "../../hooks/useWorkflowRefresh";
-import { useDashboardNotificationsUnread } from "../../context/DashboardNotificationsUnreadContext";
 
 // Search Bar Component
 const SearchBar = ({ searchTerm, onSearchChange }) => (
@@ -131,7 +130,6 @@ const projectsPerPage = 10;
 const ResearchCoordinatorDashboard = ({ section }) => {
   const { user } = useContext(AuthContext);
   const navigate = useNavigate();
-  const { refreshUnreadCount } = useDashboardNotificationsUnread();
   const [projects, setProjects] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -211,9 +209,6 @@ const ResearchCoordinatorDashboard = ({ section }) => {
 
   useWorkflowRefresh({
     onProjectsRefresh: fetchProjects,
-    onNotificationsRefresh: refreshUnreadCount,
-    socketChannel: user?.id ? `research_coordinator_notify_${user.id}` : undefined,
-    workflowSocketEvents: ["workflow_refresh_research_coordinator"],
   });
 
   // Filter & Pagination Logic

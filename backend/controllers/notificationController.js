@@ -6,6 +6,39 @@ const {
   getTimelineEventType,
 } = require("../utils/timelineUtil");
 
+function emitNotificationRead(req, role, userId, notificationId) {
+  const io = req.app.get("io");
+  if (!io || !role || !userId) return;
+
+  io.to(`${role}:${userId}`).emit(`${role}_notify_${userId}`, {
+    type: "notification_read",
+    notificationId,
+    read: true,
+  });
+}
+
+function timelineEventIsVisibleToUser(event, user) {
+  if (user.role === "student") {
+    return event.recipientRole === "student" && Number(event.studentId) === Number(user.id);
+  }
+
+  if (user.role === "research_adviser") {
+    return (
+      event.recipientRole === "research_adviser" &&
+      Number(event.researchAdviserId) === Number(user.id)
+    );
+  }
+
+  if (user.role === "research_coordinator") {
+    return (
+      event.recipientRole === "research_coordinator" &&
+      Number(event.researchCoordinatorId) === Number(user.id)
+    );
+  }
+
+  return user.role === "admin";
+}
+
 exports.getResearchCoordinatorNotifications = async (req, res) => {
   try {
     const notifications = await Notification.findAll({
@@ -29,6 +62,7 @@ exports.markResearchCoordinatorNotificationRead = async (req, res) => {
     if (!notif) return res.status(404).json({ message: "Notification not found" });
     notif.isRead = true;
     await notif.save();
+    emitNotificationRead(req, "research_coordinator", req.user.id, notif.id);
     res.json({ message: "Notification marked as read" });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -57,6 +91,7 @@ exports.markResearchAdviserNotificationRead = async (req, res) => {
   if (!notif) return res.status(404).json({ message: "Notification not found" });
   notif.isRead = true;
   await notif.save();
+  emitNotificationRead(req, "research_adviser", req.user.id, notif.id);
   res.json({ message: "Notification marked as read" });
 };
 
@@ -93,6 +128,7 @@ exports.markStudentNotificationRead = async (req, res) => {
     if (!notif) return res.status(404).json({ message: "Notification not found" });
     notif.isRead = true;
     await notif.save();
+    emitNotificationRead(req, "student", req.user.id, notif.id);
     res.json({ message: "Notification marked as read" });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -107,6 +143,7 @@ exports.markAllStudentNotificationsRead = async (req, res) => {
   }
 
   await Notification.update({ isRead: true }, { where: { studentId: req.user.id, isRead: false } });
+  emitNotificationRead(req, "student", req.user.id, null);
   res.json({ message: "All notifications marked as read" });
 };
 
@@ -132,8 +169,7 @@ exports.getProjectTimeline = async (req, res) => {
 
       const timeline = notifications.map((notification) => {
         const item = notification.toJSON();
-        const reason = item.reason || "";
-        const eventType = item.event_type || getTimelineEventType(reason);
+        const eventType = getTimelineEventType(item);
 
         return {
           id: item.id,
@@ -144,10 +180,10 @@ exports.getProjectTimeline = async (req, res) => {
           researchAdviserId: item.researchAdviserId,
           studentId: item.studentId,
           researchCoordinatorId: item.researchCoordinatorId,
-          message: reason,
+          message: item.reason || "",
           timestamp: item.createdAt,
         };
-      });
+      }).filter((event) => timelineEventIsVisibleToUser(event, req.user));
 
       res.json({
         project: {
@@ -187,6 +223,7 @@ exports.markAdminNotificationRead = async (req, res) => {
     if (!notif) return res.status(404).json({ message: "Notification not found" });
     notif.isRead = true;
     await notif.save();
+    emitNotificationRead(req, "admin", req.user.id, notif.id);
     res.json({ message: "Notification marked as read" });
   } catch (error) {
     res.status(500).json({ error: error.message });

@@ -68,7 +68,7 @@ const Home = () => {
                 <b>For Students:</b> Upload your final research papers and access a growing library of studies for reference.
               </li>
               <li>
-                <b>For Admins:</b> Organize, monitor, and review research submissions sorted by categories.
+                <b>For Admins:</b> Organize, monitor, and review research submissions sorted by statuses and categories.
               </li>
             </ul>
           </div>

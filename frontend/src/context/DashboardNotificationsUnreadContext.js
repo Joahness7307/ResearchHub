@@ -1,120 +1,26 @@
-import React, {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
-import { useLocation } from "react-router-dom";
-import { AuthContext } from "./AuthContext";
-import axios from "../api/axios";
-import { API_ROUTES } from "../api/apiRoutes";
-import { WORKFLOW_NOTIFICATIONS_UPDATED } from "../utils/workflowEvents";
+import React from "react";
+import {
+  notificationIsUnread,
+  useNotifications,
+} from "./NotificationContext";
 
-/** Normalize Sequelize / snake_case payloads */
-export function notificationIsUnread(n) {
-  if (n == null || typeof n !== "object") return false;
-  if (typeof n.isRead === "boolean") return !n.isRead;
-  if (typeof n.is_read === "boolean") return !n.is_read;
-  return false;
-}
-
-const PATH_BY_ROLE = {
-  research_coordinator: "/research-coordinator/notifications",
-  research_adviser: "/research-adviser/notifications",
-};
-
-const DashboardNotificationsUnreadContext = createContext(null);
+export { notificationIsUnread };
 
 /**
- * Provides a single unread count for adviser/research_coordinator notification routes,
- * fetched once per layout (desktop sidebar + mobile drawer share this).
+ * Compatibility wrapper for existing dashboard layouts.
+ * NotificationProvider is now the single owner of notification state.
  */
-export function DashboardNotificationsUnreadProvider({ role, children }) {
-  const { user } = useContext(AuthContext);
-  const location = useLocation();
-  const [unreadCount, setUnreadCount] = useState(0);
-  const [refreshNonce, setRefreshNonce] = useState(0);
-
-  const notificationsPath = PATH_BY_ROLE[role] ?? "";
-
-  const refreshUnreadCount = useCallback(() => {
-    setRefreshNonce((n) => n + 1);
-  }, []);
-
-  useEffect(() => {
-    if (!user?.id || (role !== "research_coordinator" && role !== "research_adviser")) {
-      setUnreadCount(0);
-      return;
-    }
-
-    let cancelled = false;
-
-    const load = async () => {
-      try {
-        const res =
-          role === "research_coordinator"
-            ? await axios.get(
-                API_ROUTES.notifications.researchCoordinatorById(user.id)
-              )
-            : await axios.get(
-                API_ROUTES.notifications.adviserById(user.id)
-              );
-        const list = res.data?.notifications ?? [];
-        if (!cancelled) {
-          setUnreadCount(list.filter(notificationIsUnread).length);
-        }
-      } catch {
-        if (!cancelled) setUnreadCount(0);
-      }
-    };
-
-    load();
-    return () => {
-      cancelled = true;
-    };
-  }, [user?.id, role, location.pathname, refreshNonce]);
-
-  useEffect(() => {
-    const onWorkflowNotifications = () => setRefreshNonce((n) => n + 1);
-    window.addEventListener(
-      WORKFLOW_NOTIFICATIONS_UPDATED,
-      onWorkflowNotifications
-    );
-    return () =>
-      window.removeEventListener(
-        WORKFLOW_NOTIFICATIONS_UPDATED,
-        onWorkflowNotifications
-      );
-  }, []);
-
-  const value = useMemo(
-    () => ({
-      unreadCount,
-      notificationsPath,
-      refreshUnreadCount,
-    }),
-    [unreadCount, notificationsPath, refreshUnreadCount]
-  );
-
-  return (
-    <DashboardNotificationsUnreadContext.Provider value={value}>
-      {children}
-    </DashboardNotificationsUnreadContext.Provider>
-  );
+export function DashboardNotificationsUnreadProvider({ children }) {
+  return <>{children}</>;
 }
 
-/**
- * Outside a provider returns zeros (e.g. admin layout).
- */
 export function useDashboardNotificationsUnread() {
-  const ctx = useContext(DashboardNotificationsUnreadContext);
-  return (
-    ctx ?? {
-      unreadCount: 0,
-      notificationsPath: "",
-      refreshUnreadCount: () => {},
-    }
-  );
+  const { unreadCount, notificationsPath, refreshNotifications } =
+    useNotifications();
+
+  return {
+    unreadCount,
+    notificationsPath,
+    refreshUnreadCount: refreshNotifications,
+  };
 }

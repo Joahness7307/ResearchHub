@@ -9,9 +9,9 @@ module.exports = {
       username: 'AdminUser',
       email: 'joahnesnillas@gmail.com',
       password: hashedPassword,
-      department: null,        // Required, use any valid value
-      year_level: null,            // Required, use any valid value
-      block: null,                // Required, use any valid value
+      department: null,
+      year_level: null,
+      block: null,
       role: 'admin',
       created_at: new Date(),
       updated_at: new Date()

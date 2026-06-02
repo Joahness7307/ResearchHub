@@ -1,4 +1,3 @@
-// src/components/common/Layout/DashboardLayout.js
 // Reusable layout component for all dashboard roles.
 // Consolidates duplicated logic from AdminLayout, ResearchCoordinatorLayout, and ResearchAdviserLayout.
 // Supports React Router v6 (useNavigate, useLocation) and prepares for Outlet in nested routes.

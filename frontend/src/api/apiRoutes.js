@@ -41,6 +41,7 @@ export const API_ROUTES = {
     adviserById: (id) => `/notifications/research-adviser/${id}`,
     projectTimeline: (projectId) => `/notifications/project/${projectId}/timeline`,
     studentMarkAsRead: (id) => `/notifications/student/${id}/read`,
+    studentMarkAllAsRead: "/notifications/student/mark-all-read",
     adviserMarkAsRead: (id) => `/notifications/research-adviser/${id}/read`,
     researchCoordinatorMarkAsRead: (id) => `/notifications/research-coordinator/${id}/read`,
     adminMarkAsRead: (id) => `/notifications/admin/${id}/read`,
