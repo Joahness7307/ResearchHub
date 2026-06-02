@@ -3,15 +3,7 @@ const { Op } = require("sequelize");
 const { isEligibleResearchStudent } = require("../utils/studentEligibility");
 const { getRelevantResearchAdvisers } = require("../utils/researchAdviser");
 const { PROJECT_STATUS } = require("./workflowService");
-
-const NOTIFICATION_EVENT = {
-  SUBMITTED: "submitted",
-  ENDORSED: "endorsed",
-  APPROVED: "approved",
-  REVISION_REQUEST: "revision_request",
-  REUPLOADED: "reuploaded",
-  INFORMED_STUDENT: "informed_student",
-};
+const { NOTIFICATION_EVENT } = require("../constants/notificationEvents");
 
 async function createNotification({
   transaction,
@@ -160,7 +152,7 @@ async function notifyResearchCoordinators(io, {
   }
 }
 
-function emitWorkflowRefresh(io, roles = [], project = null) {
+async function emitWorkflowRefresh(io, roles = [], project = null) {
   if (!io) return;
 
   const payload = {
@@ -170,20 +162,23 @@ function emitWorkflowRefresh(io, roles = [], project = null) {
     timestamp: Date.now(),
   };
 
-  if (roles.includes("student")) {
-    io.emit("workflow_refresh_student", payload);
+  if (roles.includes("student") && project?.submitted_by) {
+    io.to(`student:${project.submitted_by}`).emit("workflow_refresh_student", payload);
   }
 
-  if (roles.includes("research_adviser")) {
-    io.emit("workflow_refresh_research_adviser", payload);
+  if (roles.includes("research_adviser") && project) {
+    const advisers = await getRelevantResearchAdvisers(project);
+    advisers.forEach((adviser) => {
+      io.to(`research_adviser:${adviser.id}`).emit("workflow_refresh_research_adviser", payload);
+    });
   }
 
   if (roles.includes("research_coordinator")) {
-    io.emit("workflow_refresh_research_coordinator", payload);
+    io.to("role:research_coordinator").emit("workflow_refresh_research_coordinator", payload);
   }
 
   if (roles.includes("admin")) {
-    io.emit("workflow_refresh_admin", payload);
+    io.to("role:admin").emit("workflow_refresh_admin", payload);
   }
 }
 

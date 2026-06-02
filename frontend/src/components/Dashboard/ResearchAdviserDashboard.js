@@ -4,7 +4,6 @@ import axios from "../../api/axios";
 import { API_ROUTES } from "../../api/apiRoutes";
 import { useNavigate } from "react-router-dom";
 import { useWorkflowRefresh } from "../../hooks/useWorkflowRefresh";
-import { useDashboardNotificationsUnread } from "../../context/DashboardNotificationsUnreadContext";
 import "./ResearchAdviserPage.css";
 import categoryColors from "../../constants/categoryColors";
 
@@ -32,7 +31,6 @@ const ResearchAdviserDashboard = ({ section }) => {
     const [currentPage, setCurrentPage] = useState(1);
     const [bookmarkLoading, setBookmarkLoading] = useState({});
     const navigate = useNavigate();
-    const { refreshUnreadCount } = useDashboardNotificationsUnread();
 
     const handleBookmarkToggle = async (e, projectId, bookmarked) => {
         e.stopPropagation();
@@ -132,9 +130,6 @@ const ResearchAdviserDashboard = ({ section }) => {
 
     useWorkflowRefresh({
         onProjectsRefresh: fetchProjects,
-        onNotificationsRefresh: refreshUnreadCount,
-        socketChannel: user?.id ? `research_adviser_notify_${user.id}` : undefined,
-        workflowSocketEvents: ["workflow_refresh_research_adviser"],
     });
 
     // Filtering logic (unchanged)

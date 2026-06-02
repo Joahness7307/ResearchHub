@@ -1,6 +1,17 @@
 const { User } = require("../models");
 
 async function getRelevantResearchAdvisers(project) {
+  if (project.research_adviser_id) {
+    const assignedAdviser = await User.findOne({
+      where: {
+        id: project.research_adviser_id,
+        role: "research_adviser",
+      },
+    });
+
+    return assignedAdviser ? [assignedAdviser] : [];
+  }
+
   const where = {
     role: "research_adviser",
   };

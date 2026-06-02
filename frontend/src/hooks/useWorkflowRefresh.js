@@ -3,7 +3,7 @@ import { io } from "socket.io-client";
 import {
   WORKFLOW_PROJECTS_UPDATED,
   WORKFLOW_NOTIFICATIONS_UPDATED,
-  dispatchWorkflowRefresh,
+  scheduleWorkflowRefresh,
 } from "../utils/workflowEvents";
 
 function getRoomFromSocketChannel(socketChannel) {
@@ -54,13 +54,17 @@ export function useWorkflowRefresh({
 
   useEffect(() => {
     if (!process.env.REACT_APP_BACKEND_URL) return undefined;
+
     const hasChannels =
-      socketChannel || (workflowSocketEvents && workflowSocketEvents.length > 0);
+      socketChannel || (workflowSocketEvents?.length > 0);
+
     if (!hasChannels) return undefined;
 
     const socket = io(process.env.REACT_APP_BACKEND_URL);
 
-    const onSocketMessage = () => dispatchWorkflowRefresh();
+    const onSocketMessage = (detail = {}) =>
+      scheduleWorkflowRefresh(detail);
+
     const room = getRoomFromSocketChannel(socketChannel);
 
     if (room) {
@@ -70,12 +74,19 @@ export function useWorkflowRefresh({
     if (socketChannel) {
       socket.on(socketChannel, onSocketMessage);
     }
+
     workflowSocketEvents.forEach((event) => {
       socket.on(event, onSocketMessage);
     });
 
     return () => {
+      if (socketChannel) socket.off(socketChannel, onSocketMessage);
+
+      workflowSocketEvents.forEach((event) => {
+        socket.off(event, onSocketMessage);
+      });
+
       socket.disconnect();
     };
-  }, [socketChannel, workflowSocketEvents.join("|")]);
+  }, [socketChannel, workflowSocketEvents]);
 }

@@ -6,12 +6,10 @@ import bookmarkIcon from "../../assets/icons/bookmark-icon.png";
 import bookmarkedIcon from "../../assets/icons/bookmarked-icon.png";
 import { useNavigate } from "react-router-dom";
 import "./StudentDashboard.css"; // Reusing the same styles
-// NOTE: categoryColors is not provided, assuming it's correctly mapped in your constants
 import categoryColors from "../../constants/categoryColors"; 
 import { useContext } from "react";
 import { AuthContext } from "../../context/AuthContext";
 
-// NOTE: AuthContext is imported but not used, I've kept it as you included it, but it's not needed for guest view logic.
 // The GuestDashboard is structurally identical to the StudentDashboard as it just views the repository.
 
 const GuestDashboard = () => {

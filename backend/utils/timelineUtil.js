@@ -1,3 +1,5 @@
+const { NOTIFICATION_EVENT } = require("../constants/notificationEvents");
+
 function getNotificationOwnerRole(notification) {
   if (notification.studentId) return "student";
   if (notification.researchAdviserId) return "research_adviser";
@@ -7,46 +9,37 @@ function getNotificationOwnerRole(notification) {
 }
 
 function getTimelineActorRole(notification, project) {
-  const eventType = notification.event_type || getTimelineEventType(notification.reason);
+  const eventType = getTimelineEventType(notification);
 
-  if (eventType === "submitted") {
+  if (eventType === NOTIFICATION_EVENT.SUBMITTED) {
     return "student";
   }
 
-  if (eventType === "reuploaded") {
+  if (eventType === NOTIFICATION_EVENT.REUPLOADED) {
     return "student";
   }
 
-  if (eventType === "endorsed") {
+  if (eventType === NOTIFICATION_EVENT.ENDORSED) {
     return "research_adviser";
   }
 
-  if (eventType === "approved") {
+  if (eventType === NOTIFICATION_EVENT.APPROVED) {
     return project.last_updated_by_role || "research_coordinator";
   }
 
-  if (eventType === "revision_request") {
+  if (eventType === NOTIFICATION_EVENT.REVISION_REQUEST) {
     return project.last_updated_by_role || getNotificationOwnerRole(notification);
   }
 
-  if (eventType === "informed_student") {
+  if (eventType === NOTIFICATION_EVENT.INFORMED_STUDENT) {
     return "research_adviser";
   }
 
   return getNotificationOwnerRole(notification);
 }
 
-function getTimelineEventType(reason = "") {
-  const text = reason.toLowerCase();
-
-  if (text.includes("submitted")) return "submitted";
-  if (text.includes("endorsed")) return "endorsed";
-  if (text.includes("approved")) return "approved";
-  if (text.includes("revision")) return "revision_request";
-  if (text.includes("reuploaded")) return "reuploaded";
-  if (text.includes("informed") || text.includes("please reupload")) return "informed_student";
-
-  return "workflow_update";
+function getTimelineEventType(notification = {}) {
+  return notification.event_type || notification.eventType || NOTIFICATION_EVENT.WORKFLOW_UPDATE;
 }
 
 module.exports = {

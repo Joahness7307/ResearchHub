@@ -120,7 +120,7 @@ exports.submitProject = async (req, res) => {
     // All database operations succeeded - commit everything
     await transaction.commit();
 
-    emitWorkflowRefresh(io, [
+    await emitWorkflowRefresh(io, [
       "student",
       "research_adviser",
     ], project);
@@ -345,6 +345,7 @@ exports.endorseProject = async (req, res) => {
     await project.update(
       {
         status: PROJECT_STATUS.ENDORSED,
+        research_adviser_id: req.user.id,
         last_updated_by_role: req.user.role,
       },
       { transaction }
@@ -389,7 +390,7 @@ exports.endorseProject = async (req, res) => {
 
     await transaction.commit();
 
-    emitWorkflowRefresh(io, [
+    await emitWorkflowRefresh(io, [
       "student",
       "research_adviser",
       "research_coordinator"
@@ -508,7 +509,7 @@ exports.needRevision = async (req, res) => {
 
       await transaction.commit();
 
-      emitWorkflowRefresh(io, [
+      await emitWorkflowRefresh(io, [
         "student",
         "research_adviser",
         "research_coordinator"
@@ -535,6 +536,7 @@ exports.needRevision = async (req, res) => {
         {
           status: PROJECT_STATUS.NEED_REVISION,
           rejection_reason: reason,
+          research_adviser_id: user.id,
           last_updated_by_role: user.role,
         },
         { transaction }
@@ -564,7 +566,7 @@ exports.needRevision = async (req, res) => {
 
       await transaction.commit();
 
-      emitWorkflowRefresh(io, [
+      await emitWorkflowRefresh(io, [
         "student",
         "research_adviser",
         "research_coordinator"
@@ -642,6 +644,7 @@ exports.informStudentOfRevision = async (req, res) => {
     await project.update(
       {
         status: PROJECT_STATUS.NEED_REVISION,
+        research_adviser_id: req.user.id,
         last_updated_by_role: "research_adviser",
       },
       { transaction }
@@ -671,7 +674,7 @@ exports.informStudentOfRevision = async (req, res) => {
 
     await transaction.commit();
 
-    emitWorkflowRefresh(io, [
+    await emitWorkflowRefresh(io, [
       "student",
       "research_adviser",
       "research_coordinator"
@@ -784,7 +787,7 @@ exports.reuploadProjectDocument = async (req, res) => {
 
     await transaction.commit();
 
-    emitWorkflowRefresh(io, [
+    await emitWorkflowRefresh(io, [
       "student",
       "research_adviser",
       "research_coordinator"
@@ -894,7 +897,7 @@ exports.approveProject = async (req, res) => {
 
     await transaction.commit();
 
-    emitWorkflowRefresh(io, [
+    await emitWorkflowRefresh(io, [
       "student",
       "research_adviser",
       "research_coordinator"
