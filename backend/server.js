@@ -29,6 +29,7 @@ io.on("connection", (socket) => {
     if (!role || !userId) return;
 
     socket.join(`${role}:${userId}`);
+    socket.join(`role:${role}`);
 
     console.log(`Socket joined room: ${role}:${userId}`);
   });

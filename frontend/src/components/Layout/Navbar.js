@@ -1,15 +1,11 @@
-import React, { useRef, useEffect, useState, useContext, useCallback } from "react";
+import React, { useRef, useEffect, useState, useContext } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { AuthContext } from "../../context/AuthContext";
 import { useSidebar } from "../../context/SidebarContext";
 import appLogo from '../../assets//images/app-logo.png';
 import fallbackLogo from '../../assets/icons/fallback-logo-icon.png';
 import notifIcon from "../../assets/icons/notification-bell-icon.png";
-import axios from "../../api/axios";
-import { API_ROUTES } from "../../api/apiRoutes";
-import { io } from "socket.io-client";
-import { notificationIsUnread } from "../../context/DashboardNotificationsUnreadContext";
-import { WORKFLOW_NOTIFICATIONS_UPDATED } from "../../utils/workflowEvents";
+import { useNotifications } from "../../context/NotificationContext";
 import { isEligibleResearchStudent } from "../../utils/studentEligibility";
 import { formatNotificationSummary } from "../../utils/formatNotificationSummary";
 import './Navbar.css';
@@ -25,15 +21,18 @@ const Navbar = ({
     ? appLogo.replace(/^\./, "") // "./static/..." => "/static/..."  
     : appLogo;
   const { user, logout } = useContext(AuthContext);
-  const [studentNotifCount, setStudentNotifCount] = useState(0);
   const [showStudentDropdown, setShowStudentDropdown] = useState(false);
-  const [studentNotifications, setStudentNotifications] = useState([]);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false); // Unified state for hamburger
   const studentBellRef = useRef(null);
   const studentDropdownRef = useRef(null);
   const navigate = useNavigate();
   const location = useLocation();
-  const socketRef = useRef(null);
+  const {
+    notifications,
+    unreadCount,
+    refreshNotifications,
+    markAsRead,
+  } = useNotifications();
 
   // Sidebar context hook for admin/research_adviser/research_coordinator roles.
   const roleName = user?.role || "";
@@ -45,61 +44,11 @@ const Navbar = ({
   const isStudentOrGuest = !!user && (user.role === "student" || user.role === "guest");
   const isAdminRole = !!user && (user.role === "admin" || user.role === "research_coordinator" || user.role === "research_adviser");
 
-  // Notification fetch for student
-  const fetchStudentNotifications = useCallback(async () => {
-    if (!isEligibleResearchStudent(user)) {
-      setStudentNotifications([]);
-      setStudentNotifCount(0);
-      return;
-    }
-
-    try {
-      const res = await axios.get(API_ROUTES.notifications.student);
-      const list = res.data.notifications ?? [];
-      setStudentNotifications(list);
-      setStudentNotifCount(list.filter(notificationIsUnread).length);
-    } catch (err) {
-      setStudentNotifications([]);
-      setStudentNotifCount(0);
-    }
-  }, [user]);
-
-  // Real-time updates (socket + workflow broadcast)
-  useEffect(() => {
-    if (!canUseStudentNotifications) return undefined;
-    socketRef.current = io(process.env.REACT_APP_BACKEND_URL);
-    const onNotify = () => fetchStudentNotifications();
-    socketRef.current.emit("join_room", {
-      role: "student",
-      userId: user.id,
-    });
-    socketRef.current.on(`student_notify_${user.id}`, onNotify);
-    socketRef.current.on("workflow_refresh_student", onNotify);
-    return () => {
-      if (socketRef.current) socketRef.current.disconnect();
-      socketRef.current = null;
-    };
-  }, [canUseStudentNotifications, user?.id, fetchStudentNotifications]);
-
-  useEffect(() => {
-    if (!canUseStudentNotifications) return undefined;
-    const onWorkflow = () => fetchStudentNotifications();
-    window.addEventListener(WORKFLOW_NOTIFICATIONS_UPDATED, onWorkflow);
-    return () =>
-      window.removeEventListener(WORKFLOW_NOTIFICATIONS_UPDATED, onWorkflow);
-  }, [canUseStudentNotifications, fetchStudentNotifications]);
-
-  // Load / refresh list + unread count on mount and when navigation changes
   useEffect(() => {
     if (!canUseStudentNotifications) {
       setShowStudentDropdown(false);
-      setStudentNotifications([]);
-      setStudentNotifCount(0);
-      return;
     }
-
-    fetchStudentNotifications();
-  }, [canUseStudentNotifications, user?.id, location.pathname, fetchStudentNotifications]);
+  }, [canUseStudentNotifications, location.pathname]);
 
   useEffect(() => {
     function handleClickOutside(event) {
@@ -120,7 +69,7 @@ const Navbar = ({
     if (!canUseStudentNotifications) return;
     setShowStudentDropdown(prev => !prev);
     if (!showStudentDropdown) {
-      await fetchStudentNotifications();
+      await refreshNotifications();
     }
   };
 
@@ -286,25 +235,22 @@ const Navbar = ({
                   className="notification-icon"
                   onClick={handleStudentBellClick}
                 />
-                {studentNotifCount > 0 && (
-                  <span className="notification-badge">{studentNotifCount}</span>
+                {unreadCount > 0 && (
+                  <span className="notification-badge">{unreadCount}</span>
                 )}
                 {showStudentDropdown && (
                   <div ref={studentDropdownRef} className="projects-dropdown">
                     <div className="projects-dropdown-list">
-                      {studentNotifications.length === 0 ? (
+                      {notifications.length === 0 ? (
                         <div className="projects-dropdown-empty">No notifications</div>
                       ) : (
-                        studentNotifications.slice(0, 5).map(notif => (
+                        notifications.slice(0, 5).map(notif => (
                           <div
                             key={notif.id}
                             className={`projects-dropdown-item ${notif.isRead ? "read" : "unread"}`}
                             onClick={async () => {
                               setShowStudentDropdown(false);
-                              await axios.patch(
-                                `${API_ROUTES.notifications.student}/${notif.id}/read`
-                              );
-                              await fetchStudentNotifications();
+                              await markAsRead(notif.id);
                               navigate(`/notifications/${notif.id}`);
                             }}
                           >
@@ -361,12 +307,12 @@ const Navbar = ({
                   <span className="sidebar-link-text">{link.label}</span>
                   {canUseStudentNotifications &&
                     link.to === STUDENT_NOTIFICATIONS_PATH &&
-                    studentNotifCount > 0 && (
+                    unreadCount > 0 && (
                       <span
                         className="navbar-sidebar-unread-badge"
-                        aria-label={`${studentNotifCount} unread`}
+                        aria-label={`${unreadCount} unread`}
                       >
-                        {studentNotifCount > 99 ? "99+" : studentNotifCount}
+                        {unreadCount > 99 ? "99+" : unreadCount}
                       </span>
                     )}
                 </Link>
