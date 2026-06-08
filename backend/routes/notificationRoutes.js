@@ -3,9 +3,7 @@ const express = require("express");
 const { getResearchCoordinatorNotifications, 
   getResearchAdviserNotifications, 
   markResearchAdviserNotificationRead, 
-  markResearchCoordinatorNotificationRead, 
-  getAdminNotifications,
-  markAdminNotificationRead,
+  markResearchCoordinatorNotificationRead,
   getStudentNotifications,  
   markStudentNotificationRead, 
   markAllStudentNotificationsRead, 
@@ -41,18 +39,6 @@ router.patch(
 );
 
 router.get(
-  "/admin/:id",
-  authMiddleware(["admin"]),
-  getAdminNotifications
-);
-
-router.patch(
-  "/admin/:id/read",
-  authMiddleware(["admin"]),
-  markAdminNotificationRead
-);
-
-router.get(
   "/student", 
   authMiddleware(["student"]), 
   getStudentNotifications
@@ -73,8 +59,7 @@ router.patch(
 router.get(
   "/project/:projectId/timeline",
   authMiddleware([
-    "student", 
-    "admin", 
+    "student",
     "research_coordinator", 
     "research_adviser"
   ]), 

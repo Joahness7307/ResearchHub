@@ -1,5 +1,6 @@
 import React, { useContext, useState, useEffect, useMemo, useCallback, memo } from "react";
 import { AuthContext } from "../../context/AuthContext";
+import { API_ROUTES } from "../../api/apiRoutes";
 import "./MyAccount.css";
 import axios from "../../api/axios";
 import { useNavigate } from "react-router-dom";
@@ -175,7 +176,7 @@ const MyAccount = () => {
     if (!user) return;
     const fetchBookmarks = async () => {
       try {
-        const res = await axios.get("/bookmarks/my");
+        const res = await axios.get(API_ROUTES.bookmarks.getMyBookmarks);
         let projects = res.data;
         if (Array.isArray(projects) && projects.length && projects[0].project) {
           projects = projects.map((bm) => bm.project).filter(Boolean);
@@ -198,7 +199,7 @@ const MyAccount = () => {
 
     if (isEligibleResearchStudent(user)) {
       axios
-        .get("/users/my-projects")
+        .get(API_ROUTES.user.myProjects)
         .then((res) => setProjects(res.data.projects || []))
         .catch(() => setProjects([]));
     } else {
@@ -288,7 +289,7 @@ const MyAccount = () => {
       fd.append("email", editForm.email);
       if (editForm.profileFile) fd.append("profile_pic", editForm.profileFile);
 
-      const res = await axios.put("/users/profile/update", fd);
+      const res = await axios.put(API_ROUTES.user.updateProfile, fd);
       login(res.data.user, localStorage.getItem("token"));
       setEditing(false);
     } catch (err) {

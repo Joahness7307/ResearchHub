@@ -32,7 +32,7 @@ const CollegeSignup = () => {
 
   // Fetch departments on mount
   useEffect(() => {
-    axios.get(API_ROUTES.academic.departments)
+    axios.get(API_ROUTES.academic.getDepartments)
       .then(res => {
         setDepartments(res.data);
         setLoading(false);
@@ -59,7 +59,7 @@ const CollegeSignup = () => {
 
     // Fetch blocks if department has them
     if (dept.has_blocks) {
-      axios.get(API_ROUTES.academic.blocks(selectedDeptId))
+      axios.get(API_ROUTES.academic.getBlocksByDepartment(selectedDeptId))
         .then(res => setBlocks(res.data))
         .catch(err => console.error("Failed to load blocks:", err));
     } else {
@@ -69,7 +69,7 @@ const CollegeSignup = () => {
 
     // Fetch majors if department has them
     if (dept.has_majors) {
-      axios.get(API_ROUTES.academic.majors(selectedDeptId))
+      axios.get(API_ROUTES.academic.getMajorsByDepartment(selectedDeptId))
         .then(res => setMajors(res.data))
         .catch(err => console.error("Failed to load majors:", err));
     } else {
