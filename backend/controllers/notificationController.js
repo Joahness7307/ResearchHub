@@ -199,33 +199,3 @@ exports.getProjectTimeline = async (req, res) => {
       res.status(500).json({ message: "Failed to fetch project timeline", error: error.message });
     }
 };
-
-exports.getAdminNotifications = async (req, res) => {
-  try {
-    const notifications = await Notification.findAll({
-      where: {
-        researchCoordinatorId: req.user.id,
-      },
-      order: [["createdAt", "DESC"]],
-    });
-
-    res.json({ notifications });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-};
-
-exports.markAdminNotificationRead = async (req, res) => {
-  try {
-    const notif = await Notification.findOne({
-      where: { id: req.params.id, researchCoordinatorId: req.user.id }
-    });
-    if (!notif) return res.status(404).json({ message: "Notification not found" });
-    notif.isRead = true;
-    await notif.save();
-    emitNotificationRead(req, "admin", req.user.id, notif.id);
-    res.json({ message: "Notification marked as read" });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-};

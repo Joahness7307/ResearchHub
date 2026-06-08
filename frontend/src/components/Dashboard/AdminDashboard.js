@@ -34,8 +34,8 @@ const AdminDashboard = ({ activeSection }) => {
     email: "",
     role: "admin",
     type: "",
-    department_id: "",  // Changed to _id
-    strand_id: "",      // Changed to _id
+    department_id: "",
+    strand_id: "",
     password: "",
     confirm_password: ""
   });
@@ -94,7 +94,7 @@ const AdminDashboard = ({ activeSection }) => {
   // ── Fetch Shared Academic Data ──
   const fetchDepartments = useCallback(async () => {
     try {
-      const res = await axios.get(API_ROUTES.academic.departments);
+      const res = await axios.get(API_ROUTES.academic.getDepartments);
       setDepartments(res.data);
     } catch (err) {
       console.error("Failed to load departments:", err);
@@ -104,7 +104,7 @@ const AdminDashboard = ({ activeSection }) => {
 
   const fetchStrands = useCallback(async () => {
     try {
-      const res = await axios.get(API_ROUTES.academic.strands);
+      const res = await axios.get(API_ROUTES.academic.getStrands);
       setStrands(res.data);
     } catch (err) {
       console.error("Failed to load strands:", err);
@@ -123,7 +123,7 @@ const AdminDashboard = ({ activeSection }) => {
     if (!deptId) return;
     setAcademicLoading(true);
     try {
-      const res = await axios.get(API_ROUTES.academic.blocks(deptId));
+      const res = await axios.get(API_ROUTES.academic.getBlocksByDepartment(deptId));
       setBlocks(res.data);
     } catch (err) {
       setAcademicError("Failed to load blocks");
@@ -136,7 +136,7 @@ const AdminDashboard = ({ activeSection }) => {
     if (!deptId) return;
     setAcademicLoading(true);
     try {
-      const res = await axios.get(API_ROUTES.academic.majors(deptId));
+      const res = await axios.get(API_ROUTES.academic.getMajorsByDepartment(deptId));
       setMajors(res.data);
     } catch (err) {
       setAcademicError("Failed to load majors");
@@ -183,7 +183,7 @@ const AdminDashboard = ({ activeSection }) => {
     e.preventDefault();
     if (!selectedDeptForBlocks) return setAcademicError("Please select a department first");
     try {
-      const res = await axios.post(API_ROUTES.academic.createBlock(selectedDeptForBlocks), newBlock);
+      const res = await axios.post(API_ROUTES.academic.createBlockByDepartment(selectedDeptForBlocks), newBlock);
       setBlocks([...blocks, res.data]);
       setNewBlock({ name: "" });
     } catch (err) {
@@ -194,7 +194,7 @@ const AdminDashboard = ({ activeSection }) => {
   const handleUpdateBlock = async (e) => {
     e.preventDefault();
     try {
-      const res = await axios.put(API_ROUTES.academic.updateBlock(editBlockId), editBlockForm);
+      const res = await axios.put(API_ROUTES.academic.updateBlockByDepartment(editBlockId), editBlockForm);
       setBlocks(blocks.map(b => b.id === editBlockId ? res.data : b));
       setEditBlockId(null);
     } catch (err) {
@@ -205,7 +205,7 @@ const AdminDashboard = ({ activeSection }) => {
   const handleDeleteBlock = async (id) => {
     if (!window.confirm("Delete this block? This cannot be undone and may affect users.")) return;
     try {
-      await axios.delete(API_ROUTES.academic.deleteBlock(id));
+      await axios.delete(API_ROUTES.academic.deleteBlockByDepartment(id));
       setBlocks(blocks.filter(b => b.id !== id));
     } catch (err) {
       setAcademicError(err.response?.data?.message || "Cannot delete - users may be linked");
@@ -217,7 +217,7 @@ const AdminDashboard = ({ activeSection }) => {
     e.preventDefault();
     if (!selectedDeptForMajors) return setAcademicError("Please select a department first");
     try {
-      const res = await axios.post(API_ROUTES.academic.createMajor(selectedDeptForMajors), newMajor);
+      const res = await axios.post(API_ROUTES.academic.createMajorByDepartment(selectedDeptForMajors), newMajor);
       setMajors([...majors, res.data]);
       setNewMajor({ name: "" });
     } catch (err) {
@@ -228,7 +228,7 @@ const AdminDashboard = ({ activeSection }) => {
   const handleUpdateMajor = async (e) => {
     e.preventDefault();
     try {
-      const res = await axios.put(API_ROUTES.academic.updateMajor(editMajorId), editMajorForm);
+      const res = await axios.put(API_ROUTES.academic.updateMajorByDepartment(editMajorId), editMajorForm);
       setMajors(majors.map(m => m.id === editMajorId ? res.data : m));
       setEditMajorId(null);
     } catch (err) {
@@ -239,7 +239,7 @@ const AdminDashboard = ({ activeSection }) => {
   const handleDeleteMajor = async (id) => {
     if (!window.confirm("Delete this major? This cannot be undone and may affect users.")) return;
     try {
-      await axios.delete(API_ROUTES.academic.deleteMajor(id));
+      await axios.delete(API_ROUTES.academic.deleteMajorByDepartment(id));
       setMajors(majors.filter(m => m.id !== id));
     } catch (err) {
       setAcademicError(err.response?.data?.message || "Cannot delete - users may be linked");
@@ -349,7 +349,7 @@ const AdminDashboard = ({ activeSection }) => {
     try {
       await axios.delete(API_ROUTES.admin.deleteProject(id));
       setProjects(prev => prev.filter(p => p.id !== id));
-      axios.get(API_ROUTES.admin.projectCount)
+      axios.get(API_ROUTES.admin.getProjectCount)
         .then(res => setCounts(prev => ({ ...prev, ...res.data })))
         .catch(err => console.error("Failed to fetch project counts:", err));
     } catch (err) {
@@ -358,7 +358,7 @@ const AdminDashboard = ({ activeSection }) => {
   };
 
   const fetchUsers = () => {
-    axios.get(API_ROUTES.admin.allUsers)
+    axios.get(API_ROUTES.admin.getAllUsers)
       .then(res => setUsers(res.data.users || []))
       .catch(() => setUsers([]));
   };
@@ -377,11 +377,11 @@ const AdminDashboard = ({ activeSection }) => {
 
       fetchProjects();
 
-      axios.get(API_ROUTES.admin.userCount)
+      axios.get(API_ROUTES.admin.getUserCount)
         .then(res => setCounts(prev => ({ ...prev, totalUsers: res.data.totalUsers || 0 })))
         .catch(err => console.error("Failed to fetch user count:", err));
 
-      axios.get(API_ROUTES.admin.projectCount)
+      axios.get(API_ROUTES.admin.getProjectCount)
         .then(res => setCounts(prev => ({ ...prev, ...res.data })))
         .catch(err => console.error("Failed to fetch project counts:", err));
 

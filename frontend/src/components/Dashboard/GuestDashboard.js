@@ -24,12 +24,12 @@ const GuestDashboard = () => {
 
   useEffect(() => {
     // Only fetch approved projects for the repository
-    axios.get("/projects")
+    axios.get(API_ROUTES.projects.getAllProjects)
       .then(async res => {
         const projectsData = res.data;
         // Fetch comment counts for each project
         const commentCountPromises = projectsData.map(project =>
-          axios.get(`/comments/${project.id}`)
+          axios.get(API_ROUTES.comments.getByProject(project.id))
             .then(r => Array.isArray(r.data) ? r.data.reduce((acc, c) => acc + 1 + (c.replies ? c.replies.length : 0), 0) : 0)
             .catch(() => 0)
         );
@@ -37,7 +37,7 @@ const GuestDashboard = () => {
         let bookmarkPromises = [];
         if (user) {
           bookmarkPromises = projectsData.map(project =>
-            axios.get(`/bookmarks/is-bookmarked/${project.id}`)
+            axios.get(API_ROUTES.bookmarks.getBookmarkState(project.id))
               .then(r => r.data.bookmarked)
               .catch(() => false)
           );
@@ -64,7 +64,7 @@ const GuestDashboard = () => {
 
   // Fetch counts on mount
     useEffect(() => {
-    axios.get(API_ROUTES.student.projectCount)
+    axios.get(API_ROUTES.projects.projectCount)
         .then(res => setCounts(res.data))
         .catch(() => setCounts({ all: 0, college: 0, senior_high: 0 }));
     }, [setCounts]);
@@ -121,9 +121,9 @@ const GuestDashboard = () => {
     }
     try {
       if (bookmarked) {
-        await axios.delete(`/bookmarks/${projectId}`);
+        await axios.delete(API_ROUTES.bookmarks.toggleBookmark(projectId));
       } else {
-        await axios.post(`/bookmarks/${projectId}`);
+        await axios.post(API_ROUTES.bookmarks.toggleBookmark(projectId));
       }
       // Update local state
       setProjects(prev => prev.map(p =>

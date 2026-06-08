@@ -15,7 +15,6 @@ const researchAdviserRoutes = (
     <Route path="repository" element={<ResearchAdviserDashboard section="repository" />} />
     <Route path="notifications" element={<NotificationPage />} />
     <Route path="notifications/:id" element={<NotificationDetails />} />
-    {/* <Route path="my-account" element={<MyAccount />} /> */}
     <Route path="projects/:id" element={<ProjectDetails />} />
   </>
 );

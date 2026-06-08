@@ -78,16 +78,16 @@ const ResearchAdviserDashboard = ({ section }) => {
         try {
             let res;
             if (section === "repository") {
-                res = await axios.get("/projects");
+                res = await axios.get(API_ROUTES.projects.getAllProjects);
             } else {
-                res = await axios.get("/projects/research-adviser/all");
+                res = await axios.get(API_ROUTES.research_adviser.getAllProjects);
             }
 
             const projectsData = res.data;
 
             const commentPromises = projectsData.map((project) =>
                 axios
-                    .get(`/comments/${project.id}`)
+                    .get(API_ROUTES.comments.getByProject(project.id))
                     .then((r) => {
                         if (!Array.isArray(r.data)) return 0;
                         return r.data.reduce(
