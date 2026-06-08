@@ -176,10 +176,6 @@ async function emitWorkflowRefresh(io, roles = [], project = null) {
   if (roles.includes("research_coordinator")) {
     io.to("role:research_coordinator").emit("workflow_refresh_research_coordinator", payload);
   }
-
-  if (roles.includes("admin")) {
-    io.to("role:admin").emit("workflow_refresh_admin", payload);
-  }
 }
 
 module.exports = {

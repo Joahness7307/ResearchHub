@@ -23,7 +23,7 @@ const StudentDashboard = () => {
 
     useEffect(() => {
         // Only fetch approved projects for the repository
-        axios.get(API_ROUTES.student.getAllProjects)
+        axios.get(API_ROUTES.projects.getAllProjects)
             .then(async res => {
                 const projectsData = res.data;
                 // Fetch comment counts for each project
@@ -63,7 +63,7 @@ const StudentDashboard = () => {
 
     // Fetch counts on mount
     useEffect(() => {
-    axios.get(API_ROUTES.student.projectCount)
+    axios.get(API_ROUTES.projects.projectCount)
         .then(res => setCounts(res.data))
         .catch(() => setCounts({ all: 0, college: 0, senior_high: 0 }));
     }, []);

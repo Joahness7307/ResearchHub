@@ -105,9 +105,9 @@ const ProjectDetails = () => {
         try {
             let url = "";
             if (user?.role === "research_adviser") { // FIX 1: Add optional chaining
-                url = API_ROUTES.projects.needRevision.adviser(id);
+                url = API_ROUTES.projects.needRevision.researchAdviser(id);
             } else if (user?.role === "research_coordinator") { // FIX 2: Add optional chaining
-                url = API_ROUTES.projects.needRevision.admin(id);
+                url = API_ROUTES.projects.needRevision.researchCoordinator(id);
             }
             const res = await axios.post(url, { reason });
             const newStatus =
@@ -155,7 +155,7 @@ const ProjectDetails = () => {
             const formData = new FormData();
             formData.append("document", reuploadFile);
             const res = await axios.put(
-                API_ROUTES.projects.reupload(project.id),
+                API_ROUTES.projects.reuploadProject(project.id),
                 formData,
                 { headers: { "Content-Type": "multipart/form-data" } }
             );

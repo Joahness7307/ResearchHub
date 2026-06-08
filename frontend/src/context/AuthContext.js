@@ -41,7 +41,7 @@ export const AuthProvider = ({ children }) => {
     // keep cached user visible while revalidating in background
     const revalidate = async () => {
       try {
-        const res = await axios.get(API_ROUTES.auth.profile); // axios will include token via request interceptor
+        const res = await axios.get(API_ROUTES.user.profile); // axios will include token via request interceptor
         if (!mounted) return;
         if (res?.data?.user) {
           setUser(res.data.user);

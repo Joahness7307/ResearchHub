@@ -28,7 +28,7 @@ const SeniorHighSignup = () => {
 
   // Fetch strands on mount
   useEffect(() => {
-    axios.get(API_ROUTES.academic.strands)
+    axios.get(API_ROUTES.academic.getStrands)
       .then(res => {
         setStrands(res.data);
         setLoading(false);

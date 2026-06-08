@@ -68,28 +68,28 @@ router.get(
 
 router.post(
   "/admin/approve/:id", 
-  authMiddleware(["admin", "research_coordinator"]), 
+  authMiddleware(["research_coordinator"]), 
   approveProject
 );
 
 // Edit metadata (title, abstract, etc.)
 router.put(
   "/admin/edit/:id", 
-  authMiddleware(["admin", "research_coordinator"]), 
+  authMiddleware(["admin"]), 
   editProjectMetadata
 );
 
 // Hide/Unpublish project
 router.patch(
   "/admin/hide/:id", 
-  authMiddleware(["admin", "research_coordinator"]), 
+  authMiddleware(["admin"]), 
   hideProject
 );
 
 // Delete/Archive project
 router.delete(
   "/admin/delete/:id", 
-  authMiddleware(["admin", "research_coordinator"]), 
+  authMiddleware(["admin"]), 
   deleteProject
 );
 
@@ -110,7 +110,7 @@ router.post(
 );
 router.post(
   "/admin/need-revision/:id", 
-  authMiddleware(["admin", "research_coordinator"]), 
+  authMiddleware(["research_coordinator"]), 
   needRevision
 );
 router.post(

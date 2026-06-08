@@ -51,8 +51,8 @@ function getNotificationConfig(user) {
   if (user.role === "research_adviser") {
     return {
       role: "research_adviser",
-      listUrl: API_ROUTES.notifications.adviserById(user.id),
-      markReadUrl: (id) => API_ROUTES.notifications.adviserMarkAsRead(id),
+      listUrl: API_ROUTES.notifications.researchAdviserById(user.id),
+      markReadUrl: (id) => API_ROUTES.notifications.researchAdviserMarkAsRead(id),
       notificationsPath: NOTIFICATION_PATH_BY_ROLE.research_adviser,
       socketChannel: `research_adviser_notify_${user.id}`,
       workflowSocketEvents: ["workflow_refresh_research_adviser"],
@@ -69,18 +69,6 @@ function getNotificationConfig(user) {
       socketChannel: `research_coordinator_notify_${user.id}`,
       workflowSocketEvents: ["workflow_refresh_research_coordinator"],
       socketRoom: { role: "research_coordinator", userId: user.id },
-    };
-  }
-
-  if (user.role === "admin") {
-    return {
-      role: "admin",
-      listUrl: API_ROUTES.notifications.adminById(user.id),
-      markReadUrl: (id) => API_ROUTES.notifications.adminMarkAsRead(id),
-      notificationsPath: NOTIFICATION_PATH_BY_ROLE.admin,
-      socketChannel: `admin_notify_${user.id}`,
-      workflowSocketEvents: ["workflow_refresh_admin"],
-      socketRoom: { role: "admin", userId: user.id },
     };
   }
 

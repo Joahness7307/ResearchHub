@@ -1,89 +1,103 @@
 export const API_ROUTES = {
+  // Auth routes
   auth: {
     login: "users/login",
     register: "users/register",
     forceChangePassword: "/users/force-change-password",
-    profile: "/users/profile",
   },
 
-  student: {
+  // User routes
+  user: {
+    profile: "/users/profile",
+    updateProfile: "/users/profile/update",
+    myProjects: "/users/my-projects",
+  },
+
+  // Academic routes
+  academic: {
+    getDepartments: "/academic/departments",
+    getStrands: "/academic/strands",
+    getBlocksByDepartment: (deptId) =>
+      `/academic/departments/${deptId}/blocks`,
+    getMajorsByDepartment: (deptId) =>
+      `/academic/departments/${deptId}/majors`,
+
+    createDepartment: `/academic/admin/departments`,
+    updateDepartment: (id) => `/academic/admin/departments/${id}`,
+    deleteDepartment: (id) => `/academic/admin/departments/${id}`,
+    createBlockByDepartment: (deptId) => `/academic/admin/departments/${deptId}/blocks`,
+    updateBlockByDepartment: (id) => `/academic/admin/blocks/${id}`,
+    deleteBlockByDepartment: (id) => `/academic/admin/blocks/${id}`,
+    createMajorByDepartment: (deptId) => `/academic/admin/departments/${deptId}/majors`,
+    updateMajorByDepartment: (id) => `/academic/admin/majors/${id}`,
+    deleteMajorByDepartment: (id) => `/academic/admin/majors/${id}`,
+    createStrand: `/academic/admin/strands`,
+    updateStrand: (id) => `/academic/admin/strands/${id}`,
+    deleteStrand: (id) => `/academic/admin/strands/${id}`,
+  },
+
+  // Admin routes
+  admin: {
+    // Users
+    getAllUsers: "users/all",
+    getUserCount: "users/count",
+    addUser: "users/add",
+    updateUser: (id) => `users/update/${id}`,
+    deleteUser: (id) => `users/delete/${id}`,
+    // Projects
+    getProjectCount: "/projects/admin/counts",
+    getAllProjects: "projects/admin/all",
+    deleteProject: (id) => `projects/admin/delete/${id}`
+  },
+
+  // Project routes
+  projects: {
     getAllProjects: "/projects",
     projectCount: "/projects/public/counts",
-  },
-
-  projects: {
     submit: "/projects/submit",
     getProject: (id) => `/projects/${id}`,
     adviserEndorse: (id) => `/projects/research-adviser/endorse/${id}`,
     needRevision: {
-      adviser: (id) => `/projects/research-adviser/need-revision/${id}`,
-      admin: (id) => `/projects/admin/need-revision/${id}`,
+      researchAdviser: (id) => `/projects/research-adviser/need-revision/${id}`,
+      researchCoordinator: (id) => `/projects/admin/need-revision/${id}`,
     },
     informStudent: (id) => `/projects/research-adviser/inform-student/${id}`,
-    reupload: (id) => `/projects/reupload/${id}`,
+    reuploadProject: (id) => `/projects/reupload/${id}`,
     approve: (id) => `/projects/admin/approve/${id}`
   },
 
+  // Comment routes
   comments: {
     getByProject: (projectId) => `/comments/${projectId}`
   },
 
+  // Bookmark routes
   bookmarks: {
     getBookmarkState: (projectId) => `/bookmarks/is-bookmarked/${projectId}`,
     toggleBookmark: (projectId) => `/bookmarks/${projectId}`,
-    getMyBookmarks: "/bookmarks/my"
+    getMyBookmarks: "/bookmarks/my",
   },
 
+  // Notification routes
   notifications: {
     student: "/notifications/student",
-    adminById: (id) => `/notifications/admin/${id}`,
     researchCoordinatorById: (id) => `/notifications/research-coordinator/${id}`,
-    adviserById: (id) => `/notifications/research-adviser/${id}`,
+    researchAdviserById: (id) => `/notifications/research-adviser/${id}`,
     projectTimeline: (projectId) => `/notifications/project/${projectId}/timeline`,
     studentMarkAsRead: (id) => `/notifications/student/${id}/read`,
     studentMarkAllAsRead: "/notifications/student/mark-all-read",
-    adviserMarkAsRead: (id) => `/notifications/research-adviser/${id}/read`,
+    researchAdviserMarkAsRead: (id) => `/notifications/research-adviser/${id}/read`,
     researchCoordinatorMarkAsRead: (id) => `/notifications/research-coordinator/${id}/read`,
-    adminMarkAsRead: (id) => `/notifications/admin/${id}/read`,
   },
 
-  admin: {
-    userCount: "users/count",
-    projectCount: "/projects/admin/counts",
-    allUsers: "users/all",
-    addUser: "users/add",
-    getAllProjects: "projects/admin/all",
-    updateUser: (id) => `users/update/${id}`,
-    deleteUser: (id) => `users/delete/${id}`,
-    deleteProject: (id) => `projects/admin/delete/${id}`,
-  },
-
+  // Research Coordinator routes
   research_coordinator: {
     getAllProjects: "projects/research-coordinator/all",
   },
 
+  // Research Adviser routes
   research_adviser: {
     getAllProjects: "projects/research-adviser/all",
   },
 
-  academic: {
-    departments: "/academic/departments",
-    strands: "/academic/strands",
-    blocks: (deptId) =>
-      `/academic/departments/${deptId}/blocks`,
-    majors: (deptId) =>
-      `/academic/departments/${deptId}/majors`,
-    createBlock: (deptId) => `/academic/admin/departments/${deptId}/blocks`,
-    updateBlock: (id) => `/academic/admin/blocks/${id}`,
-    deleteBlock: (id) => `/academic/admin/blocks/${id}`,
-    createMajor: (deptId) => `/academic/admin/departments/${deptId}/majors`,
-    updateMajor: (id) => `/academic/admin/majors/${id}`,
-    deleteMajor: (id) => `/academic/admin/majors/${id}`,
-    createStrand: `/academic/admin/strands`,
-    updateStrand: (id) => `/academic/admin/strands/${id}`,
-    deleteStrand: (id) => `/academic/admin/strands/${id}`,
-    createDepartment: `/academic/admin/departments`,
-    updateDepartment: (id) => `/academic/admin/departments/${id}`,
-    deleteDepartment: (id) => `/academic/admin/departments/${id}`,
-  }
 };
