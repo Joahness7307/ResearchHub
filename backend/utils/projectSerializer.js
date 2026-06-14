@@ -1,5 +1,5 @@
 const STUDENT_INTERNAL_STATUS_MAP = {
-  admin_revision: "endorsed",
+  coordinator_revision: "endorsed",
 };
 
 function serializeProjectForRole(project, role) {

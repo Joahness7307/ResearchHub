@@ -7,7 +7,7 @@ const { Op } = require("sequelize");
 require("dotenv").config();
 
 const STUDENT_INTERNAL_STATUS_MAP = {
-  admin_revision: "endorsed",
+  coordinator_revision: "endorsed",
 };
 
 function serializeProjectForStudent(project) {

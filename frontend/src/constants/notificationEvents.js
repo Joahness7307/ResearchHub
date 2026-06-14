@@ -4,6 +4,7 @@ export const NOTIFICATION_EVENT = {
   APPROVED: "approved",
   REVISION_REQUEST: "revision_request",
   REUPLOADED: "reuploaded",
+  ASSIGNED: "assigned",
   INFORMED_STUDENT: "informed_student",
   WORKFLOW_UPDATE: "workflow_update",
 };

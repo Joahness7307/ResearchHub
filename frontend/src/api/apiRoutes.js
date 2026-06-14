@@ -59,7 +59,7 @@ export const API_ROUTES = {
     adviserEndorse: (id) => `/projects/research-adviser/endorse/${id}`,
     needRevision: {
       researchAdviser: (id) => `/projects/research-adviser/need-revision/${id}`,
-      researchCoordinator: (id) => `/projects/admin/need-revision/${id}`,
+      researchCoordinator: (id) => `/projects/research-coordinator/need-revision/${id}`,
     },
     informStudent: (id) => `/projects/research-adviser/inform-student/${id}`,
     reuploadProject: (id) => `/projects/reupload/${id}`,
