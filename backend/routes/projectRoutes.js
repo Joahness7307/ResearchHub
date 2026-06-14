@@ -19,6 +19,7 @@ const { submitProject,
 
 const categories = require("../config/categories");
 const authMiddleware = require("../middlewares/authMiddleware");
+const ensureAdviserExists = require("../middlewares/ensureAdviserExists");
 const upload = require("../config/projectUpload");
 
 const router = express.Router();
@@ -32,8 +33,16 @@ router.get("/categories", (req, res) => {
 router.post(
   "/submit", 
   authMiddleware(["student"]), 
+  ensureAdviserExists,
   upload.single("document"), 
   submitProject
+);
+
+// Research adviser claims ownership of a project
+router.post(
+  "/research-adviser/claim/:id",
+  authMiddleware(["research_adviser"]),
+  require("../controllers/projectController").claimProject
 );
 
 // Anyone logged in can view repository
@@ -109,7 +118,7 @@ router.post(
   needRevision
 );
 router.post(
-  "/admin/need-revision/:id", 
+  "/research-coordinator/need-revision/:id", 
   authMiddleware(["research_coordinator"]), 
   needRevision
 );
