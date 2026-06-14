@@ -94,10 +94,33 @@ async function notifyProjectResearchAdvisers(io, {
   payload = {},
 }) {
 
+  // If project is already assigned to a single adviser, only notify that adviser
+  if (project.assigned_research_adviser_id) {
+    const adviser = await User.findByPk(project.assigned_research_adviser_id);
+    if (!adviser) return;
+
+    await createNotification({
+      transaction,
+      projectId: project.id,
+      researchAdviserId: adviser.id,
+      reason,
+      event_type,
+    });
+
+    emitResearchAdviser(io, adviser.id, {
+      type: event_type,
+      projectId: project.id,
+      title: project.title,
+      message: reason,
+      ...payload,
+    });
+
+    return;
+  }
+
+  // Unassigned: notify all relevant advisers
   const advisers = await getRelevantResearchAdvisers(project);
-
   for (const adviser of advisers) {
-
     await createNotification({
       transaction,
       projectId: project.id,
@@ -167,10 +190,15 @@ async function emitWorkflowRefresh(io, roles = [], project = null) {
   }
 
   if (roles.includes("research_adviser") && project) {
-    const advisers = await getRelevantResearchAdvisers(project);
-    advisers.forEach((adviser) => {
-      io.to(`research_adviser:${adviser.id}`).emit("workflow_refresh_research_adviser", payload);
-    });
+    // If assigned, refresh only assigned adviser's workflow room
+    if (project.assigned_research_adviser_id) {
+      io.to(`research_adviser:${project.assigned_research_adviser_id}`).emit("workflow_refresh_research_adviser", payload);
+    } else {
+      const advisers = await getRelevantResearchAdvisers(project);
+      advisers.forEach((adviser) => {
+        io.to(`research_adviser:${adviser.id}`).emit("workflow_refresh_research_adviser", payload);
+      });
+    }
   }
 
   if (roles.includes("research_coordinator")) {

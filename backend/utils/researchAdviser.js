@@ -37,4 +37,29 @@ async function getRelevantResearchAdvisers(project) {
 
 module.exports = {
   getRelevantResearchAdvisers,
+  async isAdviserRelevant(project, adviserId) {
+    if (!adviserId) return false;
+
+    // If project explicitly assigned to an adviser, only that adviser is relevant
+    if (project.research_adviser_id) {
+      return project.research_adviser_id === adviserId;
+    }
+
+    const where = {
+      id: adviserId,
+      role: "research_adviser",
+    };
+
+    if (project.department_id && project.strand_id) {
+      where.department_id = project.department_id;
+      where.strand_id = project.strand_id;
+    } else if (project.department_id) {
+      where.department_id = project.department_id;
+    } else if (project.strand_id) {
+      where.strand_id = project.strand_id;
+    }
+
+    const adviser = await User.findOne({ where });
+    return !!adviser;
+  },
 };

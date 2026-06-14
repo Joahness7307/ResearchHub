@@ -223,7 +223,7 @@ const ResearchCoordinatorDashboard = ({ section }) => {
     const pending = projects.filter((p) => p.status === "endorsed");
     const approved = projects.filter((p) => p.status === "approved");
     const revision = projects.filter(
-      (p) => p.status === "admin_revision" && p.last_updated_by_role === "research_coordinator"
+      (p) => p.status === "coordinator_revision" && p.last_updated_by_role === "research_coordinator"
     );
     const repository = approved;
 

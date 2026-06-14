@@ -111,11 +111,16 @@ const ResearchAdviserDashboard = ({ section }) => {
                 Promise.all(bookmarkPromises),
             ]);
 
-            const projectsWithData = projectsData.map((project, idx) => ({
+            let projectsWithData = projectsData.map((project, idx) => ({
                 ...project,
                 comment_count: commentCounts[idx],
                 bookmarked: bookmarkStates[idx],
             }));
+
+            // Advisers should only see unclaimed projects or projects they own
+            if (user?.role === "research_adviser") {
+                projectsWithData = projectsWithData.filter(p => p.assigned_research_adviser_id == null || p.assigned_research_adviser_id === user.id);
+            }
 
             setProjects(projectsWithData);
         } catch (err) {
@@ -123,6 +128,21 @@ const ResearchAdviserDashboard = ({ section }) => {
             setProjects([]);
         }
     }, [user, section]);
+
+    const handleClaimProject = async (e, projectId) => {
+        e.stopPropagation();
+        if (!user) return alert("You must be logged in to claim a project.");
+        try {
+            await axios.post(`/projects/research-adviser/claim/${projectId}`);
+            // Refresh list
+            await fetchProjects();
+            // notify other components
+            window.dispatchEvent(new CustomEvent('workflow-projects-updated', { detail: { projectId }}));
+        } catch (err) {
+            console.error("Claim project failed:", err);
+            alert(err?.response?.data?.message || "Failed to claim project.");
+        }
+    };
 
     useEffect(() => {
         fetchProjects();
@@ -137,7 +157,7 @@ const ResearchAdviserDashboard = ({ section }) => {
     const endorsed = projects.filter(p => p.status === "endorsed");
     const approved = projects.filter(p => p.status === "approved");
     const needRevision = projects.filter(p => p.status === "need_revision");
-    const adminRevision = projects.filter(p => p.status === "admin_revision");
+    const coordinatorRevision = projects.filter(p => p.status === "coordinator_revision");
     const repository = approved;
 
     let projectsToFilter = [];
@@ -150,7 +170,7 @@ const ResearchAdviserDashboard = ({ section }) => {
     } else if (section === "repository") {
         projectsToFilter = repository;
     } else if (section === "request-for-revision") {
-        projectsToFilter = selectedRevisionCard === "adviser" ? needRevision : adminRevision;
+        projectsToFilter = selectedRevisionCard === "adviser" ? needRevision : coordinatorRevision;
     }
 
     const filteredProjects = projectsToFilter.filter(project => {
@@ -230,6 +250,11 @@ const ResearchAdviserDashboard = ({ section }) => {
                             <b>Abstract:</b> {project.abstract?.length > 120 ? project.abstract.slice(0, 120) + "..." : project.abstract}
                         </div>
 
+                        {/* Claim button for eligible advisers (only show on pending and unclaimed) */}
+                        {user?.role === "research_adviser" && project.status === "pending" && !project.assigned_research_adviser_id && (
+                            <button className="admin-btn" style={{ position: 'absolute', right: 110, top: 12 }} onClick={(e) => handleClaimProject(e, project.id)}>Claim</button>
+                        )}
+
                         {/* Comment Icon + Count - Bottom Right (Only on approved/repository) */}
                         {(section === "approved" || section === "repository") && (
                         <div className="comment-icon-container">
@@ -259,7 +284,7 @@ const ResearchAdviserDashboard = ({ section }) => {
                     </div>
                     <div className={`dashboard-card${selectedRevisionCard === "admin" ? " active" : ""}`} style={{ cursor: "pointer" }} onClick={() => setSelectedRevisionCard("admin")}>
                         <h3>Research Coordinator Request Revision</h3>
-                        <div className="dashboard-card-count">{adminRevision.length}</div>
+                        <div className="dashboard-card-count">{coordinatorRevision.length}</div>
                     </div>
                 </div>
                 <SearchInput value={searchTerm} onChange={handleSearchChange} />
@@ -275,7 +300,7 @@ const ResearchAdviserDashboard = ({ section }) => {
         const pendingCount = pending.length;
         const endorsedCount = endorsed.length;
         const approvedCount = approved.length;
-        const revisionCount = needRevision.length + adminRevision.length;
+        const revisionCount = needRevision.length + coordinatorRevision.length;
         const latestPending = pending.slice(0, 3);
 
         // ✅ FIXED: Filter latestPending by searchTerm

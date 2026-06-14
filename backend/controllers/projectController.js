@@ -13,9 +13,9 @@ const {
   emitWorkflowRefresh,
 } = require("../services/notificationService");
 const { isEligibleResearchStudent } = require("../utils/studentEligibility");
-const { getRelevantResearchAdvisers } = require("../utils/researchAdviser");
+const { getRelevantResearchAdvisers, isAdviserRelevant } = require("../utils/researchAdviser");
 const { serializeProjectForRole } = require("../utils/projectSerializer");
-const { validateTransition } = require("../services/workflowService");
+const { validateTransition, canTransition } = require("../services/workflowService");
 
 function validateResearchAdviserAccess(project, adviser) {
 
@@ -198,10 +198,10 @@ exports.getProjectCounts = async (req, res) => {
     // 3. Calculate the total and group the revision statuses
     const totalProjects = counts.reduce((sum, curr) => sum + parseInt(curr.dataValues.count, 10), 0);
 
-    // Combine 'need_revision', 'admin_revision', and potentially 'rejected' into 'revision'
+    // Combine 'need_revision', 'coordinator_revision', and potentially 'rejected' into 'revision'
     const revisionCount = 
       (countMap['need_revision'] || 0) + 
-      (countMap['admin_revision'] || 0) +
+      (countMap['coordinator_revision'] || 0) +
       (countMap['rejected'] || 0); // Include 'rejected' just in case it's still used
 
     // 4. Map the final desired status names for the frontend
@@ -225,24 +225,41 @@ exports.getAllProjects = async (req, res) => {
   try {
     const projects = await Project.findAll({
       where: { status: "approved" },
-      include: [{ model: User, as: "submitter", attributes: ["department_id", "year_level", "strand_id", "grade_level"] }]
+      include: [
+        { model: User, as: "submitter", attributes: ["id", "full_name", "email", "role"] },
+        { model: User, as: "assignedResearchAdviser", attributes: ["id", "full_name", "email"] }
+      ]
     });
     res.json(projects);
   } catch (error) {
-    console.log("getAllProjects error:", error);
-    res.status(500).json({ error: error.message });
-  }
-};
+      res.status(500).json({ error: error.message });
+    }
+  };
 
-// Get single project by ID (for project details page)
 exports.getSingleProject = async (req, res) => {
   try {
     const { id } = req.params;
     const project = await Project.findByPk(id, {
-      include: [{ model: User, as: "submitter", attributes: ["id", "full_name", "email", "role"] }]
+      include: [
+        { model: User, as: "submitter", attributes: ["id", "full_name", "email", "role"] },
+        { model: User, as: "assignedResearchAdviser", attributes: ["id", "full_name", "email"] }
+      ]
     });
+
     if (!project) return res.status(404).json({ message: "Project not found" });
-    res.json(serializeProjectForRole(project, req.user.role));
+
+    // Build response payload for clients — always return project data but include
+    // assignment metadata so the frontend can render a read-only view for non-assigned advisers.
+    const data = serializeProjectForRole(project, req.user?.role);
+
+    // Attach assignment metadata for client-side UI decisions
+    data.assigned_research_adviser_id = project.assigned_research_adviser_id || null;
+    data.claimed_at = project.claimed_at || null;
+    data.assignedResearchAdviser = project.assignedResearchAdviser ? project.assignedResearchAdviser.toJSON() : null;
+    data.current_user_is_owner = !!(req.user && req.user.role === "research_adviser" && project.assigned_research_adviser_id === req.user.id);
+    data.current_user_is_restricted_adviser = !!(req.user && req.user.role === "research_adviser" && project.assigned_research_adviser_id && project.assigned_research_adviser_id !== req.user.id);
+
+    return res.json(data);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -255,7 +272,7 @@ exports.getResearchAdviserProjects = async (req, res) => {
 
     // Build query based on adviser's affiliation
     const where = {
-      status: { [Op.in]: ["pending", "approved", "need_revision", "endorsed", "admin_revision"] } // add statuses you want visible
+      status: { [Op.in]: ["pending", "approved", "need_revision", "endorsed", "coordinator_revision"] } // add statuses you want visible
     };
 
     if (user.department_id) {
@@ -282,6 +299,126 @@ exports.getResearchAdviserProjects = async (req, res) => {
   } catch (error) {
     console.error("Adviser projects error:", error);
     res.status(500).json({ error: error.message });
+  }
+};
+
+// Claim project - research adviser claims ownership
+exports.claimProject = async (req, res) => {
+  const transaction = await sequelize.transaction();
+  try {
+    const adviser = req.user;
+    const { id } = req.params;
+
+    const project = await Project.findByPk(id, {
+      transaction,
+      lock: transaction.LOCK.UPDATE,
+    });
+
+    if (!project) {
+      await transaction.rollback();
+      return res.status(404).json({ message: "Project not found" });
+    }
+
+    // Prevent double-claim
+    if (project.assigned_research_adviser_id) {
+      await transaction.rollback();
+      return res.status(409).json({ message: "Project already claimed" });
+    }
+
+    // Validate adviser eligibility for this project
+    const relevant = await isAdviserRelevant(project, adviser.id);
+    if (!relevant) {
+      await transaction.rollback();
+      return res.status(403).json({ message: "You are not eligible to claim this project" });
+    }
+
+    // Assign ownership
+    await project.update(
+      {
+        assigned_research_adviser_id: adviser.id,
+        claimed_at: new Date(),
+        last_updated_by_role: adviser.role,
+      },
+      { transaction }
+    );
+
+    const io = req.app.get("io");
+
+    // Resolve previous pending notifications for other advisers on this project
+    await Notification.update(
+      { isRead: true },
+      {
+        where: {
+          projectId: project.id,
+          researchAdviserId: { [Op.ne]: adviser.id },
+        },
+        transaction,
+      }
+    );
+
+    // Notify other advisers that this project is assigned
+    const otherAdvisers = await getRelevantResearchAdvisers(project);
+    const others = otherAdvisers.filter(a => a.id !== adviser.id);
+
+    for (const other of others) {
+      await Notification.create(
+        {
+          projectId: project.id,
+          researchAdviserId: other.id,
+          reason: `Project "${project.title}" has been assigned to ${adviser.full_name}.`,
+          event_type: NOTIFICATION_EVENT.ASSIGNED,
+          isRead: false,
+        },
+        { transaction }
+      );
+
+      // emit to adviser's socket room to update in real-time (use existing room + event naming)
+      try {
+        io.to(`research_adviser:${other.id}`).emit(`research_adviser_notify_${other.id}`, {
+          type: NOTIFICATION_EVENT.ASSIGNED,
+          projectId: project.id,
+          title: project.title,
+          message: `Project \"${project.title}\" has been assigned to ${adviser.full_name}.`,
+          assignedResearchAdviserId: adviser.id,
+          assignedResearchAdviserName: adviser.full_name,
+        });
+      } catch (e) {
+        // ignore socket failures
+      }
+    }
+
+    // Inform the assigned adviser as well (optional notify)
+    await Notification.create(
+      {
+        projectId: project.id,
+        researchAdviserId: adviser.id,
+        reason: `You have claimed project "${project.title}".`,
+        event_type: NOTIFICATION_EVENT.ASSIGNED,
+        isRead: false,
+      },
+      { transaction }
+    );
+      try {
+        io.to(`research_adviser:${adviser.id}`).emit(`research_adviser_notify_${adviser.id}`, {
+          type: NOTIFICATION_EVENT.ASSIGNED,
+          projectId: project.id,
+          title: project.title,
+          message: `You have claimed project \"${project.title}\".`,
+          assignedResearchAdviserId: adviser.id,
+          assignedResearchAdviserName: adviser.full_name,
+        });
+      } catch (e) {}
+
+    await transaction.commit();
+
+    // Broadcast a workflow refresh so dashboards update instantly
+    await emitWorkflowRefresh(io, ["research_adviser"], project);
+
+    return res.json({ message: "Project claimed successfully.", project: await project.reload() });
+  } catch (error) {
+    if (!transaction.finished) await transaction.rollback();
+    console.error("claimProject error:", error);
+    return res.status(500).json({ message: "Failed to claim project.", error: error.message });
   }
 };
 
@@ -327,6 +464,12 @@ exports.endorseProject = async (req, res) => {
     if (!project) {
       await transaction.rollback();
       return res.status(404).json({ message: "Project not found" });
+    }
+
+    // Prevent non-assigned advisers from mutating a claimed project
+    if (project.assigned_research_adviser_id && project.assigned_research_adviser_id !== req.user.id) {
+      await transaction.rollback();
+      return res.status(403).json({ message: "This project is assigned to another research adviser." });
     }
 
     if (!validateResearchAdviserAccess(project, req.user)) {
@@ -450,35 +593,45 @@ exports.needRevision = async (req, res) => {
       });
     }
 
-    if (
-      user.role === "research_adviser" &&
-      !validateResearchAdviserAccess(project, user)
-    ) {
-      await transaction.rollback();
+    // Authorization checks - only apply adviser-specific checks to advisers
+    console.debug("[needRevision] user.role=", user.role, "user.id=", user.id);
+    console.debug("[needRevision] project.id=", id, "project.status=", project.status, "assigned_research_adviser_id=", project.assigned_research_adviser_id, "research_adviser_id=", project.research_adviser_id);
 
-      return res.status(403).json({
-        message: "Unauthorized adviser access",
-      });
+    if (user.role === "research_adviser") {
+      const assignedMismatch = project.assigned_research_adviser_id && project.assigned_research_adviser_id !== user.id;
+      const accessAllowed = validateResearchAdviserAccess(project, user);
+      console.debug("[needRevision] adviserChecks assignedMismatch=", assignedMismatch, "accessAllowed=", accessAllowed);
+
+      if (assignedMismatch || !accessAllowed) {
+        await transaction.rollback();
+        console.debug("[needRevision] returning 403 for adviser unauthorized");
+        return res.status(403).json({
+          message: "Unauthorized adviser access",
+        });
+      }
     }
 
     const io = req.app.get("io");
 
     // =========================================================
     // RESEARCH COORDINATOR
-    // endorsed -> admin_revision
+    // endorsed -> coordinator_revision
     // =========================================================
-    if (
-      user.role === "research_coordinator"
-    ) {
+    if (user.role === "research_coordinator") {
+      console.debug("[needRevision] research_coordinator attempting coordinator_revision", {
+        projectStatus: project.status,
+        targetStatus: PROJECT_STATUS.COORDINATOR_REVISION,
+        canTransition: canTransition(project.status, PROJECT_STATUS.COORDINATOR_REVISION),
+        projectId: project.id,
+        coordinatorId: user.id,
+        submitterId: submitter?.id,
+      });
 
-      validateTransition(
-        project.status,
-        PROJECT_STATUS.ADMIN_REVISION
-      );
+      validateTransition(project.status, PROJECT_STATUS.COORDINATOR_REVISION);
 
       await project.update(
         {
-          status: PROJECT_STATUS.ADMIN_REVISION,
+          status: PROJECT_STATUS.COORDINATOR_REVISION,
           rejection_reason: reason,
           last_updated_by_role: user.role,
         },
@@ -492,7 +645,7 @@ exports.needRevision = async (req, res) => {
         event_type: NOTIFICATION_EVENT.REVISION_REQUEST,
         reason: `Research Coordinator requested revision for "${project.title}". Reason: ${reason}`,
         payload: {
-          newStatus: PROJECT_STATUS.ADMIN_REVISION,
+          newStatus: PROJECT_STATUS.COORDINATOR_REVISION,
         },
       });
 
@@ -503,17 +656,13 @@ exports.needRevision = async (req, res) => {
         event_type: NOTIFICATION_EVENT.REVISION_REQUEST,
         reason: `Revision requested for "${project.title}".`,
         payload: {
-          newStatus: PROJECT_STATUS.ADMIN_REVISION,
+          newStatus: PROJECT_STATUS.COORDINATOR_REVISION,
         },
       });
 
       await transaction.commit();
 
-      await emitWorkflowRefresh(io, [
-        "student",
-        "research_adviser",
-        "research_coordinator"
-      ], project);
+      await emitWorkflowRefresh(io, ["student", "research_adviser", "research_coordinator"], project);
 
       return res.json({
         message: "Revision request sent to advisers.",
@@ -599,7 +748,7 @@ exports.needRevision = async (req, res) => {
   }
 };
 
-// Adviser informs student after Research Coordinator requested revision (admin_revision → need_revision)
+// Adviser informs student after Research Coordinator requested revision (coordinator_revision → need_revision)
 exports.informStudentOfRevision = async (req, res) => {
   const transaction = await sequelize.transaction();
 
@@ -626,7 +775,7 @@ exports.informStudentOfRevision = async (req, res) => {
       });
     }
 
-    if (!validateResearchAdviserAccess(project, req.user)) {
+    if ((project.assigned_research_adviser_id && project.assigned_research_adviser_id !== req.user.id) || !validateResearchAdviserAccess(project, req.user)) {
       await transaction.rollback();
 
       return res.status(403).json({

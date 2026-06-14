@@ -100,6 +100,22 @@ const ProjectDetails = () => {
         setShowRevisionModal(true);
     };
 
+    const handleClaimProject = async () => {
+        if (!user) return alert("Please log in to claim projects.");
+        try {
+            setActionLoading(true);
+            await axios.post(`/projects/research-adviser/claim/${project.id}`);
+            const res = await axios.get(API_ROUTES.projects.getProject(id));
+            setProject(res.data);
+            dispatchWorkflowRefresh({ projectId: project.id, status: project.status });
+            alert("Project claimed successfully.");
+        } catch (err) {
+            alert(err?.response?.data?.message || "Failed to claim project.");
+        } finally {
+            setActionLoading(false);
+        }
+    };
+
     const submitRevisionReason = async (reason) => {
         setActionLoading(true);
         try {
@@ -111,7 +127,7 @@ const ProjectDetails = () => {
             }
             const res = await axios.post(url, { reason });
             const newStatus =
-                user?.role === "research_coordinator" ? "admin_revision" : "need_revision";
+                user?.role === "research_coordinator" ? "coordinator_revision" : "need_revision";
             const updated =
                 res.data?.project || {
                     ...project,
@@ -276,20 +292,29 @@ const ProjectDetails = () => {
                     <p><b>Authors:</b> {project.authors}</p>
                 </div>
                 <p className="abstract-content"><b>Abstract:</b> {project.abstract}</p>
-                {project.status === "need_revision" && project.rejection_reason && (
-                    <div className="revision-required">
-                        <b>Revision Required:</b> {project.rejection_reason}
-                    </div>
-                )}
+                {/* Revision reasons are private: only visible to the assigned adviser, the submitter, coordinators and admins */}
+                {(() => {
+                    const isOwner = user?.role === "research_adviser" && project.assigned_research_adviser_id === user?.id;
+                    const isSubmitter = user?.id && project.submitted_by === user?.id;
+                    const isCoordinatorOrAdmin = user?.role === "research_coordinator" || user?.role === "admin";
+                    const canViewRevision = isOwner || isSubmitter || isCoordinatorOrAdmin;
 
-                {project.status === "admin_revision" &&
-                    project.rejection_reason &&
-                    user?.role !== "student" &&
-                    user?.role !== "guest" && (
-                    <div className="revision-required" style={{ background: "#fff8f0", border: "1px solid #fbbf24", color: "#b33834", margin: "1rem 0", padding: "1rem", borderRadius: "8px" }}>
-                        <b>Research Coordinator Revision Reason:</b> {project.rejection_reason}
-                    </div>
-                )}
+                    return (
+                        <>
+                            {project.status === "need_revision" && project.rejection_reason && canViewRevision && (
+                                <div className="revision-required">
+                                    <b>Revision Required:</b> {project.rejection_reason}
+                                </div>
+                            )}
+
+                            {project.status === "coordinator_revision" && project.rejection_reason && canViewRevision && (
+                                <div className="revision-required" style={{ background: "#fff8f0", border: "1px solid #fbbf24", color: "#b33834", margin: "1rem 0", padding: "1rem", borderRadius: "8px" }}>
+                                    <b>Coordinator Revision Reason:</b> {project.rejection_reason}
+                                </div>
+                            )}
+                        </>
+                    );
+                })()}
                 
                 {/* FIX 4: Add optional chaining to user.role and user.id */}
                 {user?.role === "student" &&
@@ -381,7 +406,8 @@ const ProjectDetails = () => {
                 )}
                 {/* FIX 5: Add optional chaining to user.role */}
                 {user?.role === "research_adviser" &&
-                    project.status === "admin_revision" && (
+                    project.status === "coordinator_revision" &&
+                    project.assigned_research_adviser_id === user.id && (
                         <button
                             className="inform-student-btn"
                             onClick={handleInformStudent}
@@ -389,6 +415,19 @@ const ProjectDetails = () => {
                             Inform Student
                         </button>
                     )}
+
+                {project.current_user_is_restricted_adviser && (
+                    <div style={{ background: '#fff4e6', border: '1px solid #ffd8a8', padding: '1rem', borderRadius: 8, marginBottom: '1rem' }}>
+                        <div style={{ fontWeight: 700, marginBottom: 6 }}>This project is assigned to another adviser.</div>
+                        <div style={{ marginBottom: 8 }}>You have read-only access.</div>
+                        <div style={{ marginTop: 8 }}>
+                            <div><b>Status:</b> {project.status?.replace(/_/g, ' ')}</div>
+                            <div><b>Assigned Adviser:</b> {project.assignedResearchAdviser?.full_name || '—'}</div>
+                            <div><b>Claimed:</b> {project.claimed_at ? new Date(project.claimed_at).toLocaleString() : '—'}</div>
+                        </div>
+                    </div>
+                )}
+
                 <div className="pdf-actions-row">
                     <div className="details-actions">
                         <a href={fullDocumentPath} target="_blank" rel="noopener noreferrer" className="view-pdf-btn">
@@ -408,25 +447,41 @@ const ProjectDetails = () => {
                 {/* FIX 6: Add optional chaining to user.role */}
                 {user?.role === "research_adviser" && project.status === "pending" && (
                     <div className="adviser-actions">
-                        <button
-                            onClick={handleEndorse}
-                            disabled={actionLoading}
-                            className="endorse-btn"
-                        >
-                            {actionLoading ? "Processing..." : "Endorse"}
-                        </button>
-                        <button
-                            onClick={handleNeedRevision}
-                            disabled={actionLoading}
-                            className="revision-btn"
-                        >
-                            {actionLoading ? "Processing..." : "Request Revision"}
-                        </button>
+                        {!project.assigned_research_adviser_id && (
+                            <button
+                                onClick={handleClaimProject}
+                                disabled={actionLoading}
+                                className="claim-btn"
+                                style={{ marginRight: 12 }}
+                            >
+                                {actionLoading ? "Processing..." : "Claim"}
+                            </button>
+                        )}
+                        
+                        {project.assigned_research_adviser_id === user?.id && (
+                            <>
+                                <button
+                                    onClick={handleEndorse}
+                                    disabled={actionLoading}
+                                    className="endorse-btn"
+                                >
+                                    {actionLoading ? "Processing..." : "Endorse"}
+                                </button>
+                                <button
+                                    onClick={handleNeedRevision}
+                                    disabled={actionLoading}
+                                    className="revision-btn"
+                                >
+                                    {actionLoading ? "Processing..." : "Request Revision"}
+                                </button>
+                            </>
+                        )}
+                    
                     </div>
                 )}
 
                     {/* FIX 7: Add optional chaining to user.role */}
-                    {user?.role === "research_coordinator" && project.status === "endorsed" && (
+                    {user?.role === "research_coordinator" && project.status === "endorsed" && !project.assigned_research_coordinator_id && (
                         <div className="adviser-actions">
                             <button
                                 onClick={async () => {
@@ -571,7 +626,7 @@ const ProjectDetails = () => {
                 </div>
                 ) : (
                 // Optional: Show a message for non-approved projects
-                project.status !== "approved" && ["pending", "endorsed", "need_revision", "admin_revision"].includes(project.status) && (
+                project.status !== "approved" && ["pending", "endorsed", "need_revision", "coordinator_revision"].includes(project.status) && (
                     <div className="comments-section" style={{ opacity: 0.6, pointerEvents: "none" }}>
                     <p style={{ color: "#888", fontStyle: "italic", textAlign: "center", padding: "2rem 0" }}>
                         Comments are only available for approved projects.
