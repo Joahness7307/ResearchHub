@@ -118,8 +118,11 @@ const ResearchAdviserDashboard = ({ section }) => {
             }));
 
             // Advisers should only see unclaimed projects or projects they own
-            if (user?.role === "research_adviser") {
-                projectsWithData = projectsWithData.filter(p => p.assigned_research_adviser_id == null || p.assigned_research_adviser_id === user.id);
+            // for adviser-scoped views (NOT the public repository).
+            if (user?.role === "research_adviser" && section !== "repository") {
+                projectsWithData = projectsWithData.filter(
+                    (p) => p.assigned_research_adviser_id == null || p.assigned_research_adviser_id === user.id
+                );
             }
 
             setProjects(projectsWithData);
