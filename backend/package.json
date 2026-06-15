@@ -4,9 +4,18 @@
   "main": "index.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "nodemon server.js",
-    "migrate": "npx sequelize-cli db:migrate --env production",
-    "seed": "npx sequelize-cli db:seed:all",
+
+    "dev":        "nodemon --env-file=.env.local       server.js",
+    "dev:branch": "nodemon --env-file=.env.development server.js",
+    "dev:prod":   "nodemon --env-file=.env.production  server.js",
+
+    "migrate":        "dotenv -e .env.local       -- sequelize-cli db:migrate",
+    "migrate:branch": "dotenv -e .env.development -- sequelize-cli db:migrate",
+    "migrate:prod":   "dotenv -e .env.production  -- sequelize-cli db:migrate",
+
+    "seed":      "dotenv -e .env.local      -- sequelize-cli db:seed:all",
+    "seed:prod": "dotenv -e .env.production -- sequelize-cli db:seed:all",
+
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -31,6 +40,7 @@
     "socket.io": "^4.8.1"
   },
   "devDependencies": {
+    "dotenv-cli": "^10.0.0",
     "nodemon": "^3.1.9",
     "sequelize-cli": "^6.6.2"
   }

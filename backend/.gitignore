@@ -6,9 +6,12 @@ dist/
 build/
 *.tsbuildinfo
 
-# Local DB or config
+# Environment files & config — never commit these
 .env
 .env.local
+.env.development
+.env.production
+.env.*
 config/*.local.json
 
 # Nodemon / PM2
