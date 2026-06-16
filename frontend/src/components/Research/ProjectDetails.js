@@ -5,6 +5,8 @@ import { useParams, useNavigate } from "react-router-dom";
 import { AuthContext } from "../../context/AuthContext";
 import { dispatchWorkflowRefresh } from "../../utils/workflowEvents";
 import RevisionReasonModal from "../RevisionReasonModal";
+import ActionButton from "../common/ActionButton";
+import ActionGroup from "../common/ActionGroup";
 import "./ProjectDetails.css";
 import categoryColors from "../../constants/categoryColors";
 import bookmarkIcon from "../../assets/icons/bookmark-icon.png";
@@ -292,6 +294,24 @@ const ProjectDetails = () => {
                     <p><b>Authors:</b> {project.authors}</p>
                 </div>
                 <p className="abstract-content"><b>Abstract:</b> {project.abstract}</p>
+
+                <div className="pdf-actions-row">
+                    <div className="details-actions">
+                        <a href={fullDocumentPath} target="_blank" rel="noopener noreferrer" className="view-pdf-btn">
+                            View PDF
+                        </a>
+                        <a
+                            href={`${process.env.REACT_APP_BACKEND_URL}/api/projects/download/${project.id}`}
+                            className="download-pdf-btn"
+                        >
+                            Download PDF
+                        </a>
+                    </div>
+                    <span className="submission-date">
+                        Uploaded: {new Date(project.created_at).toLocaleDateString()}
+                    </span>
+                </div>
+
                 {/* Revision reasons are private: only visible to the assigned adviser, the submitter, coordinators and admins */}
                 {(() => {
                     const isOwner = user?.role === "research_adviser" && project.assigned_research_adviser_id === user?.id;
@@ -320,12 +340,9 @@ const ProjectDetails = () => {
                 {user?.role === "student" &&
                     project.status === "need_revision" &&
                     project.submitted_by === user?.id && (
-                        <button
-                            className="reupload-btn"
-                            onClick={() => setShowReuploadModal(true)}
-                        >
-                            Reupload Project
-                        </button>
+                        <ActionButton onClick={() => setShowReuploadModal(true)} variant="primary">
+                            Reupload
+                        </ActionButton>
                     )}
                 {showReuploadModal && (
                     <div
@@ -368,39 +385,14 @@ const ProjectDetails = () => {
                                     width: "100%"
                                 }}
                             />
-                            <div style={{ display: "flex", gap: "1rem", justifyContent: "center", marginTop: "1.5rem" }}>
-                                <button
-                                    onClick={handleReupload}
-                                    style={{
-                                        background: "#3a3e92",
-                                        color: "#fff",
-                                        border: "none",
-                                        borderRadius: "8px",
-                                        padding: "0.7rem 1.5rem",
-                                        fontWeight: 600,
-                                        fontSize: "1rem",
-                                        cursor: "pointer",
-                                        boxShadow: "0 2px 8px rgba(37,99,235,0.07)"
-                                    }}
-                                >
-                                    Submit
-                                </button>
-                                <button
-                                    onClick={() => setShowReuploadModal(false)}
-                                    style={{
-                                        background: "#b33834",
-                                        color: "#fff",
-                                        border: "none",
-                                        borderRadius: "8px",
-                                        padding: "0.7rem 1.5rem",
-                                        fontWeight: 600,
-                                        fontSize: "1rem",
-                                        cursor: "pointer"
-                                    }}
-                                >
-                                    Cancel
-                                </button>
-                            </div>
+                            <ActionGroup style={{ justifyContent: "center", marginTop: "1.5rem" }}>
+                              <ActionButton onClick={handleReupload} variant="primary" loading={actionLoading}>
+                                Submit
+                              </ActionButton>
+                              <ActionButton onClick={() => setShowReuploadModal(false)} variant="danger">
+                                Cancel
+                              </ActionButton>
+                            </ActionGroup>
                         </div>
                     </div>
                 )}
@@ -408,12 +400,9 @@ const ProjectDetails = () => {
                 {user?.role === "research_adviser" &&
                     project.status === "coordinator_revision" &&
                     project.assigned_research_adviser_id === user.id && (
-                        <button
-                            className="inform-student-btn"
-                            onClick={handleInformStudent}
-                        >
+                        <ActionButton onClick={handleInformStudent} variant="primary" loading={actionLoading}>
                             Inform Student
-                        </button>
+                        </ActionButton>
                     )}
 
                 {project.current_user_is_restricted_adviser && (
@@ -428,62 +417,32 @@ const ProjectDetails = () => {
                     </div>
                 )}
 
-                <div className="pdf-actions-row">
-                    <div className="details-actions">
-                        <a href={fullDocumentPath} target="_blank" rel="noopener noreferrer" className="view-pdf-btn">
-                            View PDF
-                        </a>
-                        <a
-                            href={`${process.env.REACT_APP_BACKEND_URL}/api/projects/download/${project.id}`}
-                            className="download-pdf-btn"
-                        >
-                            Download PDF
-                        </a>
-                    </div>
-                    <span className="submission-date">
-                        Uploaded: {new Date(project.created_at).toLocaleDateString()}
-                    </span>
-                </div>
                 {/* FIX 6: Add optional chaining to user.role */}
                 {user?.role === "research_adviser" && project.status === "pending" && (
-                    <div className="adviser-actions">
+                    <ActionGroup className="adviser-actions">
                         {!project.assigned_research_adviser_id && (
-                            <button
-                                onClick={handleClaimProject}
-                                disabled={actionLoading}
-                                className="claim-btn"
-                                style={{ marginRight: 12 }}
-                            >
-                                {actionLoading ? "Processing..." : "Claim"}
-                            </button>
+                            <ActionButton onClick={handleClaimProject} variant="primary" loading={actionLoading}>
+                                Claim
+                            </ActionButton>
                         )}
-                        
+
                         {project.assigned_research_adviser_id === user?.id && (
                             <>
-                                <button
-                                    onClick={handleEndorse}
-                                    disabled={actionLoading}
-                                    className="endorse-btn"
-                                >
-                                    {actionLoading ? "Processing..." : "Endorse"}
-                                </button>
-                                <button
-                                    onClick={handleNeedRevision}
-                                    disabled={actionLoading}
-                                    className="revision-btn"
-                                >
-                                    {actionLoading ? "Processing..." : "Request Revision"}
-                                </button>
+                                <ActionButton onClick={handleEndorse} variant="primary" loading={actionLoading}>
+                                    Endorse
+                                </ActionButton>
+                                <ActionButton onClick={handleNeedRevision} variant="secondary" loading={actionLoading}>
+                                    Request Revision
+                                </ActionButton>
                             </>
                         )}
-                    
-                    </div>
+                    </ActionGroup>
                 )}
 
                     {/* FIX 7: Add optional chaining to user.role */}
                     {user?.role === "research_coordinator" && project.status === "endorsed" && !project.assigned_research_coordinator_id && (
-                        <div className="adviser-actions">
-                            <button
+                        <ActionGroup className="adviser-actions">
+                            <ActionButton
                                 onClick={async () => {
                                     setActionLoading(true);
                                     try {
@@ -506,19 +465,15 @@ const ProjectDetails = () => {
                                     }
                                     setActionLoading(false);
                                 }}
-                                disabled={actionLoading}
-                                className="endorse-btn"
+                                loading={actionLoading}
+                                variant="primary"
                             >
-                                {actionLoading ? "Processing..." : "Approve"}
-                            </button>
-                            <button
-                                onClick={() => setShowRevisionModal(true)}
-                                disabled={actionLoading}
-                                className="revision-btn"
-                            >
-                                {actionLoading ? "Processing..." : "Request Revision"}
-                            </button>
-                        </div>
+                                Approve
+                            </ActionButton>
+                            <ActionButton onClick={() => setShowRevisionModal(true)} variant="secondary" loading={actionLoading}>
+                                Request Revision
+                            </ActionButton>
+                        </ActionGroup>
                     )}
                 </div>
 

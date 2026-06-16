@@ -501,23 +501,7 @@
   .research-details-container p {
     font-size: 1rem;
   }
-  .pdf-actions-row {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 1rem;
-    margin-top: 2rem;
-  }
-  .view-pdf-btn, .download-pdf-btn {
-    width: 100%;
-    min-width: 0;
-    font-size: 1rem;
-    padding: 0.8rem 1.2rem;
-    margin-bottom: 0.5rem;
-  }
-  .details-actions {
-    flex-direction: column;
-    gap: 1rem;
-  }
+  /* Keep pdf/action buttons side-by-side on tablet/desktop (>=601px). */
   .comments-title {
     font-size: 1.2rem;
     margin-bottom: 1.2rem;
@@ -558,27 +542,7 @@
   .research-details-container p {
     font-size: 0.98rem;
   }
-  .pdf-actions-row {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 0.7rem;
-    margin-top: 1.5rem;
-  }
-  .view-pdf-btn, .download-pdf-btn {
-    width: 100%;
-    min-width: 0;
-    font-size: 0.98rem;
-    padding: 0.7rem 1rem;
-    margin-bottom: 0.3rem;
-  }
-  .details-actions {
-    flex-direction: column;
-    gap: 1rem;
-  }
-  .adviser-actions {
-    flex-direction: column;
-    gap: 1rem;
-  }
+  /* On medium screens keep button layout unchanged; stacking handled at 600px and below. */
   .comments-section {
     margin-top: 1.5rem;
   }
@@ -731,4 +695,36 @@
     padding: 0.6rem 0.7rem;
     font-size: 0.95rem;
   }
+}
+
+/* 📱 Small Mobile — only at 600px and below we stack/expand buttons */
+@media (max-width: 600px) {
+  .pdf-actions-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.7rem;
+    margin-top: 1.2rem;
+  }
+  .view-pdf-btn, .download-pdf-btn {
+    width: 100%;
+    min-width: 0;
+    font-size: 0.98rem;
+    padding: 0.7rem 1rem;
+    margin-bottom: 0.3rem;
+  }
+  .details-actions {
+    flex-direction: column;
+    gap: 0.7rem;
+  }
+  .submission-date {
+    margin-top: 0.6rem;
+  }
+  .adviser-actions {
+    flex-direction: column;
+    gap: 0.7rem;
+  }
+  .adviser-actions > * {
+    width: 100%;
+  }
+  /* Ensure specific full-width action buttons used elsewhere also expand on small screens */
 }
