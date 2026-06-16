@@ -253,11 +253,6 @@ const ResearchAdviserDashboard = ({ section }) => {
                             <b>Abstract:</b> {project.abstract?.length > 120 ? project.abstract.slice(0, 120) + "..." : project.abstract}
                         </div>
 
-                        {/* Claim button for eligible advisers (only show on pending and unclaimed) */}
-                        {user?.role === "research_adviser" && project.status === "pending" && !project.assigned_research_adviser_id && (
-                            <button className="admin-btn" style={{ position: 'absolute', right: 110, top: 12 }} onClick={(e) => handleClaimProject(e, project.id)}>Claim</button>
-                        )}
-
                         {/* Comment Icon + Count - Bottom Right (Only on approved/repository) */}
                         {(section === "approved" || section === "repository") && (
                         <div className="comment-icon-container">
