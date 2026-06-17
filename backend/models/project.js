@@ -26,6 +26,10 @@ module.exports = (sequelize, DataTypes) => {
   Project.associate = function(models) {
     Project.belongsTo(models.User, { foreignKey: 'submitted_by', as: 'submitter' });
     Project.belongsTo(models.User, { foreignKey: 'assigned_research_adviser_id', as: 'assignedResearchAdviser' });
+    // Revision requests
+    if (models.ProjectRevisionRequest) {
+      Project.hasMany(models.ProjectRevisionRequest, { foreignKey: 'project_id', as: 'revisionRequests' });
+    }
     // Add other associations if needed
   };
   return Project;
