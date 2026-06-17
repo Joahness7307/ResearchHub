@@ -27,6 +27,10 @@ module.exports = (sequelize, DataTypes) => {
     User.belongsTo(models.Block, { foreignKey: 'block_id' });
     User.belongsTo(models.Major, { foreignKey: 'major_id' });
     User.belongsTo(models.Strand, { foreignKey: 'strand_id' });
+    // Revision requests created by the user
+    if (models.ProjectRevisionRequest) {
+      User.hasMany(models.ProjectRevisionRequest, { foreignKey: 'requested_by_user_id', as: 'projectRevisionRequests' });
+    }
   };
 
   return User;
