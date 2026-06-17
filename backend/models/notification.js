@@ -25,7 +25,7 @@ module.exports = (sequelize, DataTypes) => {
       field: 'is_read'
     },
 
-    reason: DataTypes.TEXT,
+    message: DataTypes.TEXT,
 
     event_type: {
       type: DataTypes.STRING,

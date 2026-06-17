@@ -11,7 +11,7 @@ async function createNotification({
   studentId,
   researchAdviserId,
   researchCoordinatorId,
-  reason,
+  message,
   event_type,
 }) {
   return Notification.create(
@@ -20,7 +20,7 @@ async function createNotification({
       studentId: studentId || null,
       researchAdviserId: researchAdviserId || null,
       researchCoordinatorId: researchCoordinatorId || null,
-      reason,
+      message,
       event_type,
       isRead: false,
     },
@@ -58,7 +58,7 @@ function emitResearchCoordinator(io, coordinatorId, payload) {
 async function notifyStudent(io, {
   transaction = null,
   project,
-  reason,
+  message,
   event_type,
   payload = {},
 }) {
@@ -73,7 +73,7 @@ async function notifyStudent(io, {
     transaction,
     projectId: project.id,
     studentId: student.id,
-    reason,
+    message,
     event_type,
   });
 
@@ -81,7 +81,7 @@ async function notifyStudent(io, {
     type: event_type,
     projectId: project.id,
     title: project.title,
-    message: reason,
+    message: message,
     ...payload,
   });
 }
@@ -89,7 +89,7 @@ async function notifyStudent(io, {
 async function notifyProjectResearchAdvisers(io, {
   transaction = null,
   project,
-  reason,
+  message,
   event_type,
   payload = {},
 }) {
@@ -103,7 +103,7 @@ async function notifyProjectResearchAdvisers(io, {
       transaction,
       projectId: project.id,
       researchAdviserId: adviser.id,
-      reason,
+      message,
       event_type,
     });
 
@@ -111,7 +111,7 @@ async function notifyProjectResearchAdvisers(io, {
       type: event_type,
       projectId: project.id,
       title: project.title,
-      message: reason,
+      message: message,
       ...payload,
     });
 
@@ -125,7 +125,7 @@ async function notifyProjectResearchAdvisers(io, {
       transaction,
       projectId: project.id,
       researchAdviserId: adviser.id,
-      reason,
+      message,
       event_type,
     });
 
@@ -133,7 +133,7 @@ async function notifyProjectResearchAdvisers(io, {
       type: event_type,
       projectId: project.id,
       title: project.title,
-      message: reason,
+      message: message,
       ...payload,
     });
   }
@@ -142,7 +142,7 @@ async function notifyProjectResearchAdvisers(io, {
 async function notifyResearchCoordinators(io, {
   transaction = null,
   project,
-  reason,
+  message,
   event_type,
   payload = {},
 }) {
@@ -161,7 +161,7 @@ async function notifyResearchCoordinators(io, {
       transaction,
       projectId: project.id,
       researchCoordinatorId: coordinator.id,
-      reason,
+      message,
       event_type,
     });
 
@@ -169,7 +169,7 @@ async function notifyResearchCoordinators(io, {
       type: event_type,
       projectId: project.id,
       title: project.title,
-      message: reason,
+      message: message,
       ...payload,
     });
   }
