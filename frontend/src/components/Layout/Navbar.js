@@ -254,8 +254,8 @@ const Navbar = ({
                               navigate(`/notifications/${notif.id}`);
                             }}
                           >
-                            <div className="dropdown-item-reason">
-                              {formatNotificationSummary(notif.reason)}.
+                            <div className="dropdown-item-message">
+                              {formatNotificationSummary(notif.message)}.
                             </div>
                             <div className="projects-dropdown-date">
                               {notif.createdAt ? new Date(notif.createdAt).toLocaleString() : ""}

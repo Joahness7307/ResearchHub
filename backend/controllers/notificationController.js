@@ -180,7 +180,7 @@ exports.getProjectTimeline = async (req, res) => {
           researchAdviserId: item.researchAdviserId,
           studentId: item.studentId,
           researchCoordinatorId: item.researchCoordinatorId,
-          message: item.reason || "",
+          message: item.message || "",
           timestamp: item.createdAt,
         };
       }).filter((event) => timelineEventIsVisibleToUser(event, req.user));
