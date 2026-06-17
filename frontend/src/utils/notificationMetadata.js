@@ -63,10 +63,10 @@ function getEventType(notification = {}) {
   return notification.event_type || notification.eventType || NOTIFICATION_EVENT.WORKFLOW_UPDATE;
 }
 
-export function formatNotificationSummary(reason = "") {
-  if (!reason) return "New notification";
+export function formatNotificationSummary(message = "") {
+  if (!message) return "New notification";
 
-  let summary = reason;
+  let summary = message;
 
   const reasonIndex = summary.indexOf(" Reason:");
   if (reasonIndex !== -1) {
@@ -92,42 +92,42 @@ export function formatNotificationSummary(reason = "") {
   return summary.trim();
 }
 
-export function formatNotificationDetails(reason = "") {
-  if (!reason) {
+export function formatNotificationDetails(message = "") {
+  if (!message) {
     return {
       summary: "No notification message.",
       revisionReason: "",
     };
   }
 
-  const standardReasonIndex = reason.indexOf(" Reason:");
+  const standardReasonIndex = message.indexOf(" Reason:");
   if (standardReasonIndex !== -1) {
     return {
-      summary: reason.slice(0, standardReasonIndex).trim(),
-      revisionReason: reason.slice(standardReasonIndex + " Reason:".length).trim(),
+      summary: message.slice(0, standardReasonIndex).trim(),
+      revisionReason: message.slice(standardReasonIndex + " Reason:".length).trim(),
     };
   }
 
-  const researchCoordinatorReasonIndex = reason.indexOf(" Reason from Research Coordinator:");
+  const researchCoordinatorReasonIndex = message.indexOf(" Reason from Research Coordinator:");
   if (researchCoordinatorReasonIndex !== -1) {
     return {
-      summary: reason.slice(0, researchCoordinatorReasonIndex).trim(),
-      revisionReason: reason
+      summary: message.slice(0, researchCoordinatorReasonIndex).trim(),
+      revisionReason: message
         .slice(researchCoordinatorReasonIndex + " Reason from Research Coordinator:".length)
         .trim(),
     };
   }
 
-  const reuploadIndex = reason.indexOf(". Please reupload");
+  const reuploadIndex = message.indexOf(". Please reupload");
   if (reuploadIndex !== -1) {
     return {
-      summary: reason.slice(0, reuploadIndex).trim(),
+      summary: message.slice(0, reuploadIndex).trim(),
       revisionReason: "",
     };
   }
 
   return {
-    summary: reason,
+    summary: message,
     revisionReason: "",
   };
 }
@@ -135,12 +135,12 @@ export function formatNotificationDetails(reason = "") {
 export function getNotificationMetadata(notification = {}) {
   const type = getEventType(notification);
   const meta = NOTIFICATION_META[type] || NOTIFICATION_META[NOTIFICATION_EVENT.WORKFLOW_UPDATE];
-  const reason = notification.reason || notification.message || "";
+  const message = notification.message || notification.reason || "";
 
   return {
     ...meta,
     type,
-    summary: formatNotificationSummary(reason),
-    details: formatNotificationDetails(reason),
+    summary: formatNotificationSummary(message),
+    details: formatNotificationDetails(message),
   };
 }

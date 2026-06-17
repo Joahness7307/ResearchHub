@@ -406,7 +406,7 @@ const ProjectDetails = () => {
                     )}
 
                 {project.current_user_is_restricted_adviser && (
-                    <div style={{ background: '#fff4e6', border: '1px solid #ffd8a8', padding: '1rem', borderRadius: 8, marginBottom: '1rem' }}>
+                    <div style={{ background: '#fff4e6', border: '1px solid #ffd8a8', padding: '1rem', borderRadius: 8, marginTop: '1rem', marginBottom: '1rem' }}>
                         <div style={{ fontWeight: 700, marginBottom: 6 }}>This project is assigned to another adviser.</div>
                         <div style={{ marginBottom: 8 }}>You have read-only access.</div>
                         <div style={{ marginTop: 8 }}>

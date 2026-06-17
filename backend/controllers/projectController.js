@@ -89,7 +89,7 @@ exports.submitProject = async (req, res) => {
       transaction,
       project,
       event_type: NOTIFICATION_EVENT.SUBMITTED,
-      reason: `You submitted the project "${project.title}".`,
+      message: `You submitted the project "${project.title}".`,
       payload: {
         newStatus: PROJECT_STATUS.PENDING,
       },
@@ -102,7 +102,7 @@ exports.submitProject = async (req, res) => {
         transaction,
         project,
         event_type: NOTIFICATION_EVENT.SUBMITTED,
-        reason: `New pending project "${project.title}" submitted by ${user.full_name}.`,
+        message: `New pending project "${project.title}" submitted by ${user.full_name}.`,
         payload: {
           newStatus: PROJECT_STATUS.PENDING,
         },
@@ -365,7 +365,7 @@ exports.claimProject = async (req, res) => {
         {
           projectId: project.id,
           researchAdviserId: other.id,
-          reason: `Project "${project.title}" has been assigned to ${adviser.full_name}.`,
+          message: `Project "${project.title}" has been assigned to ${adviser.full_name}.`,
           event_type: NOTIFICATION_EVENT.ASSIGNED,
           isRead: false,
         },
@@ -392,7 +392,7 @@ exports.claimProject = async (req, res) => {
       {
         projectId: project.id,
         researchAdviserId: adviser.id,
-        reason: `You have claimed project "${project.title}".`,
+        message: `You have claimed project "${project.title}".`,
         event_type: NOTIFICATION_EVENT.ASSIGNED,
         isRead: false,
       },
@@ -502,7 +502,7 @@ exports.endorseProject = async (req, res) => {
         transaction,
         project,
         event_type: NOTIFICATION_EVENT.ENDORSED,
-        reason: `Your project "${project.title}" was endorsed for admin approval.`,
+        message: `Your project "${project.title}" was endorsed for admin approval.`,
         payload: {
           newStatus: PROJECT_STATUS.ENDORSED,
         },
@@ -514,7 +514,7 @@ exports.endorseProject = async (req, res) => {
         transaction,
         project,
         event_type: NOTIFICATION_EVENT.ENDORSED,
-        reason: `Project "${project.title}" was endorsed for admin approval.`,
+          message: `Project "${project.title}" was endorsed for admin approval.`,
         payload: {
           newStatus: PROJECT_STATUS.ENDORSED,
         },
@@ -525,7 +525,7 @@ exports.endorseProject = async (req, res) => {
       transaction,
       project,
       event_type: NOTIFICATION_EVENT.ENDORSED,
-      reason: `Project "${project.title}" was endorsed by ${req.user.full_name}.`,
+      message: `Project "${project.title}" was endorsed by ${req.user.full_name}.`,
       payload: {
         newStatus: PROJECT_STATUS.ENDORSED,
       },
@@ -643,7 +643,7 @@ exports.needRevision = async (req, res) => {
         transaction,
         project,
         event_type: NOTIFICATION_EVENT.REVISION_REQUEST,
-        reason: `Research Coordinator requested revision for "${project.title}". Reason: ${reason}`,
+        message: `Research Coordinator requested revision for "${project.title}". Reason: ${reason}`,
         payload: {
           newStatus: PROJECT_STATUS.COORDINATOR_REVISION,
         },
@@ -654,7 +654,7 @@ exports.needRevision = async (req, res) => {
         transaction,
         project,
         event_type: NOTIFICATION_EVENT.REVISION_REQUEST,
-        reason: `Revision requested for "${project.title}".`,
+        message: `Revision requested for "${project.title}".`,
         payload: {
           newStatus: PROJECT_STATUS.COORDINATOR_REVISION,
         },
@@ -696,7 +696,7 @@ exports.needRevision = async (req, res) => {
         transaction,
         project,
         event_type: NOTIFICATION_EVENT.REVISION_REQUEST,
-        reason: `Your project "${project.title}" requires revision. Reason: ${reason}`,
+        message: `Your project "${project.title}" requires revision. Reason: ${reason}`,
         payload: {
           newStatus: PROJECT_STATUS.NEED_REVISION,
         },
@@ -707,7 +707,7 @@ exports.needRevision = async (req, res) => {
         transaction,
         project,
         event_type: NOTIFICATION_EVENT.REVISION_REQUEST,
-        reason: `Project "${project.title}" was marked for revision.`,
+        message: `Project "${project.title}" was marked for revision.`,
         payload: {
           newStatus: PROJECT_STATUS.NEED_REVISION,
         },
@@ -804,7 +804,7 @@ exports.informStudentOfRevision = async (req, res) => {
       transaction,
       project,
         event_type: NOTIFICATION_EVENT.INFORMED_STUDENT,
-        reason: `Your project "${project.title}" requires revision. Reason: ${project.rejection_reason}`,
+        message: `Your project "${project.title}" requires revision. Reason: ${project.rejection_reason}`,
         payload: {
           newStatus: PROJECT_STATUS.NEED_REVISION,
         },
@@ -815,7 +815,7 @@ exports.informStudentOfRevision = async (req, res) => {
       transaction,
       project,
         event_type: NOTIFICATION_EVENT.INFORMED_STUDENT,
-        reason: `Student was informed about revision for "${project.title}".`,
+        message: `Student was informed about revision for "${project.title}".`,
         payload: {
           newStatus: PROJECT_STATUS.NEED_REVISION,
         },
@@ -917,7 +917,7 @@ exports.reuploadProjectDocument = async (req, res) => {
       transaction,
       project,
         event_type: NOTIFICATION_EVENT.REUPLOADED,
-        reason: `You reuploaded revised project "${project.title}".`,
+        message: `You reuploaded revised project "${project.title}".`,
         payload: {
         newStatus: PROJECT_STATUS.PENDING,
       },
@@ -928,7 +928,7 @@ exports.reuploadProjectDocument = async (req, res) => {
       transaction,
       project,
       event_type: NOTIFICATION_EVENT.REUPLOADED,
-      reason: `Student reuploaded revised project "${project.title}".`,
+      message: `Student reuploaded revised project "${project.title}".`,
       payload: {
         newStatus: PROJECT_STATUS.PENDING,
       },
@@ -1016,7 +1016,7 @@ exports.approveProject = async (req, res) => {
       transaction,
       project,
       event_type: NOTIFICATION_EVENT.APPROVED,
-      reason: `Project "${project.title}" was approved.`,
+      message: `Project "${project.title}" was approved.`,
       payload: {
         newStatus: PROJECT_STATUS.APPROVED,
       },
@@ -1027,7 +1027,7 @@ exports.approveProject = async (req, res) => {
       transaction,
       project,
       event_type: NOTIFICATION_EVENT.APPROVED,
-      reason: `Your project "${project.title}" was approved.`,
+      message: `Your project "${project.title}" was approved.`,
       payload: {
         newStatus: PROJECT_STATUS.APPROVED,
       },
@@ -1038,7 +1038,7 @@ exports.approveProject = async (req, res) => {
       transaction,
       project,
       event_type: NOTIFICATION_EVENT.APPROVED,
-      reason: `Project "${project.title}" was approved.`,
+      message: `Project "${project.title}" was approved.`,
       payload: {
         newStatus: PROJECT_STATUS.APPROVED,
       },

@@ -46,7 +46,7 @@ const NotificationPage = () => {
                 }
               }}
             >
-              <div className="notification-message">{formatNotificationSummary(notif.reason)}.</div>
+              <div className="notification-message">{formatNotificationSummary(notif.message)}.</div>
               <div className="notification-meta">
                 <span>
                   {notif.createdAt
